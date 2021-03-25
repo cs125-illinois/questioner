@@ -1,0 +1,287 @@
+package edu.illinois.cs.cs125.questioner.plugin.save
+
+import edu.illinois.cs.cs125.questioner.antlr.KotlinLexer
+import edu.illinois.cs.cs125.questioner.antlr.KotlinParser
+import edu.illinois.cs.cs125.questioner.lib.*
+import org.antlr.v4.runtime.*
+import org.apache.tools.ant.filters.StringInputStream
+import org.intellij.markdown.flavours.commonmark.CommonMarkFlavourDescriptor
+import org.intellij.markdown.html.HtmlGenerator
+import java.io.File
+
+data class ParsedKotlinFile(val path: String, val contents: String) {
+    constructor(file: File) : this(file.path, file.readText())
+
+    init {
+        require(path.endsWith(".kt")) { "Can only parse Kotlin files" }
+    }
+
+    private val parsedSource = contents.parseKotlin()
+    private val parseTree = parsedSource.tree
+
+    private val topLevelFile =
+        parseTree.preamble().fileAnnotations()
+            ?.getAnnotation(AlsoCorrect::class.java, Incorrect::class.java, Starter::class.java) != null
+
+    private val topLevelClass = if (!topLevelFile) {
+        parseTree.topLevelObject().filter { it.classDeclaration() != null }.also {
+            require(it.size == 1) { "Kotlin files must only contain a single top-level class declaration: ${it.size}" }
+        }.first().classDeclaration()
+    } else {
+        null
+    }
+
+    val alternateSolution = if (topLevelFile) {
+        parseTree.preamble().fileAnnotations().getAnnotation(AlsoCorrect::class.java)
+    } else {
+        topLevelClass!!.getAnnotation(AlsoCorrect::class.java)
+    }
+
+    val incorrect = if (topLevelFile) {
+        parseTree.preamble().fileAnnotations().getAnnotation(Incorrect::class.java)
+    } else {
+        topLevelClass!!.getAnnotation(Incorrect::class.java)
+    }?.let { ruleContext ->
+        when (ruleContext) {
+            is KotlinParser.AnnotationContext -> ruleContext.valueArguments()
+            is KotlinParser.UnescapedAnnotationContext -> ruleContext.valueArguments()
+            else -> error("Bad annotation chain")
+        }?.valueArgument()?.find {
+            it.simpleIdentifier().text == "reason"
+        }?.expression()?.text?.removeSurrounding("\"") ?: "test"
+    }
+
+    val starter = if (topLevelFile) {
+        parseTree.preamble().fileAnnotations().getAnnotation(Starter::class.java)
+    } else {
+        topLevelClass!!.getAnnotation(Starter::class.java)
+    }
+
+    fun toIncorrectFile(template: String? = null, importNames: List<String> = listOf()): Question.IncorrectFile {
+        check(incorrect != null) { "Not an incorrect file" }
+        val contents = clean(importNames).let { contents ->
+            template?.let {
+                contents.deTemplate(template)
+            } ?: contents
+        }
+        when (incorrect.toUpperCase()) {
+            "DESIGN" -> Question.IncorrectFile.Reason.DESIGN
+            "TEST" -> Question.IncorrectFile.Reason.TEST
+            "COMPILE" -> Question.IncorrectFile.Reason.COMPILE
+            "CHECKSTYLE" -> Question.IncorrectFile.Reason.CHECKSTYLE
+            "TIMEOUT" -> Question.IncorrectFile.Reason.TIMEOUT
+            else -> error("Invalid incorrect reason: $incorrect: $path")
+        }.also { reason ->
+            return Question.IncorrectFile(
+                className,
+                contents.stripPackage(),
+                reason,
+                Question.Language.kotlin
+            )
+        }
+    }
+
+    val className: String = if (topLevelFile) {
+        "${File(path).nameWithoutExtension}Kt"
+    } else {
+        topLevelClass!!.simpleIdentifier().text
+    }
+
+    fun toAlternateFile(template: String? = null, importNames: List<String> = listOf()): Question.FlatFile {
+        check(alternateSolution != null) { "Not an alternate solution file" }
+        val contents = removeImports(importNames).let { contents ->
+            template?.let {
+                contents.deTemplate(template)
+            } ?: contents
+        }
+        return Question.FlatFile(className, contents.stripPackage(), Question.Language.kotlin)
+    }
+
+    private fun removeImports(importNames: List<String>): String {
+        val toRemove = mutableSetOf<Int>()
+        parseTree.preamble().importList().importHeader().forEach { importHeaderContext ->
+            val packageName = importHeaderContext.identifier().text
+            if (packageName in importNames) {
+                toRemove.add(importHeaderContext.start.startIndex.toLine())
+            }
+        }
+        return contents
+            .split("\n")
+            .filterIndexed { index, _ -> (index + 1) !in toRemove }
+            .joinToString("\n")
+            .trim()
+    }
+
+    private val chars = contents.toCharArray()
+    private fun Int.toLine(): Int {
+        var lines = 1
+        for (i in 0 until this) {
+            if (chars[i] == '\n') {
+                lines++
+            }
+        }
+        return lines
+    }
+
+    val comment = if (topLevelFile) {
+        parseTree.comment()
+    } else {
+        topLevelClass!!.comment()
+    }
+
+    val description =
+        if (comment != null) {
+            markdownParser.buildMarkdownTreeFromString(comment).let { astNode ->
+                HtmlGenerator(comment, astNode, CommonMarkFlavourDescriptor()).generateHtml()
+                    .removeSurrounding("<body>", "</body>")
+            }
+        } else {
+            null
+        }
+
+    @Suppress("ComplexMethod")
+    fun clean(importNames: List<String>): String {
+        val toRemove = mutableSetOf<Int>()
+        parseTree.preamble()?.packageHeader()?.also {
+            toRemove.add(it.start.startIndex.toLine())
+        }
+        parseTree.preamble().importList().importHeader().forEach { importHeaderContext ->
+            val packageName = importHeaderContext.identifier().text
+            if (packageName in importsToRemove ||
+                packageName in importNames ||
+                packagesToRemove.any { packageName.startsWith(it) }
+            ) {
+                toRemove.add(importHeaderContext.start.startIndex.toLine())
+            }
+        }
+        if (topLevelFile) {
+            parseTree.topLevelObject().forEach { topLevelObject ->
+                topLevelObject.DelimitedComment()?.also { node ->
+                    (node.symbol.startIndex.toLine()..node.symbol.stopIndex.toLine()).forEach { toRemove.add(it) }
+                }
+            }
+            parseTree.preamble().fileAnnotations().fileAnnotation()?.flatMap { it.unescapedAnnotation() }
+                ?.filter { annotation ->
+                    annotation.identifier()?.text != null &&
+                            annotationsToRemove.contains(annotation.identifier().text.removePrefix("@"))
+                }?.forEach { context ->
+                    (context.start.startIndex.toLine()..context.stop.stopIndex.toLine()).forEach {
+                        toRemove.add(it)
+                    }
+                }
+        } else {
+            topLevelClass!!.DelimitedComment()?.also { node ->
+                (node.symbol.startIndex.toLine()..node.symbol.stopIndex.toLine()).forEach { toRemove.add(it) }
+            }
+            topLevelClass.modifierList().annotations()
+                ?.filter {
+                    it.annotation().LabelReference()?.text != null && annotationsToRemove.contains(
+                        it.annotation().LabelReference().text.removePrefix("@")
+                    )
+                }?.forEach { context ->
+                    (context.start.startIndex.toLine()..context.stop.stopIndex.toLine()).forEach {
+                        toRemove.add(it)
+                    }
+                }
+        }
+
+        return contents
+            .split("\n")
+            .filterIndexed { index, _ -> (index + 1) !in toRemove }
+            .filter { line -> !line.trim().endsWith("""// REMOVE""") }
+            .joinToString("\n")
+            .trim()
+    }
+
+    private fun String.deTemplate(template: String?): String {
+        if (template == null) {
+            return this
+        }
+        val lines = split("\n")
+        val start = lines.indexOfFirst { it.contains("TEMPLATE_START") }
+        val end = lines.indexOfFirst { it.contains("TEMPLATE_END") }
+        require(start != -1) { "Couldn't locate TEMPLATE_START during extraction" }
+        require(end != -1) { "Couldn't locate TEMPLATE_END during extraction" }
+        return lines.slice((start + 1) until end).joinToString(separator = "\n").trimIndent()
+    }
+
+}
+
+data class ParsedKotlinContent(
+    val tree: KotlinParser.KotlinFileContext,
+    val stream: CharStream
+)
+
+internal fun String.parseKotlin() = CharStreams.fromStream(StringInputStream(this)).let { stream ->
+    KotlinLexer(stream).also { it.removeErrorListeners() }.let { lexer ->
+        CommonTokenStream(lexer).let { tokens ->
+            KotlinParser(tokens).also { parser ->
+                parser.removeErrorListeners()
+                parser.addErrorListener(
+                    object : BaseErrorListener() {
+                        override fun syntaxError(
+                            recognizer: Recognizer<*, *>?,
+                            offendingSymbol: Any?,
+                            line: Int,
+                            charPositionInLine: Int,
+                            msg: String?,
+                            e: RecognitionException?
+                        ) {
+                            // Ignore messages that are not errors...
+                            if (e == null) {
+                                return
+                            }
+                            throw e
+                        }
+                    }
+                )
+            }
+        }.kotlinFile()
+    }.let { tree ->
+        ParsedKotlinContent(tree, stream)
+    }
+}
+
+fun KotlinParser.FileAnnotationsContext.getAnnotation(vararg toFind: Class<*>):
+        KotlinParser.UnescapedAnnotationContext? =
+    fileAnnotation()?.flatMap { it.unescapedAnnotation() }?.find { annotation ->
+        annotation.identifier()?.text != null && toFind.map { it.simpleName }.contains(annotation.identifier().text)
+    }
+
+fun KotlinParser.ClassDeclarationContext.getAnnotation(annotation: Class<*>): KotlinParser.AnnotationContext? =
+    modifierList().annotations()?.find {
+        it.annotation()?.LabelReference()?.text == "@${annotation.simpleName}"
+    }?.annotation()
+
+fun KotlinParser.KotlinFileContext.comment() =
+    topLevelObject().find { it.DelimitedComment() != null }?.DelimitedComment()?.text
+        ?.toString()?.split("\n")?.joinToString(separator = "\n") { line ->
+            line.trim()
+                .removePrefix("""/*""")
+                .removePrefix("""*/""")
+                .removePrefix("""* """)
+                .removeSuffix("""*//*""")
+                .let {
+                    if (it == "*") {
+                        ""
+                    } else {
+                        it
+                    }
+                }
+        }?.trim()
+
+fun KotlinParser.ClassDeclarationContext.comment() = DelimitedComment()?.text
+    ?.toString()?.split("\n")?.joinToString(separator = "\n") { line ->
+        line.trim()
+            .removePrefix("""/*""")
+            .removePrefix("""*/""")
+            .removePrefix("""* """)
+            .removeSuffix("""*//*""")
+            .let {
+                if (it == "*") {
+                    ""
+                } else {
+                    it
+                }
+            }
+    }?.trim()
