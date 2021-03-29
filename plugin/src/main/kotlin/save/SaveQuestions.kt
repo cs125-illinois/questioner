@@ -302,7 +302,8 @@ fun List<ParsedJavaFile>.findQuestions(): List<Question> {
             kotlinStarterFile,
             javaTemplate,
             kotlinTemplate,
-            solution.whitelist.toSet()
+            solution.whitelist.toSet(),
+            solution.blacklist.toSet()
         )
     }
 }
@@ -317,6 +318,7 @@ val annotationsToRemove =
         "Suppress",
         "Override",
         "Whitelist",
+        "Blacklist",
         "DesignOnly",
         "WrapWith"
     )

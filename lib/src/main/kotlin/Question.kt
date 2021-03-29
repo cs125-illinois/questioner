@@ -49,7 +49,8 @@ data class Question(
     val kotlinStarter: FlatFile?,
     var javaTemplate: String?,
     var kotlinTemplate: String?,
-    val importWhitelist: Set<String>
+    val importWhitelist: Set<String>,
+    val importBlacklist: Set<String>
 ) {
     @JsonClass(generateAdapter = true)
     data class Metadata(
@@ -296,6 +297,11 @@ data class Question(
                         "Submission defines incorrect class: ${it.first()} != $compilationDefinedClass"
                 }
             }
+        }
+        taskResults.sandboxedClassLoader?.loadedClasses?.find { imported ->
+            importBlacklist.any { imported.startsWith(it) }
+        }?.let {
+            message = "Cannot use $it for this problem"
         }
         taskResults.permissionRequests.filter { !it.granted }.let { denied ->
             if (denied.isNotEmpty()) {

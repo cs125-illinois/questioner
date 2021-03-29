@@ -70,6 +70,24 @@ data class ParsedJavaFile(val path: String, val contents: String) {
         }
     }
 
+    val blacklist = topLevelClass.getAnnotations(Blacklist::class.java).let { annotations ->
+        check(annotations.size <= 1) { "Found multiple @Blacklist annotations" }
+        if (annotations.isEmpty()) {
+            listOf()
+        } else {
+            annotations.first().let { annotation ->
+                @Suppress("TooGenericExceptionCaught")
+                try {
+                    annotation.parameterMap().let { it["paths"] ?: error("path field not set on @Blacklist") }
+                } catch (e: Exception) {
+                    error("Couldn't parse @Blacklist paths for $path: $e")
+                }.let { names ->
+                    names.split(",").map { it.trim() }
+                }
+            }
+        }
+    }
+
     val correct = topLevelClass.getAnnotation(Correct::class.java)?.let { annotation ->
         @Suppress("TooGenericExceptionCaught")
         try {
@@ -284,10 +302,16 @@ data class ParsedJavaFile(val path: String, val contents: String) {
     private fun String.javaDeTemplate(template: String?, wrappedClass: String?): String {
         return when {
             wrappedClass != null -> {
-                parseJava().tree.topLevelClass().let {
-                    val start = it.classDeclaration().start.line
-                    val end = it.classDeclaration().stop.line
-                    split("\n").subList(start, end - 1).joinToString("\n").trimIndent().trim()
+                parseJava().tree.topLevelClass().let { context ->
+                    val start = context.classDeclaration().start.line
+                    val end = context.classDeclaration().stop.line
+                    split("\n").subList(start, end - 1).also { lines ->
+                        require(lines.find {
+                            it.contains("TEMPLATE_START") || it.contains("TEMPLATE_END")
+                        } == null) {
+                            "@WrapWith should not use template delimiters"
+                        }
+                    }.joinToString("\n").trimIndent().trim()
                 }
             }
             template == null -> this

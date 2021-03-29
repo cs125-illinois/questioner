@@ -18,7 +18,7 @@ dependencies {
     implementation("com.github.cs125-illinois.jeed:core:2021.3.4")
     implementation("com.github.cs125-illinois.jenisol:core:2021.3.6")
     implementation("com.squareup.moshi:moshi:1.11.0")
-    implementation("org.jetbrains:markdown:0.1.45") {
+    implementation("org.jetbrains:markdown:0.2.1") {
         exclude(module = "kotlin-runtime")
         exclude(module = "kotlin-js")
     }
@@ -58,5 +58,6 @@ gradlePlugin {
     }
 }
 java {
+    @Suppress("UnstableApiUsage")
     withSourcesJar()
 }

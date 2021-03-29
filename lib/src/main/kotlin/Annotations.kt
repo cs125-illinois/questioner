@@ -70,6 +70,9 @@ annotation class AlsoCorrect
 annotation class Whitelist(val paths: String)
 
 @Target(AnnotationTarget.CLASS)
+annotation class Blacklist(val paths: String)
+
+@Target(AnnotationTarget.CLASS)
 annotation class WrapWith(val klass: String = "Question")
 
 @Target(AnnotationTarget.CLASS)
