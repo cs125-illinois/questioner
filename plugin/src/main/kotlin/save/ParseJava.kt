@@ -220,7 +220,7 @@ data class ParsedJavaFile(val path: String, val contents: String) {
         wrappedClass: String?,
         importNames: List<String> = listOf()
     ): Question.FlatFile {
-        check(starter != null) { "Not an alternate solution file" }
+        check(starter != null) { "Not an starter code file" }
         val contents = clean(importNames).javaDeTemplate(template, wrappedClass)
         return Question.FlatFile(className, contents.stripPackage(), Question.Language.java)
     }

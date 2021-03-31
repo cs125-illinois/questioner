@@ -94,237 +94,218 @@ fun List<ParsedJavaFile>.findQuestions(allPaths: List<String>): List<Question> {
         require(solution.packageName != "") { "Solutions should not have an empty package name" }
         require(solution.className != "") { "Solutions should not have an empty class name" }
 
-        val allContentHash = if (Files.isRegularFile(Paths.get(solution.path))) {
-            Files.walk(Paths.get(solution.path).parent).filter { path ->
-                Files.isRegularFile(path)
-            }.map { File(it.toString()) }.collect(Collectors.toList()).toMutableList().sortedBy { it.path }
-                .map { it.path to it.readText() }.toMap()
-        } else {
-            mapOf()
-        }.let {
-            moshi.adapter<Map<String, String>>(
-                Types.newParameterizedType(
-                    Map::class.java,
-                    String::class.java,
-                    String::class.java
+        try {
+            val allContentHash = if (Files.isRegularFile(Paths.get(solution.path))) {
+                Files.walk(Paths.get(solution.path).parent).filter { path ->
+                    Files.isRegularFile(path)
+                }.map { File(it.toString()) }.collect(Collectors.toList()).toMutableList().sortedBy { it.path }
+                    .map { it.path to it.readText() }.toMap()
+            } else {
+                mapOf()
+            }.let {
+                moshi.adapter<Map<String, String>>(
+                    Types.newParameterizedType(
+                        Map::class.java,
+                        String::class.java,
+                        String::class.java
+                    )
                 )
-            )
-                .indent("  ")
-                .toJson(it)
-        }.let { json ->
-            MessageDigest.getInstance("SHA-256").let { digest ->
-                digest.digest(json.toByteArray())
-            }.fold("", { str, it -> str + "%02x".format(it) })
-        }
+                    .indent("  ")
+                    .toJson(it)
+            }.let { json ->
+                MessageDigest.getInstance("SHA-256").let { digest ->
+                    digest.digest(json.toByteArray())
+                }.fold("", { str, it -> str + "%02x".format(it) })
+            }
 
-        val kotlinFiles = if (Files.isRegularFile(Paths.get(solution.path))) {
-            Files.walk(Paths.get(solution.path).parent).filter { path ->
-                !knownFiles.contains(path.toString()) && Files.isRegularFile(path) && path.toString().endsWith(".kt")
-            }.map { it.toString() }.collect(Collectors.toSet())
-        } else {
-            setOf<String>()
-        }.map {
-            ParsedKotlinFile(File(it))
-        }
-
-        val javaStarter =
-            otherFiles.filter { it.packageName.startsWith("${solution.packageName}.") }
-                .filter { it.starter != null }.let {
-                    assert(it.size <= 1) {
-                        "Solution ${solution.correct.name} provided multiple files marked as starter code"
-                    }
-                    it.firstOrNull()
-                }?.also {
-                    if (it.path in usedFiles) {
-                        require(usedFiles[it.path] == "Incorrect")
-                    }
-                    usedFiles[it.path] = "Starter"
-                }
-
-        val importNames = if (solution.imports.isNotEmpty()) {
-            solution.imports.map { toImport ->
-                if (toImport.endsWith(".*")) {
-                    val packagePrefix = toImport.removeSuffix("*")
-                    byFullName.keys.filter { it.startsWith(packagePrefix) }.also {
-                        check(it.isNotEmpty()) { "@Import paths $toImport not found" }
-                    }
-                } else {
-                    toImport.also {
-                        check(toImport in byFullName) { "@Import path $toImport not found" }
-                    }.let {
-                        listOf(it)
-                    }
-                }
-            }.flatten()
-        } else {
-            listOf()
-        }
-
-        var javaTemplate = File("${solution.path}.hbs").let {
-            if (it.exists()) {
-                it
+            val kotlinFiles = if (Files.isRegularFile(Paths.get(solution.path))) {
+                Files.walk(Paths.get(solution.path).parent).filter { path ->
+                    !knownFiles.contains(path.toString()) && Files.isRegularFile(path) && path.toString()
+                        .endsWith(".kt")
+                }.map { it.toString() }.collect(Collectors.toSet())
             } else {
-                null
+                setOf<String>()
+            }.map {
+                ParsedKotlinFile(File(it))
             }
-        }?.also {
-            require(it.path !in usedFiles) { "File $it.path was already used as ${usedFiles[it.path]}" }
-            usedFiles[it.path] = "Template"
-        }?.readText()?.stripPackage()
 
-        var kotlinTemplate = File("${solution.path.replace(".java$".toRegex(), ".kt")}.hbs").let {
-            if (it.path != "${solution.path}.hbs" && it.exists()) {
-                it
-            } else {
-                null
-            }
-        }?.also {
-            require(it.path !in usedFiles) { "File $it.path was already used as ${usedFiles[it.path]}" }
-            usedFiles[it.path] = "Template"
-        }?.readText()?.stripPackage()
+            val javaStarter =
+                otherFiles.filter { it.packageName.startsWith("${solution.packageName}.") }
+                    .filter { it.starter != null }.let {
+                        assert(it.size <= 1) {
+                            "Solution ${solution.correct.name} provided multiple files marked as starter code"
+                        }
+                        it.firstOrNull()
+                    }?.also {
+                        if (it.path in usedFiles) {
+                            require(usedFiles[it.path] == "Incorrect")
+                        }
+                        usedFiles[it.path] = "Starter"
+                    }
 
-        if (solution.wrapWith != null) {
-            require(javaTemplate == null && kotlinTemplate == null) {
-                "Can't use both a template and @WrapWith"
-            }
-            javaTemplate = """public class ${solution.wrapWith} {
-                |  {{{ contents }}}
-                |}
-            """.trimMargin()
-            kotlinTemplate = """class ${solution.wrapWith} {
-                |  {{{ contents }}}
-                |}
-            """.trimMargin()
-        }
-
-        val incorrectExamples =
-            otherFiles.filter { it.packageName.startsWith("${solution.packageName}.") }
-                .filter { it.incorrect != null }
-                .onEach {
-                    if (it.path in usedFiles) {
-                        require(usedFiles[it.path] == "Starter") {
-                            "File $it.path was already used as ${usedFiles[it.path]}"
+            val importNames = if (solution.imports.isNotEmpty()) {
+                solution.imports.map { toImport ->
+                    if (toImport.endsWith(".*")) {
+                        val packagePrefix = toImport.removeSuffix("*")
+                        byFullName.keys.filter { it.startsWith(packagePrefix) }.also {
+                            check(it.isNotEmpty()) { "@Import paths $toImport not found" }
+                        }
+                    } else {
+                        toImport.also {
+                            check(toImport in byFullName) { "@Import path $toImport not found" }
+                        }.let {
+                            listOf(it)
                         }
                     }
-                    usedFiles[it.path] = "Incorrect"
-                }
-                .also {
-                    require(it.isNotEmpty()) {
-                        "Solution ${solution.correct.name} (${solution.path}) did not provide any counterexamples " +
-                                "annotated with @Incorrect"
-                    }
-                }.map { it.toIncorrectFile(javaTemplate, solution.wrapWith, importNames) }.toMutableList().apply {
-                    addAll(
-                        kotlinFiles.filter { it.incorrect != null }
-                            .onEach {
-                                require(it.path !in usedFiles) {
-                                    "File $it.path was already used as ${usedFiles[it.path]}"
-                                }
-                                usedFiles[it.path] = "Incorrect"
-                            }
-                            .map { it.toIncorrectFile(kotlinTemplate, importNames) }
-                    )
-                }
-
-        val test = File("${solution.path.removeSuffix(".java")}Test.java").let {
-            if (it.exists()) {
-                it
+                }.flatten()
             } else {
-                null
+                listOf()
             }
-        }?.also {
-            require(it.path !in usedFiles) { "File $it.path was already used as ${usedFiles[it.path]}" }
-            usedFiles[it.path] = "Test"
-        }
 
-        val alternateSolutions =
-            otherFiles.filter { it.packageName.startsWith("${solution.packageName}.") }
-                .filter { it.alternateSolution != null }
-                .onEach {
-                    require(it.path !in usedFiles) {
-                        "File $it.path was already used as ${usedFiles[it.path]}"
-                    }
-                    usedFiles[it.path] = "Alternate"
-                }.map {
-                    it.toAlternateFile(javaTemplate, solution.wrapWith, importNames)
-                }.toMutableList().apply {
-                    addAll(
-                        kotlinFiles
-                            .filter { it.alternateSolution != null }
-                            .onEach {
-                                require(it.path !in usedFiles) {
-                                    "File $it.path was already used as ${usedFiles[it.path]}"
-                                }
-                                usedFiles[it.path] = "Correct"
-                            }
-                            .map { it.toAlternateFile(kotlinTemplate, importNames) }
-                    )
-                }.toList()
-
-        val common = importNames.map {
-            usedFiles[byFullName[it]!!.path] = "Common"
-            byFullName[it]?.contents?.stripPackage() ?: error("Couldn't find import $it")
-        }
-
-        val javaStarterFile = javaStarter?.toStarterFile(javaTemplate, solution.wrapWith, importNames)
-
-        val kotlinStarterFile = kotlinFiles.filter { it.starter != null }.also {
-            require(it.size <= 1) { "Provided multiple file with Kotlin starter code" }
-        }.firstOrNull()?.let {
-            require(it.path !in usedFiles || usedFiles[it.path] == "Incorrect") {
-                "File $it.path was already used as ${usedFiles[it.path]}"
-            }
-            usedFiles[it.path] = "Starter"
-            Question.FlatFile(
-                it.className,
-                it.clean(importNames).stripPackage(),
-                Question.Language.kotlin
-            )
-        }
-
-        Question(
-            solution.correct.name,
-            solution.className,
-            Question.Metadata(
-                allContentHash,
-                solution.packageName,
-                solution.correct.version,
-                solution.correct.author,
-                solution.correct.description,
-                solution.correct.points,
-                solution.correct.timeoutMultiplier,
-                solution.correct.minTimeout,
-                solution.correct.mutate,
-                solution.correct.checkstyle,
-                solution.correct.solutionThrows,
-                solution.correct.maxTestCount,
-                kotlinFiles.find { it.alternateSolution != null && it.description != null }?.description,
-                solution.citation
-            ),
-            Question.FlatFile(
-                solution.className,
-                solution.removeImports(importNames).stripPackage(),
-                Question.Language.java
-            ),
-            solution.toCleanSolution(importNames, javaTemplate),
-            alternateSolutions,
-            incorrectExamples,
-            common,
-            test?.let { file ->
-                ParsedJavaFile(file).let {
-                    Question.FlatFile(
-                        it.className,
-                        it.removeImports(importNames).stripPackage(),
-                        Question.Language.java
-                    )
+            var javaTemplate = File("${solution.path}.hbs").let {
+                if (it.exists()) {
+                    it
+                } else {
+                    null
                 }
-            },
-            javaStarterFile,
-            kotlinStarterFile,
-            javaTemplate,
-            kotlinTemplate,
-            solution.whitelist.toSet(),
-            solution.blacklist.toSet()
-        )
+            }?.also {
+                require(it.path !in usedFiles) { "File $it.path was already used as ${usedFiles[it.path]}" }
+                usedFiles[it.path] = "Template"
+            }?.readText()?.stripPackage()
+
+            var kotlinTemplate = File("${solution.path.replace(".java$".toRegex(), ".kt")}.hbs").let {
+                if (it.path != "${solution.path}.hbs" && it.exists()) {
+                    it
+                } else {
+                    null
+                }
+            }?.also {
+                require(it.path !in usedFiles) { "File $it.path was already used as ${usedFiles[it.path]}" }
+                usedFiles[it.path] = "Template"
+            }?.readText()?.stripPackage()
+
+            if (solution.wrapWith != null) {
+                require(javaTemplate == null && kotlinTemplate == null) {
+                    "Can't use both a template and @WrapWith"
+                }
+                javaTemplate = """public class ${solution.wrapWith} {
+                |  {{{ contents }}}
+                |}
+            """.trimMargin()
+                kotlinTemplate = """class ${solution.wrapWith} {
+                |  {{{ contents }}}
+                |}
+            """.trimMargin()
+            }
+
+            val incorrectExamples =
+                otherFiles.filter { it.packageName.startsWith("${solution.packageName}.") }
+                    .filter { it.incorrect != null }
+                    .onEach {
+                        if (it.path in usedFiles) {
+                            require(usedFiles[it.path] == "Starter") {
+                                "File $it.path was already used as ${usedFiles[it.path]}"
+                            }
+                        }
+                        usedFiles[it.path] = "Incorrect"
+                    }
+                    .also {
+                        require(it.isNotEmpty()) {
+                            "Solution ${solution.correct.name} (${solution.path}) did not provide any counterexamples " +
+                                    "annotated with @Incorrect"
+                        }
+                    }.map { it.toIncorrectFile(javaTemplate, solution.wrapWith, importNames) }.toMutableList().apply {
+                        addAll(
+                            kotlinFiles.filter { it.incorrect != null }
+                                .onEach {
+                                    require(it.path !in usedFiles) {
+                                        "File $it.path was already used as ${usedFiles[it.path]}"
+                                    }
+                                    usedFiles[it.path] = "Incorrect"
+                                }
+                                .map { it.toIncorrectFile(kotlinTemplate, solution.wrapWith, importNames) }
+                        )
+                    }
+
+            val alternateSolutions =
+                otherFiles.filter { it.packageName.startsWith("${solution.packageName}.") }
+                    .filter { it.alternateSolution != null }
+                    .onEach {
+                        require(it.path !in usedFiles) {
+                            "File $it.path was already used as ${usedFiles[it.path]}"
+                        }
+                        usedFiles[it.path] = "Alternate"
+                    }.map {
+                        it.toAlternateFile(javaTemplate, solution.wrapWith, importNames)
+                    }.toMutableList().apply {
+                        addAll(
+                            kotlinFiles
+                                .filter { it.alternateSolution != null }
+                                .onEach {
+                                    require(it.path !in usedFiles) {
+                                        "File $it.path was already used as ${usedFiles[it.path]}"
+                                    }
+                                    usedFiles[it.path] = "Correct"
+                                }
+                                .map { it.toAlternateFile(kotlinTemplate, solution.wrapWith, importNames) }
+                        )
+                    }.toList()
+
+            val common = importNames.map {
+                usedFiles[byFullName[it]!!.path] = "Common"
+                byFullName[it]?.contents?.stripPackage() ?: error("Couldn't find import $it")
+            }
+
+            val javaStarterFile = javaStarter?.toStarterFile(javaTemplate, solution.wrapWith, importNames)
+
+            val kotlinStarterFile = kotlinFiles.filter { it.starter != null }.also {
+                require(it.size <= 1) { "Provided multiple file with Kotlin starter code" }
+            }.firstOrNull()?.let {
+                require(it.path !in usedFiles || usedFiles[it.path] == "Incorrect") {
+                    "File $it.path was already used as ${usedFiles[it.path]}"
+                }
+                usedFiles[it.path] = "Starter"
+                it.toStarterFile(kotlinTemplate, solution.wrapWith, importNames)
+            }
+
+            Question(
+                solution.correct.name,
+                solution.className,
+                Question.Metadata(
+                    allContentHash,
+                    solution.packageName,
+                    solution.correct.version,
+                    solution.correct.author,
+                    solution.correct.description,
+                    solution.correct.points,
+                    solution.correct.timeoutMultiplier,
+                    solution.correct.minTimeout,
+                    solution.correct.mutate,
+                    solution.correct.checkstyle,
+                    solution.correct.solutionThrows,
+                    solution.correct.maxTestCount,
+                    kotlinFiles.find { it.alternateSolution != null && it.description != null }?.description,
+                    solution.citation
+                ),
+                Question.FlatFile(
+                    solution.className,
+                    solution.removeImports(importNames).stripPackage(),
+                    Question.Language.java
+                ),
+                solution.toCleanSolution(importNames, javaTemplate),
+                alternateSolutions,
+                incorrectExamples,
+                common,
+                javaStarterFile,
+                kotlinStarterFile,
+                javaTemplate,
+                kotlinTemplate,
+                solution.whitelist.toSet(),
+                solution.blacklist.toSet()
+            )
+        } catch (e: Exception) {
+            throw Exception("Problem parsing ${solution.path}: $e")
+        }
     }
     allPaths.filter { !usedFiles.containsKey(it) }.forEach {
         println("WARNING: $it will not be included in the build")

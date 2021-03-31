@@ -57,9 +57,12 @@ data class ParsedKotlinFile(val path: String, val contents: String) {
         topLevelClass!!.getAnnotation(Starter::class.java)
     }
 
-    fun toIncorrectFile(template: String? = null, importNames: List<String> = listOf()): Question.IncorrectFile {
+    fun toIncorrectFile(
+        template: String? = null, wrappedClass: String? = null,
+        importNames: List<String> = listOf()
+    ): Question.IncorrectFile {
         check(incorrect != null) { "Not an incorrect file" }
-        val contents = clean(importNames).deTemplate(template).stripPackage()
+        val contents = clean(importNames).kotlinDeTemplate(template, wrappedClass).stripPackage()
         when (incorrect.toUpperCase()) {
             "DESIGN" -> Question.IncorrectFile.Reason.DESIGN
             "TEST" -> Question.IncorrectFile.Reason.TEST
@@ -83,12 +86,25 @@ data class ParsedKotlinFile(val path: String, val contents: String) {
         topLevelClass!!.simpleIdentifier().text
     }
 
-    fun toAlternateFile(template: String? = null, importNames: List<String> = listOf()): Question.FlatFile {
+    fun toAlternateFile(
+        template: String? = null, wrappedClass: String? = null,
+        importNames: List<String> = listOf()
+    ): Question.FlatFile {
         check(alternateSolution != null) { "Not an alternate solution file" }
-        val contents = clean(importNames).deTemplate(template).stripPackage()
+        val contents = clean(importNames).kotlinDeTemplate(template, wrappedClass).stripPackage()
         return Question.FlatFile(className, contents, Question.Language.kotlin)
     }
 
+    fun toStarterFile(
+        template: String? = null, wrappedClass: String? = null,
+        importNames: List<String> = listOf()
+    ): Question.FlatFile {
+        check(starter != null) { "Not an starter code file" }
+        val contents = clean(importNames).kotlinDeTemplate(template, wrappedClass).stripPackage()
+        return Question.FlatFile(className, contents, Question.Language.kotlin)
+    }
+
+    @Suppress("unused")
     private fun removeImports(importNames: List<String>): String {
         val toRemove = mutableSetOf<Int>()
         parseTree.preamble().importList().importHeader().forEach { importHeaderContext ->
@@ -185,24 +201,35 @@ data class ParsedKotlinFile(val path: String, val contents: String) {
             .trim()
     }
 
-    private fun String.deTemplate(template: String?): String {
-        if (template == null) {
-            return this
+    private fun String.kotlinDeTemplate(template: String?, wrappedClass: String?) = when {
+        wrappedClass != null && topLevelFile -> this
+        wrappedClass != null && !topLevelFile -> parseKotlin().tree.topLevelObject()
+            .filter { it.classDeclaration() != null }.also {
+                require(it.size == 1) { "Kotlin files must only contain a single top-level class declaration: ${it.size}" }
+            }.first().classDeclaration().let { context ->
+                val start = context.start.line
+                val end = context.stop.line
+                split("\n").subList(start, end - 1).also { lines ->
+                    require(lines.find {
+                        it.contains("TEMPLATE_START") || it.contains("TEMPLATE_END")
+                    } == null) {
+                        "@WrapWith should not use template delimiters"
+                    }
+                }.joinToString("\n").trimIndent().trim()
+            }
+        template == null -> this
+        else -> {
+            val lines = split("\n")
+            val start = lines.indexOfFirst { it.contains("TEMPLATE_START") }
+            val end = lines.indexOfFirst { it.contains("TEMPLATE_END") }
+            require(start != -1) { "Couldn't locate TEMPLATE_START during extraction" }
+            require(end != -1) { "Couldn't locate TEMPLATE_END during extraction" }
+            lines.slice((start + 1) until end).joinToString(separator = "\n").trimIndent()
         }
-        val lines = split("\n")
-        val start = lines.indexOfFirst { it.contains("TEMPLATE_START") }
-        val end = lines.indexOfFirst { it.contains("TEMPLATE_END") }
-        require(start != -1) { "Couldn't locate TEMPLATE_START during extraction" }
-        require(end != -1) { "Couldn't locate TEMPLATE_END during extraction" }
-        return lines.slice((start + 1) until end).joinToString(separator = "\n").trimIndent()
     }
-
 }
 
-data class ParsedKotlinContent(
-    val tree: KotlinParser.KotlinFileContext,
-    val stream: CharStream
-)
+data class ParsedKotlinContent(val tree: KotlinParser.KotlinFileContext, val stream: CharStream)
 
 internal fun String.parseKotlin() = CharStreams.fromStream(StringInputStream(this)).let { stream ->
     KotlinLexer(stream).also { it.removeErrorListeners() }.let { lexer ->
@@ -234,8 +261,7 @@ internal fun String.parseKotlin() = CharStreams.fromStream(StringInputStream(thi
     }
 }
 
-fun KotlinParser.FileAnnotationsContext.getAnnotation(vararg toFind: Class<*>):
-        KotlinParser.UnescapedAnnotationContext? =
+fun KotlinParser.FileAnnotationsContext.getAnnotation(vararg toFind: Class<*>): KotlinParser.UnescapedAnnotationContext? =
     fileAnnotation()?.flatMap { it.unescapedAnnotation() }?.find { annotation ->
         annotation.identifier()?.text != null && toFind.map { it.simpleName }.contains(annotation.identifier().text)
     }

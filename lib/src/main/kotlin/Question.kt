@@ -44,7 +44,6 @@ data class Question(
     val alternativeSolutions: List<FlatFile>,
     val incorrect: List<IncorrectFile>,
     val common: List<String>?,
-    val test: FlatFile?,
     val javaStarter: FlatFile?,
     val kotlinStarter: FlatFile?,
     var javaTemplate: String?,
@@ -616,7 +615,7 @@ data class Question(
                             correct.contents
                         }
                     ).allMutations(random = Random(seed))
-                        .map { it.contents.deTemplate(getTemplate(Language.java)) }
+                        .map { it.contents.kotlinDeTemplate(getTemplate(Language.java)) }
                         // Templated questions sometimes will mutate the template
                         .filter { it != correct.contents }
                         .map { IncorrectFile(klass, it, IncorrectFile.Reason.TEST, Language.java) }
@@ -701,7 +700,7 @@ data class Question(
     }
 
     var detemplatedJavaStarter = javaStarter?.contents
-    var detemplatedKotlinStarter = kotlinStarter?.contents?.deTemplate(getTemplate(Language.kotlin))
+    var detemplatedKotlinStarter = kotlinStarter?.contents
 
     val hasKotlin =
         metadata.kotlinDescription != null && alternativeSolutions.find { it.language == Language.kotlin } != null &&
@@ -891,7 +890,7 @@ fun captureJeedOutput(run: () -> Any?): CapturedResult = Sandbox.redirectOutput(
     CapturedResult(it.returned, it.threw, it.stdout, it.stderr)
 }
 
-private fun String.deTemplate(template: String?): String {
+private fun String.kotlinDeTemplate(template: String?): String {
     return when (template) {
         null -> this
         else -> {
