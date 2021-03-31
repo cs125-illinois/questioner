@@ -7,7 +7,7 @@ dependencies {
     kapt("com.squareup.moshi:moshi-kotlin-codegen:1.11.0")
 
     implementation(kotlin("stdlib"))
-    api("com.github.cs125-illinois.jeed:core:2021.3.4")
+    api("com.github.cs125-illinois.jeed:core:2021.3.5")
     api("com.github.cs125-illinois.jenisol:core:2021.3.6")
     implementation("com.squareup.moshi:moshi-kotlin-codegen:1.11.0")
     api("io.kotest:kotest-runner-junit5:4.4.3")
