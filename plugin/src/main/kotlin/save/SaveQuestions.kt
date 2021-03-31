@@ -55,13 +55,16 @@ open class SaveQuestions : DefaultTask() {
     }
 }
 
-fun Project.getQuestions(): List<Question> = convention.getPlugin(JavaPluginConvention::class.java)
-    .sourceSets.getByName("main").allSource.filter { it.name.endsWith(".java") }
-    .map { ParsedJavaFile(it) }
-    .findQuestions()
+fun Project.getQuestions(): List<Question> {
+    val allFiles = convention.getPlugin(JavaPluginConvention::class.java)
+        .sourceSets.getByName("main").allSource
+        .filter { it.name.endsWith(".java") || it.name.endsWith(".kt") }
+    val parsedJavaFiles = allFiles.filter { it.name.endsWith(".java") }.map { ParsedJavaFile(it) }
+    return parsedJavaFiles.findQuestions(allFiles.map { it.path })
+}
 
 @Suppress("LongMethod", "ComplexMethod")
-fun List<ParsedJavaFile>.findQuestions(): List<Question> {
+fun List<ParsedJavaFile>.findQuestions(allPaths: List<String>): List<Question> {
     map { it.fullName }.groupingBy { it }.eachCount().filter { it.value > 1 }.also { duplicates ->
         if (duplicates.isNotEmpty()) {
             error("Files with duplicate qualified names found: ${duplicates.keys}")
@@ -86,7 +89,7 @@ fun List<ParsedJavaFile>.findQuestions(): List<Question> {
     val usedFiles = solutions.map { it.path to "Correct" }.toMap().toMutableMap()
     val knownFiles = map { it.path }
 
-    return solutions.map { solution ->
+    val questions = solutions.map { solution ->
         require(solution.correct != null) { "Solutions should have @Correct metadata" }
         require(solution.packageName != "") { "Solutions should not have an empty package name" }
         require(solution.className != "") { "Solutions should not have an empty class name" }
@@ -212,6 +215,12 @@ fun List<ParsedJavaFile>.findQuestions(): List<Question> {
                 }.map { it.toIncorrectFile(javaTemplate, solution.wrapWith, importNames) }.toMutableList().apply {
                     addAll(
                         kotlinFiles.filter { it.incorrect != null }
+                            .onEach {
+                                require(it.path !in usedFiles) {
+                                    "File $it.path was already used as ${usedFiles[it.path]}"
+                                }
+                                usedFiles[it.path] = "Incorrect"
+                            }
                             .map { it.toIncorrectFile(kotlinTemplate, importNames) }
                     )
                 }
@@ -241,11 +250,18 @@ fun List<ParsedJavaFile>.findQuestions(): List<Question> {
                     addAll(
                         kotlinFiles
                             .filter { it.alternateSolution != null }
+                            .onEach {
+                                require(it.path !in usedFiles) {
+                                    "File $it.path was already used as ${usedFiles[it.path]}"
+                                }
+                                usedFiles[it.path] = "Correct"
+                            }
                             .map { it.toAlternateFile(kotlinTemplate, importNames) }
                     )
                 }.toList()
 
         val common = importNames.map {
+            usedFiles[byFullName[it]!!.path] = "Common"
             byFullName[it]?.contents?.stripPackage() ?: error("Couldn't find import $it")
         }
 
@@ -254,6 +270,10 @@ fun List<ParsedJavaFile>.findQuestions(): List<Question> {
         val kotlinStarterFile = kotlinFiles.filter { it.starter != null }.also {
             require(it.size <= 1) { "Provided multiple file with Kotlin starter code" }
         }.firstOrNull()?.let {
+            require(it.path !in usedFiles || usedFiles[it.path] == "Incorrect") {
+                "File $it.path was already used as ${usedFiles[it.path]}"
+            }
+            usedFiles[it.path] = "Starter"
             Question.FlatFile(
                 it.className,
                 it.clean(importNames).stripPackage(),
@@ -306,6 +326,10 @@ fun List<ParsedJavaFile>.findQuestions(): List<Question> {
             solution.blacklist.toSet()
         )
     }
+    allPaths.filter { !usedFiles.containsKey(it) }.forEach {
+        println("WARNING: $it will not be included in the build")
+    }
+    return questions
 }
 
 val annotationsToRemove =
@@ -320,7 +344,8 @@ val annotationsToRemove =
         "Whitelist",
         "Blacklist",
         "DesignOnly",
-        "WrapWith"
+        "WrapWith",
+        "AlsoCorrect"
     )
 val annotationsToDestroy =
     setOf(

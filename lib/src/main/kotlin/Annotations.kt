@@ -1,3 +1,5 @@
+@file:Suppress("unused")
+
 package edu.illinois.cs.cs125.questioner.lib
 
 import com.squareup.moshi.JsonClass

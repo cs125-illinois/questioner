@@ -59,11 +59,7 @@ data class ParsedKotlinFile(val path: String, val contents: String) {
 
     fun toIncorrectFile(template: String? = null, importNames: List<String> = listOf()): Question.IncorrectFile {
         check(incorrect != null) { "Not an incorrect file" }
-        val contents = clean(importNames).let { contents ->
-            template?.let {
-                contents.deTemplate(template)
-            } ?: contents
-        }
+        val contents = clean(importNames).deTemplate(template).stripPackage()
         when (incorrect.toUpperCase()) {
             "DESIGN" -> Question.IncorrectFile.Reason.DESIGN
             "TEST" -> Question.IncorrectFile.Reason.TEST
@@ -74,7 +70,7 @@ data class ParsedKotlinFile(val path: String, val contents: String) {
         }.also { reason ->
             return Question.IncorrectFile(
                 className,
-                contents.stripPackage(),
+                contents,
                 reason,
                 Question.Language.kotlin
             )
@@ -89,12 +85,8 @@ data class ParsedKotlinFile(val path: String, val contents: String) {
 
     fun toAlternateFile(template: String? = null, importNames: List<String> = listOf()): Question.FlatFile {
         check(alternateSolution != null) { "Not an alternate solution file" }
-        val contents = removeImports(importNames).let { contents ->
-            template?.let {
-                contents.deTemplate(template)
-            } ?: contents
-        }
-        return Question.FlatFile(className, contents.stripPackage(), Question.Language.kotlin)
+        val contents = clean(importNames).deTemplate(template).stripPackage()
+        return Question.FlatFile(className, contents, Question.Language.kotlin)
     }
 
     private fun removeImports(importNames: List<String>): String {

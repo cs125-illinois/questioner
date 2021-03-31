@@ -211,7 +211,7 @@ data class ParsedJavaFile(val path: String, val contents: String) {
         importNames: List<String> = listOf()
     ): Question.FlatFile {
         check(alternateSolution != null) { "Not an alternate solution file" }
-        val contents = removeImports(importNames).javaDeTemplate(template, wrappedClass)
+        val contents = clean(importNames).javaDeTemplate(template, wrappedClass)
         return Question.FlatFile(className, contents.stripPackage(), Question.Language.java)
     }
 
@@ -221,7 +221,7 @@ data class ParsedJavaFile(val path: String, val contents: String) {
         importNames: List<String> = listOf()
     ): Question.FlatFile {
         check(starter != null) { "Not an alternate solution file" }
-        val contents = removeImports(importNames).javaDeTemplate(template, wrappedClass)
+        val contents = clean(importNames).javaDeTemplate(template, wrappedClass)
         return Question.FlatFile(className, contents.stripPackage(), Question.Language.java)
     }
 
