@@ -8,22 +8,22 @@ plugins {
     id("org.jmailen.kotlinter")
 }
 dependencies {
-    kapt("com.squareup.moshi:moshi-kotlin-codegen:1.11.0")
+    kapt("com.squareup.moshi:moshi-kotlin-codegen:1.12.0")
 
     antlr("org.antlr:antlr4:4.9.2")
 
     implementation(kotlin("stdlib"))
     implementation(gradleApi())
     implementation(project(":lib"))
-    implementation("com.github.cs125-illinois.jeed:core:2021.3.4")
+    implementation("com.github.cs125-illinois.jeed:core:2021.4.0")
     implementation("com.github.cs125-illinois.jenisol:core:2021.3.6")
-    implementation("com.squareup.moshi:moshi:1.11.0")
+    implementation("com.squareup.moshi:moshi:1.12.0")
     implementation("org.jetbrains:markdown:0.2.1") {
         exclude(module = "kotlin-runtime")
         exclude(module = "kotlin-js")
     }
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.3")
-    implementation("com.google.googlejavaformat:google-java-format:1.9")
+    implementation("com.google.googlejavaformat:google-java-format:1.10.0")
     implementation("com.google.guava:guava:30.1.1-jre")
     implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.12.2")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.12.2")
