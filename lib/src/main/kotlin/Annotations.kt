@@ -35,7 +35,7 @@ annotation class Correct(
 ) {
     companion object {
         const val DEFAULT_POINTS = 100
-        const val DEFAULT_TIMEOUT_MULTIPLIER = 2.0
+        const val DEFAULT_TIMEOUT_MULTIPLIER = 4.0
         const val DEFAULT_MIN_TIMEOUT = 512L
         const val DEFAULT_MUTATE = true
         const val DEFAULT_CHECKSTYLE = true

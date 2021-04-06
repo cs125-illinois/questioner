@@ -411,41 +411,29 @@ data class Question(
         }
 
         require(correct != null || submissionTimeout > 0) { "submissionTimeout not set" }
-        val testingTimeout = (
-                when (correct) {
-                    true -> DEFAULT_SOLUTION_TIMEOUT
-                    false -> DEFAULT_KNOWN_INCORRECT_TIMEOUT
-                    else -> {
-                        maxOf(
-                            (
-                                    submissionTimeout.toDouble() *
-                                            SUBMISSION_TEST_MULTIPLIER *
-                                            metadata.timeoutMultiplier
-                                    ).toLong(),
-                            metadata.minTimeout
-                        )
-                    }
-                }
-                ) * timeoutAdjustment
 
-        val settings = when (correct) {
-            true -> passedSettings.copy(seed = seed)
-            false ->
+        val (settings, testingTimeout) = when (correct) {
+            true -> Pair(passedSettings.copy(seed = seed), DEFAULT_SOLUTION_TIMEOUT)
+            false -> Pair(
                 passedSettings.copy(
                     seed = seed,
                     overrideTotalCount = MAX_TEST_COUNT,
                     startMultipleCount = MAX_START_MULTIPLE_COUNT
-                )
+                ), DEFAULT_KNOWN_INCORRECT_TIMEOUT
+            )
             else -> {
                 require(requiredTestCount > 0) { "requiredTestCount not set" }
-                val testCount = requiredTestCount * SUBMISSION_TEST_MULTIPLIER
-                passedSettings.copy(
-                    seed = seed,
-                    overrideTotalCount = testCount,
-                    startMultipleCount = (testCount / 2).coerceAtMost(MAX_START_MULTIPLE_COUNT)
+                val testCount = (requiredTestCount * SUBMISSION_TEST_MULTIPLIER).coerceAtLeast(MIN_TEST_COUNT)
+                Pair(
+                    passedSettings.copy(
+                        seed = seed,
+                        overrideTotalCount = testCount,
+                        startMultipleCount = (testCount / 2).coerceAtMost(MAX_START_MULTIPLE_COUNT)
+                    ), (submissionTimeout.toDouble() * timeoutAdjustment).toLong()
                 )
             }
         }
+
         val maxOutputLines =
             if (correct == true) {
                 SOLUTION_TEST_OUTPUT_LINES
@@ -456,7 +444,7 @@ data class Question(
         Sandbox.execute(
             compiledSubmission.classLoader,
             Sandbox.ExecutionArguments(
-                timeout = testingTimeout.toLong(),
+                timeout = testingTimeout,
                 classLoaderConfiguration = classLoaderConfiguration,
                 maxOutputLines = maxOutputLines,
                 permissions = SAFE_PERMISSIONS,
@@ -465,6 +453,7 @@ data class Question(
         ) { (classLoader, _) ->
             solution.submission(classLoader.loadClass(klassName), contents).test(settings, ::captureJeedOutput)
         }.also { taskResults ->
+            testResults.taskResults = taskResults
             if (!taskResults.timeout && taskResults.threw != null) {
                 return when (taskResults.threw) {
                     is ClassNotFoundException -> {
@@ -662,27 +651,41 @@ data class Question(
         require(requiredTestCount <= metadata.maxTestCount) {
             "Requires too many tests: $report"
         }
-        check(submissionTimeout > 0)
 
         validated = true
-        (
-                listOf(Pair(correct.contents, correct.language)) + alternativeSolutions.map {
-                    Pair(
-                        it.contents,
-                        it.language
-                    )
-                }
-                ).forEach { (contents, language) ->
-                test(
-                    contents,
-                    language = language,
-                    seed = seed
-                ).also { results ->
-                    require(results.succeeded) {
-                        "Solution did not pass the test suite after validation: ${results.summary}\n$contents"
-                    }
+
+        test(
+            correct.contents,
+            jenisolSettings,
+            seed = seed,
+            timeoutAdjustment = 1024.0
+        ).also { results ->
+            require(results.succeeded) {
+                "Untimed solution did not pass the test suite after validation: ${results.summary} ${correct.contents}"
+            }
+            submissionTimeout = (results.taskResults!!.interval.length.toDouble() * metadata.timeoutMultiplier).toLong()
+                .coerceAtLeast(metadata.minTimeout)
+        }
+
+        check(submissionTimeout > 0)
+
+        (listOf(Pair(correct.contents, Language.java)) + alternativeSolutions.map {
+            Pair(
+                it.contents,
+                it.language
+            )
+        }).forEach { (contents, language) ->
+            test(
+                contents,
+                language = language,
+                seed = seed
+            ).also { results ->
+                require(results.succeeded) {
+                    "Solution did not pass the test suite after validation: ${results.summary}\n$contents"
                 }
             }
+        }
+
         incorrectToTest.forEachIndexed { index, wrong ->
             val isMutated = index >= incorrect.size
             test(
@@ -711,6 +714,7 @@ data class Question(
         const val DEFAULT_SOLUTION_TIMEOUT = 4096L
         const val DEFAULT_KNOWN_INCORRECT_TIMEOUT = 4096L
         const val MAX_START_MULTIPLE_COUNT = 128
+        const val MIN_TEST_COUNT = 128
         const val MAX_TEST_COUNT = 1024 * 1024
         const val SUBMISSION_TEST_MULTIPLIER = 2
         const val SOLUTION_TEST_OUTPUT_LINES = 102400
@@ -736,7 +740,9 @@ data class TestResults(
     val failedSteps: MutableSet<Step> = mutableSetOf(),
     val failed: FailedTasks = FailedTasks(),
     val skippedSteps: MutableSet<Step> = mutableSetOf(),
-    var timeout: Boolean = false
+    var timeout: Boolean = false,
+    @Transient
+    var taskResults: Sandbox.TaskResults<*>? = null
 ) {
     @Suppress("EnumNaming", "EnumEntryName")
     enum class Type { jenisol }
