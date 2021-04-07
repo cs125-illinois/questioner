@@ -130,6 +130,8 @@ data class ParsedJavaFile(val path: String, val contents: String) {
         }
     }
 
+    val starter = topLevelClass.getAnnotation(Starter::class.java)
+
     val incorrect = topLevelClass.getAnnotation(Incorrect::class.java)?.let { annotation ->
         @Suppress("TooGenericExceptionCaught")
         try {
@@ -139,9 +141,11 @@ data class ParsedJavaFile(val path: String, val contents: String) {
         } catch (e: Exception) {
             error("Couldn't parse @Incorrect metadata for $path: $e")
         }
+    } ?: if (starter != null) {
+        "test"
+    } else {
+        null
     }
-
-    val starter = topLevelClass.getAnnotation(Starter::class.java)
 
     val alternateSolution = topLevelClass.getAnnotation(AlsoCorrect::class.java)
 

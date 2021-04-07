@@ -37,6 +37,12 @@ data class ParsedKotlinFile(val path: String, val contents: String) {
         topLevelClass!!.getAnnotation(AlsoCorrect::class.java)
     }
 
+    val starter = if (topLevelFile) {
+        parseTree.preamble().fileAnnotations().getAnnotation(Starter::class.java)
+    } else {
+        topLevelClass!!.getAnnotation(Starter::class.java)
+    }
+
     val incorrect = if (topLevelFile) {
         parseTree.preamble().fileAnnotations().getAnnotation(Incorrect::class.java)
     } else {
@@ -49,12 +55,10 @@ data class ParsedKotlinFile(val path: String, val contents: String) {
         }?.valueArgument()?.find {
             it.simpleIdentifier().text == "reason"
         }?.expression()?.text?.removeSurrounding("\"") ?: "test"
-    }
-
-    val starter = if (topLevelFile) {
-        parseTree.preamble().fileAnnotations().getAnnotation(Starter::class.java)
+    } ?: if (starter != null) {
+        "test"
     } else {
-        topLevelClass!!.getAnnotation(Starter::class.java)
+        null
     }
 
     fun toIncorrectFile(

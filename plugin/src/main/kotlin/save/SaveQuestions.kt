@@ -137,9 +137,7 @@ fun List<ParsedJavaFile>.findQuestions(allPaths: List<String>): List<Question> {
                         }
                         it.firstOrNull()
                     }?.also {
-                        if (it.path in usedFiles) {
-                            require(usedFiles[it.path] == "Incorrect")
-                        }
+                        require(it.path !in usedFiles) { "File $it.path was already used as ${usedFiles[it.path]}" }
                         usedFiles[it.path] = "Starter"
                     }
 
