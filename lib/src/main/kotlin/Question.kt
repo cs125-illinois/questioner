@@ -495,7 +495,7 @@ data class Question(
             }
 
             check(correct == null || (taskResults.timeout || taskResults.truncatedLines == 0)) {
-                "Truncated output during validation: {${taskResults.truncatedLines}"
+                "Truncated output during validation: ${taskResults.truncatedLines}"
             }
 
             if (correct == true) {
@@ -665,6 +665,7 @@ data class Question(
             }
             submissionTimeout = (results.taskResults!!.interval.length.toDouble() * metadata.timeoutMultiplier).toLong()
                 .coerceAtLeast(metadata.minTimeout)
+            solutionPrinted = results.taskResults!!.outputLines.size
         }
 
         check(submissionTimeout > 0)

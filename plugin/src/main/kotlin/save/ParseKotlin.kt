@@ -61,27 +61,23 @@ data class ParsedKotlinFile(val path: String, val contents: String) {
         null
     }
 
-    fun toIncorrectFile(
-        template: String? = null, wrappedClass: String? = null,
-        importNames: List<String> = listOf()
-    ): Question.IncorrectFile {
+    fun toIncorrectFile(cleanSpec: CleanSpec): Question.IncorrectFile {
         check(incorrect != null) { "Not an incorrect file" }
-        val contents = clean(importNames).kotlinDeTemplate(template, wrappedClass).stripPackage()
-        when (incorrect.toUpperCase()) {
+        val reason = when (incorrect.toUpperCase()) {
             "DESIGN" -> Question.IncorrectFile.Reason.DESIGN
             "TEST" -> Question.IncorrectFile.Reason.TEST
             "COMPILE" -> Question.IncorrectFile.Reason.COMPILE
             "CHECKSTYLE" -> Question.IncorrectFile.Reason.CHECKSTYLE
             "TIMEOUT" -> Question.IncorrectFile.Reason.TIMEOUT
             else -> error("Invalid incorrect reason: $incorrect: $path")
-        }.also { reason ->
-            return Question.IncorrectFile(
-                className,
-                contents,
-                reason,
-                Question.Language.kotlin
-            )
         }
+        return Question.IncorrectFile(
+            className,
+            clean(cleanSpec),
+            reason,
+            Question.Language.kotlin
+        )
+
     }
 
     val className: String = if (topLevelFile) {
@@ -90,22 +86,14 @@ data class ParsedKotlinFile(val path: String, val contents: String) {
         topLevelClass!!.simpleIdentifier().text
     }
 
-    fun toAlternateFile(
-        template: String? = null, wrappedClass: String? = null,
-        importNames: List<String> = listOf()
-    ): Question.FlatFile {
+    fun toAlternateFile(cleanSpec: CleanSpec): Question.FlatFile {
         check(alternateSolution != null) { "Not an alternate solution file" }
-        val contents = clean(importNames).kotlinDeTemplate(template, wrappedClass).stripPackage()
-        return Question.FlatFile(className, contents, Question.Language.kotlin)
+        return Question.FlatFile(className, clean(cleanSpec), Question.Language.kotlin)
     }
 
-    fun toStarterFile(
-        template: String? = null, wrappedClass: String? = null,
-        importNames: List<String> = listOf()
-    ): Question.FlatFile {
+    fun toStarterFile(cleanSpec: CleanSpec): Question.FlatFile {
         check(starter != null) { "Not an starter code file" }
-        val contents = clean(importNames).kotlinDeTemplate(template, wrappedClass).stripPackage()
-        return Question.FlatFile(className, contents, Question.Language.kotlin)
+        return Question.FlatFile(className, clean(cleanSpec), Question.Language.kotlin)
     }
 
     @Suppress("unused")
@@ -151,8 +139,14 @@ data class ParsedKotlinFile(val path: String, val contents: String) {
             null
         }
 
+    private var cleaned: String? = null
+
     @Suppress("ComplexMethod")
-    fun clean(importNames: List<String>): String {
+    fun clean(cleanSpec: CleanSpec): String {
+        if (cleaned != null) {
+            return cleaned!!
+        }
+        val (hasTemplate, wrapWith, importNames) = cleanSpec
         val toRemove = mutableSetOf<Int>()
         parseTree.preamble()?.packageHeader()?.also {
             toRemove.add(it.start.startIndex.toLine())
@@ -200,14 +194,24 @@ data class ParsedKotlinFile(val path: String, val contents: String) {
         return contents
             .split("\n")
             .filterIndexed { index, _ -> (index + 1) !in toRemove }
-            .filter { line -> !line.trim().endsWith("""// REMOVE""") }
             .joinToString("\n")
             .trim()
+            .kotlinDeTemplate(hasTemplate, wrapWith)
+            .stripPackage().also {
+                cleaned = it
+            }
     }
 
-    private fun String.kotlinDeTemplate(template: String?, wrappedClass: String?) = when {
-        wrappedClass != null && topLevelFile -> this
-        wrappedClass != null && !topLevelFile -> parseKotlin().tree.topLevelObject()
+    var usedImports: List<String> = listOf()
+
+    private fun String.kotlinDeTemplate(hasTemplate: Boolean, wrappedClass: String?) = when {
+        wrappedClass != null && topLevelFile -> {
+            usedImports = parseKotlin().tree.preamble().importList().importHeader().map { it.identifier().text }
+            this
+        }
+        wrappedClass != null && !topLevelFile -> parseKotlin().tree.also { context ->
+            usedImports = context.preamble().importList().importHeader().map { it.identifier().text }
+        }.topLevelObject()
             .filter { it.classDeclaration() != null }.also {
                 require(it.size == 1) { "Kotlin files must only contain a single top-level class declaration: ${it.size}" }
             }.first().classDeclaration().let { context ->
@@ -221,7 +225,7 @@ data class ParsedKotlinFile(val path: String, val contents: String) {
                     }
                 }.joinToString("\n").trimIndent().trim()
             }
-        template == null -> this
+        !hasTemplate -> this
         else -> {
             val lines = split("\n")
             val start = lines.indexOfFirst { it.contains("TEMPLATE_START") }

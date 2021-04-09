@@ -178,8 +178,8 @@ data class ParsedJavaFile(val path: String, val contents: String) {
         }
     }
 
-    fun toCleanSolution(importNames: List<String>, template: String?): Question.FlatFile {
-        val solutionContent = clean(importNames).javaDeTemplate(template, wrapWith).let { content ->
+    fun toCleanSolution(cleanSpec: CleanSpec): Question.FlatFile {
+        val solutionContent = clean(cleanSpec).let { content ->
             Source.fromJava(content).checkstyle(CheckstyleArguments(failOnError = false)).let { results ->
                 val removeLines = results.errors.filter { error ->
                     error.message.trim().startsWith("Unused import")
@@ -190,43 +190,27 @@ data class ParsedJavaFile(val path: String, val contents: String) {
         return Question.FlatFile(className, solutionContent, Question.Language.java)
     }
 
-    fun toIncorrectFile(
-        template: String? = null,
-        wrappedClass: String? = null,
-        importNames: List<String> = listOf()
-    ): Question.IncorrectFile {
+    fun toIncorrectFile(cleanSpec: CleanSpec): Question.IncorrectFile {
         check(incorrect != null) { "Not an incorrect file" }
-        val contents = clean(importNames).javaDeTemplate(template, wrappedClass)
-        when (incorrect.toUpperCase()) {
+        val reason = when (incorrect.toUpperCase()) {
             "DESIGN" -> Question.IncorrectFile.Reason.DESIGN
             "TEST" -> Question.IncorrectFile.Reason.TEST
             "COMPILE" -> Question.IncorrectFile.Reason.COMPILE
             "CHECKSTYLE" -> Question.IncorrectFile.Reason.CHECKSTYLE
             "TIMEOUT" -> Question.IncorrectFile.Reason.TIMEOUT
             else -> error("Invalid incorrect reason: $incorrect: $path")
-        }.also { reason ->
-            return Question.IncorrectFile(className, contents.stripPackage(), reason, Question.Language.java)
         }
+        return Question.IncorrectFile(className, clean(cleanSpec), reason, Question.Language.java)
     }
 
-    fun toAlternateFile(
-        template: String? = null,
-        wrappedClass: String?,
-        importNames: List<String> = listOf()
-    ): Question.FlatFile {
+    fun toAlternateFile(cleanSpec: CleanSpec): Question.FlatFile {
         check(alternateSolution != null) { "Not an alternate solution file" }
-        val contents = clean(importNames).javaDeTemplate(template, wrappedClass)
-        return Question.FlatFile(className, contents.stripPackage(), Question.Language.java)
+        return Question.FlatFile(className, clean(cleanSpec), Question.Language.java)
     }
 
-    fun toStarterFile(
-        template: String? = null,
-        wrappedClass: String?,
-        importNames: List<String> = listOf()
-    ): Question.FlatFile {
+    fun toStarterFile(cleanSpec: CleanSpec): Question.FlatFile {
         check(starter != null) { "Not an starter code file" }
-        val contents = clean(importNames).javaDeTemplate(template, wrappedClass)
-        return Question.FlatFile(className, contents.stripPackage(), Question.Language.java)
+        return Question.FlatFile(className, clean(cleanSpec), Question.Language.java)
     }
 
     private val chars = contents.toCharArray()
@@ -255,8 +239,15 @@ data class ParsedJavaFile(val path: String, val contents: String) {
             .trim()
     }
 
+    private var cleaned: String? = null
+
     @Suppress("ComplexMethod")
-    fun clean(importNames: List<String>): String {
+    fun clean(cleanSpec: CleanSpec): String {
+        if (cleaned != null) {
+            return cleaned!!
+        }
+        val (template, wrapWith, importNames) = cleanSpec
+
         val toRemove = mutableSetOf<Int>()
         parseTree.packageDeclaration()?.also {
             toRemove.add(it.start.startIndex.toLine())
@@ -297,16 +288,35 @@ data class ParsedJavaFile(val path: String, val contents: String) {
         return contents
             .split("\n")
             .filterIndexed { index, _ -> (index + 1) !in toRemove }
-            .filter { line -> !line.trim().endsWith("""// REMOVE""") }
             .joinToString("\n")
             .trim()
             .let { Formatter().formatSource(it) }
+            .let { content ->
+                Source.fromJava(content).checkstyle(CheckstyleArguments(failOnError = false)).let { results ->
+                    val unusedImports = results.errors.filter { error ->
+                        error.message.trim().startsWith("Unused import")
+                    }
+                    val removeLines = unusedImports.map { it.location.line }.toSet()
+                    require(correct != null || removeLines.isEmpty()) {
+                        "Found unused imports in $path: ${unusedImports.joinToString(",") { it.message }}"
+                    }
+                    content.lines().filterIndexed { index, _ -> !removeLines.contains(index + 1) }
+                        .joinToString("\n")
+                }
+            }.javaDeTemplate(template, wrapWith)
+            .stripPackage().also {
+                cleaned = it
+            }
     }
 
-    private fun String.javaDeTemplate(template: String?, wrappedClass: String?): String {
+    var usedImports: List<String> = listOf()
+
+    private fun String.javaDeTemplate(hasTemplate: Boolean, wrappedClass: String?): String {
         return when {
             wrappedClass != null -> {
-                parseJava().tree.topLevelClass().let { context ->
+                parseJava().tree.also { context ->
+                    usedImports = context.importDeclaration().map { it.qualifiedName().asString() }
+                }.topLevelClass().let { context ->
                     val start = context.classDeclaration().start.line
                     val end = context.classDeclaration().stop.line
                     split("\n").subList(start, end - 1).also { lines ->
@@ -318,7 +328,7 @@ data class ParsedJavaFile(val path: String, val contents: String) {
                     }.joinToString("\n").trimIndent().trim()
                 }
             }
-            template == null -> this
+            !hasTemplate -> this
             else -> {
                 val lines = split("\n")
                 val start = lines.indexOfFirst { it.contains("TEMPLATE_START") }
@@ -385,14 +395,15 @@ fun JavaParser.TypeDeclarationContext.getAnnotations(annotation: Class<*>): List
         it.annotation()?.qualifiedName()?.asString() == annotation.simpleName
     }.map { it.annotation() }
 
-fun JavaParser.AnnotationContext.parameterMap(): Map<String, String> = elementValuePairs()?.elementValuePair()?.map {
-    it.IDENTIFIER().toString() to it.elementValue().expression().primary().literal().let { literal ->
-        literal.STRING_LITERAL()
-            ?: literal.integerLiteral()?.DECIMAL_LITERAL()
-            ?: literal.BOOL_LITERAL()
-            ?: literal.floatLiteral()?.FLOAT_LITERAL()
-    }.toString().removeSurrounding("\"")
-}?.toMap() ?: mapOf()
+fun JavaParser.AnnotationContext.parameterMap(): Map<String, String> =
+    elementValuePairs()?.elementValuePair()?.map {
+        it.IDENTIFIER().toString() to it.elementValue().expression().primary().literal().let { literal ->
+            literal.STRING_LITERAL()
+                ?: literal.integerLiteral()?.DECIMAL_LITERAL()
+                ?: literal.BOOL_LITERAL()
+                ?: literal.floatLiteral()?.FLOAT_LITERAL()
+        }.toString().removeSurrounding("\"")
+    }?.toMap() ?: mapOf()
 
 fun JavaParser.AnnotationContext.comment(): String {
     return when {

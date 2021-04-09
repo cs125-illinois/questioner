@@ -182,19 +182,8 @@ fun List<ParsedJavaFile>.findQuestions(allPaths: List<String>): List<Question> {
                 usedFiles[it.path] = "Template"
             }?.readText()?.stripPackage()
 
-            if (solution.wrapWith != null) {
-                require(javaTemplate == null && kotlinTemplate == null) {
-                    "Can't use both a template and @WrapWith"
-                }
-                javaTemplate = """public class ${solution.wrapWith} {
-                |  {{{ contents }}}
-                |}
-            """.trimMargin()
-                kotlinTemplate = """class ${solution.wrapWith} {
-                |  {{{ contents }}}
-                |}
-            """.trimMargin()
-            }
+            val javaCleanSpec = CleanSpec(javaTemplate != null, solution.wrapWith, importNames)
+            val kotlinCleanSpec = CleanSpec(kotlinTemplate != null, solution.wrapWith, importNames)
 
             val incorrectExamples =
                 otherFiles.filter { it.packageName.startsWith("${solution.packageName}.") }
@@ -212,7 +201,7 @@ fun List<ParsedJavaFile>.findQuestions(allPaths: List<String>): List<Question> {
                             "Solution ${solution.correct.name} (${solution.path}) did not provide any counterexamples " +
                                     "annotated with @Incorrect"
                         }
-                    }.map { it.toIncorrectFile(javaTemplate, solution.wrapWith, importNames) }.toMutableList().apply {
+                    }.map { it.toIncorrectFile(javaCleanSpec) }.toMutableList().apply {
                         addAll(
                             kotlinFiles.filter { it.incorrect != null }
                                 .onEach {
@@ -221,7 +210,7 @@ fun List<ParsedJavaFile>.findQuestions(allPaths: List<String>): List<Question> {
                                     }
                                     usedFiles[it.path] = "Incorrect"
                                 }
-                                .map { it.toIncorrectFile(kotlinTemplate, solution.wrapWith, importNames) }
+                                .map { it.toIncorrectFile(kotlinCleanSpec) }
                         )
                     }
 
@@ -234,7 +223,7 @@ fun List<ParsedJavaFile>.findQuestions(allPaths: List<String>): List<Question> {
                         }
                         usedFiles[it.path] = "Alternate"
                     }.map {
-                        it.toAlternateFile(javaTemplate, solution.wrapWith, importNames)
+                        it.toAlternateFile(javaCleanSpec)
                     }.toMutableList().apply {
                         addAll(
                             kotlinFiles
@@ -245,7 +234,7 @@ fun List<ParsedJavaFile>.findQuestions(allPaths: List<String>): List<Question> {
                                     }
                                     usedFiles[it.path] = "Correct"
                                 }
-                                .map { it.toAlternateFile(kotlinTemplate, solution.wrapWith, importNames) }
+                                .map { it.toAlternateFile(kotlinCleanSpec) }
                         )
                     }.toList()
 
@@ -254,7 +243,7 @@ fun List<ParsedJavaFile>.findQuestions(allPaths: List<String>): List<Question> {
                 byFullName[it]?.contents?.stripPackage() ?: error("Couldn't find import $it")
             }
 
-            val javaStarterFile = javaStarter?.toStarterFile(javaTemplate, solution.wrapWith, importNames)
+            val javaStarterFile = javaStarter?.toStarterFile(javaCleanSpec)
 
             val kotlinStarterFile = kotlinFiles.filter { it.starter != null }.also {
                 require(it.size <= 1) { "Provided multiple file with Kotlin starter code" }
@@ -263,7 +252,35 @@ fun List<ParsedJavaFile>.findQuestions(allPaths: List<String>): List<Question> {
                     "File $it.path was already used as ${usedFiles[it.path]}"
                 }
                 usedFiles[it.path] = "Starter"
-                it.toStarterFile(kotlinTemplate, solution.wrapWith, importNames)
+                it.toStarterFile(kotlinCleanSpec)
+            }
+
+            val kotlinSolution = kotlinFiles.find { it.alternateSolution != null && it.description != null }
+
+            if (solution.wrapWith != null) {
+                require(javaTemplate == null && kotlinTemplate == null) {
+                    "Can't use both a template and @WrapWith"
+                }
+
+                solution.clean(javaCleanSpec)
+
+                javaTemplate = """public class ${solution.wrapWith} {
+                |  {{{ contents }}}
+                |}
+            """.trimMargin()
+                if (solution.usedImports.isNotEmpty()) {
+                    javaTemplate = solution.usedImports.joinToString("\n") { "import $it;" } + "\n\n$javaTemplate"
+                }
+
+                kotlinTemplate = """class ${solution.wrapWith} {
+                |  {{{ contents }}}
+                |}
+            """.trimMargin()
+
+                if (kotlinSolution?.usedImports?.isNotEmpty() == true) {
+                    kotlinTemplate =
+                        kotlinSolution.usedImports.joinToString("\n") { "import $it" } + "\n\n$kotlinTemplate"
+                }
             }
 
             Question(
@@ -282,7 +299,7 @@ fun List<ParsedJavaFile>.findQuestions(allPaths: List<String>): List<Question> {
                     solution.correct.checkstyle,
                     solution.correct.solutionThrows,
                     solution.correct.maxTestCount,
-                    kotlinFiles.find { it.alternateSolution != null && it.description != null }?.description,
+                    kotlinSolution?.description,
                     solution.citation
                 ),
                 Question.FlatFile(
@@ -290,7 +307,7 @@ fun List<ParsedJavaFile>.findQuestions(allPaths: List<String>): List<Question> {
                     solution.removeImports(importNames).stripPackage(),
                     Question.Language.java
                 ),
-                solution.toCleanSolution(importNames, javaTemplate),
+                solution.toCleanSolution(javaCleanSpec),
                 alternateSolutions,
                 incorrectExamples,
                 common,
@@ -356,6 +373,12 @@ private val emailRegex = Pattern.compile(
 )
 
 fun String.isEmail(): Boolean = emailRegex.matcher(this).matches()
+
+data class CleanSpec(
+    val hasTemplate: Boolean = false,
+    val wrappedClass: String? = null,
+    val importNames: List<String> = listOf()
+)
 
 internal fun String.stripPackage(): String {
     val packageLine = lines().indexOfFirst { it.trim().startsWith("package ") }
