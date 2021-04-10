@@ -15,7 +15,7 @@ dependencies {
     implementation(kotlin("stdlib"))
     implementation(gradleApi())
     implementation(project(":lib"))
-    implementation("com.github.cs125-illinois.jeed:core:2021.4.0")
+    implementation("com.github.cs125-illinois.jeed:core:2021.4.1")
     implementation("com.github.cs125-illinois.jenisol:core:2021.4.1")
     implementation("com.squareup.moshi:moshi:1.12.0")
     implementation("org.jetbrains:markdown:0.2.1") {
@@ -31,6 +31,9 @@ dependencies {
     testImplementation("io.kotest:kotest-runner-junit5:4.4.3")
 }
 tasks.compileKotlin {
+    dependsOn(tasks.generateGrammarSource)
+}
+tasks.compileTestKotlin {
     dependsOn(tasks.generateGrammarSource)
 }
 tasks.generateGrammarSource {
@@ -56,8 +59,4 @@ gradlePlugin {
             implementationClass = "edu.illinois.cs.cs125.questioner.plugin.QuestionerPlugin"
         }
     }
-}
-java {
-    @Suppress("UnstableApiUsage")
-    withSourcesJar()
 }

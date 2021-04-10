@@ -1,11 +1,11 @@
-package edu.illinois.cs.cs125.questioner
+package edu.illinois.cs.cs125.questioner.plugin
 
+import edu.illinois.cs.cs125.questioner.plugin.save.CleanSpec
 import edu.illinois.cs.cs125.questioner.plugin.save.ParsedJavaFile
 import edu.illinois.cs.cs125.questioner.plugin.save.ParsedKotlinFile
 import edu.illinois.cs.cs125.questioner.plugin.save.findQuestions
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
-import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import java.lang.IllegalStateException
@@ -45,7 +45,6 @@ public class Second {
 
                 parsedFile.correct shouldNotBe null
                 parsedFile.type shouldBe "Correct"
-                parsedFile.imports shouldContainExactlyInAnyOrder listOf("examples.first", "examples.second")
                 parsedFile.wrapWith shouldBe "Question"
 
                 parsedFile.correct!!.also {
@@ -79,7 +78,7 @@ fun correct() { }
             ).also { parsedFile ->
                 parsedFile.className shouldBe "SecondKt"
                 parsedFile.alternateSolution shouldNotBe null
-                parsedFile.toAlternateFile().also {
+                parsedFile.toAlternateFile(CleanSpec()).also {
                     it.klass shouldBe "SecondKt"
                 }
                 parsedFile.comment shouldBe "Test me _markdown_."
@@ -105,7 +104,7 @@ class Second {
             ).also { parsedFile ->
                 parsedFile.className shouldBe "Second"
                 parsedFile.alternateSolution shouldNotBe null
-                parsedFile.toAlternateFile().also {
+                parsedFile.toAlternateFile(CleanSpec()).also {
                     it.klass shouldBe "Second"
                 }
                 parsedFile.comment shouldBe "Test me _markdown_."
@@ -162,7 +161,7 @@ public class Another {
 }
 """.trim()
                     )
-                ).findQuestions()
+                ).findQuestions(listOf("Another.java"))
             }
         }
         "should reject nested questions" {
@@ -194,7 +193,7 @@ public class Another {
 }
 """.trim()
                     )
-                ).findQuestions()
+                ).findQuestions(listOf("examples/first/Example.java", "examples/first/another/Another.java"))
             }
         }
     }

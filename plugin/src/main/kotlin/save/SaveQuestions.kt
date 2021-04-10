@@ -27,8 +27,6 @@ open class SaveQuestions : DefaultTask() {
         description = "Save questions to JSON."
     }
 
-    var email: String? = null
-
     @TaskAction
     fun save() {
         val resourcesDirectory = File(project.buildDir, "questioner")
@@ -118,6 +116,16 @@ fun List<ParsedJavaFile>.findQuestions(allPaths: List<String>): List<Question> {
                 }.fold("", { str, it -> str + "%02x".format(it) })
             }
 
+            val neighborImports = Files.walk(Paths.get(solution.path).parent, 1).filter {
+                Files.isRegularFile(it)
+            }.map { File(it.toString()) }.filter {
+                it.path != solution.path && it.path.endsWith(".java")
+            }.collect(Collectors.toList()).map {
+                it.readText().parseJava().tree
+            }.map {
+                "${it.packageName()}.${it.className()}"
+            }
+
             val kotlinFiles = if (Files.isRegularFile(Paths.get(solution.path))) {
                 Files.walk(Paths.get(solution.path).parent).filter { path ->
                     !knownFiles.contains(path.toString()) && Files.isRegularFile(path) && path.toString()
@@ -141,24 +149,7 @@ fun List<ParsedJavaFile>.findQuestions(allPaths: List<String>): List<Question> {
                         usedFiles[it.path] = "Starter"
                     }
 
-            val importNames = if (solution.imports.isNotEmpty()) {
-                solution.imports.map { toImport ->
-                    if (toImport.endsWith(".*")) {
-                        val packagePrefix = toImport.removeSuffix("*")
-                        byFullName.keys.filter { it.startsWith(packagePrefix) }.also {
-                            check(it.isNotEmpty()) { "@Import paths $toImport not found" }
-                        }
-                    } else {
-                        toImport.also {
-                            check(toImport in byFullName) { "@Import path $toImport not found" }
-                        }.let {
-                            listOf(it)
-                        }
-                    }
-                }.flatten()
-            } else {
-                listOf()
-            }
+            val importNames = solution.listedImports.filter { it in byFullName } + neighborImports
 
             var javaTemplate = File("${solution.path}.hbs").let {
                 if (it.exists()) {

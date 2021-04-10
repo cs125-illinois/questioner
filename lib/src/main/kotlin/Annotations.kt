@@ -62,9 +62,6 @@ annotation class Incorrect(val reason: String = "test")
 @Target(AnnotationTarget.CLASS, AnnotationTarget.FILE)
 annotation class Starter
 
-@Target(AnnotationTarget.CLASS)
-annotation class Import(val paths: String)
-
 @Target(AnnotationTarget.CLASS, AnnotationTarget.FILE)
 annotation class AlsoCorrect
 

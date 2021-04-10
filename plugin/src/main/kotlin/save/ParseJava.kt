@@ -24,32 +24,13 @@ data class ParsedJavaFile(val path: String, val contents: String) {
     private val parseTree = parsedSource.tree
     private val topLevelClass = parseTree.topLevelClass()
 
-    val packageName = parseTree.packageDeclaration()?.qualifiedName()?.asString() ?: ""
-    val className = topLevelClass.let {
-        if (it.classDeclaration() != null) {
-            it.classDeclaration().IDENTIFIER()
-        } else {
-            it.interfaceDeclaration().IDENTIFIER()
-        }
-    }.toString()
+    val packageName = parseTree.packageName()
+    val className = parseTree.className()
+
     val fullName = "$packageName.$className"
 
-    val imports = topLevelClass.getAnnotations(Import::class.java).let { annotations ->
-        check(annotations.size <= 1) { "Found multiple @Import annotations" }
-        if (annotations.isEmpty()) {
-            listOf()
-        } else {
-            annotations.first().let { annotation ->
-                @Suppress("TooGenericExceptionCaught")
-                try {
-                    annotation.parameterMap().let { it["paths"] ?: error("path field not set on @Import") }
-                } catch (e: Exception) {
-                    error("Couldn't parse @Import paths for $path: $e")
-                }.let { names ->
-                    names.split(",").map { it.trim() }
-                }
-            }
-        }
+    val listedImports = parseTree.importDeclaration().map { it.qualifiedName().asString() }.filter {
+        it !in importsToRemove
     }
 
     val whitelist = topLevelClass.getAnnotations(Whitelist::class.java).let { annotations ->
@@ -429,3 +410,12 @@ fun JavaParser.AnnotationContext.comment(): String {
 }
 
 fun JavaParser.QualifiedNameContext.asString() = IDENTIFIER().joinToString(".")
+
+fun JavaParser.CompilationUnitContext.packageName() = packageDeclaration()?.qualifiedName()?.asString() ?: ""
+fun JavaParser.CompilationUnitContext.className() = topLevelClass().let {
+    if (it.classDeclaration() != null) {
+        it.classDeclaration().IDENTIFIER()
+    } else {
+        it.interfaceDeclaration().IDENTIFIER()
+    }
+}.toString()

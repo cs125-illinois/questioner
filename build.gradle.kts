@@ -16,9 +16,8 @@ allprojects {
     repositories {
         mavenLocal()
         mavenCentral()
-        jcenter()
         maven("https://jitpack.io")
-        maven("http://dl.bintray.com/jetbrains/markdown")
+        maven("https://dl.bintray.com/jetbrains/markdown")
     }
     tasks.withType<KotlinCompile> {
         val javaVersion = JavaVersion.VERSION_1_8.toString()
