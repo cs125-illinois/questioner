@@ -15,18 +15,18 @@ dependencies {
     implementation(kotlin("stdlib"))
     implementation(gradleApi())
     implementation(project(":lib"))
-    implementation("com.github.cs125-illinois.jeed:core:2021.4.1")
-    implementation("com.github.cs125-illinois.jenisol:core:2021.4.1")
+    implementation("com.github.cs125-illinois.jeed:core:2021.4.2")
+    implementation("com.github.cs125-illinois.jenisol:core:2021.4.2")
     implementation("com.squareup.moshi:moshi:1.12.0")
-    implementation("org.jetbrains:markdown:0.2.1") {
+    implementation("org.jetbrains:markdown:0.2.2") {
         exclude(module = "kotlin-runtime")
         exclude(module = "kotlin-js")
     }
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.3")
     implementation("com.google.googlejavaformat:google-java-format:1.10.0")
     implementation("com.google.guava:guava:30.1.1-jre")
-    implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.12.2")
-    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.12.2")
+    implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.12.3")
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.12.3")
 
     testImplementation("io.kotest:kotest-runner-junit5:4.4.3")
 }
