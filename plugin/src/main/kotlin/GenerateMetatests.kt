@@ -1,9 +1,10 @@
 package edu.illinois.cs.cs125.questioner.plugin
 
 import edu.illinois.cs.cs125.questioner.lib.Question
-import edu.illinois.cs.cs125.questioner.plugin.save.getQuestions
+import edu.illinois.cs.cs125.questioner.lib.loadFromFiles
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.TaskAction
+import java.io.File
 
 @Suppress("unused")
 open class GenerateMetatests : DefaultTask() {
@@ -20,8 +21,10 @@ open class GenerateMetatests : DefaultTask() {
         } else {
             testRoot.mkdirs()
         }
-
-        project.getQuestions().organizeTests().first().let { (packageName, questions) ->
+        loadFromFiles(
+            File(project.buildDir, "questioner/questions.json"),
+            File(project.buildDir, "resources/main")
+        ).values.organizeTests().first().let { (packageName, questions) ->
             val klass = if (questions.size == 1) {
                 "Test${questions.first().klass}"
             } else {
@@ -85,7 +88,7 @@ import java.nio.file.Path
 /* ktlint-disable max-line-length */
 
 private val validator =
-    Validator(Path.of(object {}::class.java.getResource("/questions.json").toURI()).parent.toFile(), seed = 124)
+    Validator(Path.of(object {}::class.java.getResource("/questions.json")!!.toURI()).parent.toFile(), seed = 124)
 
 @Suppress("MaxLineLength")
 class $klass : StringSpec({

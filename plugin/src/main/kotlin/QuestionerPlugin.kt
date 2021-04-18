@@ -27,7 +27,8 @@ class QuestionerPlugin : Plugin<Project> {
             .readValue<QuestionerConfig>(configurationFile)
 
         val saveQuestions = project.tasks.register("saveQuestions", SaveQuestions::class.java).get()
-        project.tasks.register("generateQuestionMetatests", GenerateMetatests::class.java)
+        val generateMetatests = project.tasks.register("generateQuestionMetatests", GenerateMetatests::class.java).get()
+        generateMetatests.dependsOn(saveQuestions)
         project.afterEvaluate {
             project.tasks.getByName("processResources").dependsOn(saveQuestions)
         }

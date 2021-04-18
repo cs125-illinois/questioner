@@ -30,6 +30,7 @@ import edu.illinois.cs.cs125.jenisol.core.Settings
 import edu.illinois.cs.cs125.jenisol.core.SubmissionDesignError
 import edu.illinois.cs.cs125.jenisol.core.TestResult
 import edu.illinois.cs.cs125.jenisol.core.safePrint
+import java.io.File
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.ReflectPermission
 import kotlin.math.max
@@ -58,6 +59,8 @@ data class Question(
     val importBlacklist: Set<String>,
 ) {
     val slug = slugify.slugify(name)
+
+    fun toJson() = moshi.adapter(Question::class.java).toJson(this)
 
     @JsonClass(generateAdapter = true)
     data class Metadata(
@@ -930,6 +933,25 @@ fun loadFromResources(): Map<String, Question> {
         questions.entries.forEach { (slug, question) ->
             object {}::class.java.getResource("/${question.metadata.contentHash}-validated.json")?.readText()
                 ?.also { it -> questions[slug] = moshi.adapter(Question::class.java).fromJson(it)!! }
+        }
+    }.toMap()
+}
+
+fun loadFromFiles(questionsFile: File, validationDirectory: File): Map<String, Question> {
+    require(questionsFile.exists())
+    return moshi.adapter<Map<String, Question>>(
+        Types.newParameterizedType(
+            Map::class.java,
+            String::class.java,
+            Question::class.java
+        )
+    ).fromJson(questionsFile.readText())!!.toMutableMap().also { questions ->
+        questions.entries.forEach { (slug, question) ->
+            File(validationDirectory, "${question.metadata.contentHash}-validated.json").also {
+                if (it.exists()) {
+                    questions[slug] = moshi.adapter(Question::class.java).fromJson(it.readText())!!
+                }
+            }
         }
     }.toMap()
 }

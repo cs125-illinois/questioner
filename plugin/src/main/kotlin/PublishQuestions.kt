@@ -1,14 +1,17 @@
 package edu.illinois.cs.cs125.questioner.plugin
 
-import com.squareup.moshi.Moshi
-import com.squareup.moshi.Types
-import edu.illinois.cs.cs125.questioner.lib.Question
+import com.mongodb.MongoClient
+import com.mongodb.MongoClientURI
+import com.mongodb.client.model.Filters
+import com.mongodb.client.model.UpdateOptions
+import edu.illinois.cs.cs125.questioner.lib.loadFromFiles
+import org.bson.*
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.TaskAction
 import java.io.File
-
-private val moshi = Moshi.Builder().build()
+import java.net.URI
+import java.util.*
 
 open class PublishQuestions : DefaultTask() {
     @Input
@@ -24,23 +27,50 @@ open class PublishQuestions : DefaultTask() {
 
     @TaskAction
     fun publish() {
-        val questions = moshi.adapter<Map<String, Question>>(
-            Types.newParameterizedType(
-                Map::class.java,
-                String::class.java,
-                Question::class.java
-            )
-        ).fromJson(File(project.buildDir, "questioner/questions.json").readText())?.toMutableMap()!!.also { questions ->
-            questions.entries.forEach { (slug, question) ->
-                File(project.buildDir, "resources/main/${question.metadata.contentHash}-validated.json").also {
-                    if (it.exists()) {
-                        questions[slug] = moshi.adapter(Question::class.java).fromJson(it.readText())!!
+        val uri = URI(destination)
+        val collection = if (uri.scheme == "mongodb") {
+            val mongoUri = MongoClientURI(destination)
+            val database = mongoUri.database ?: error { "MONGO must specify database to use" }
+            MongoClient(mongoUri).getDatabase(database).getCollection("questioner", BsonDocument::class.java)
+        } else {
+            null
+        }
+
+        val questions = loadFromFiles(
+            File(project.buildDir, "questioner/questions.json"),
+            File(project.buildDir, "resources/main")
+        ).values
+        questions.forEach { question ->
+            if (collection != null) {
+                collection.updateOne(
+                    Filters.and(
+                        Filters.eq("name", question.name),
+                        Filters.eq("metadata.version", question.metadata.version),
+                        Filters.eq("metadata.author", question.metadata.author),
+                        Filters.eq("metadata.contentHash", question.metadata.contentHash)
+                    ),
+                    BsonDocument().apply {
+                        put("\$set", BsonDocument.parse(question.toJson()).apply {
+                            put("updated", BsonDateTime(Date().time))
+                            put("latest", BsonBoolean(true))
+                        })
+                    },
+                    UpdateOptions().upsert(true)
+                )
+                collection.updateMany(
+                    Filters.and(
+                        Filters.eq("name", question.name),
+                        Filters.eq("metadata.version", question.metadata.version),
+                        Filters.eq("metadata.author", question.metadata.author),
+                        Filters.ne("metadata.contentHash", question.metadata.contentHash)
+                    ),
+                    BsonDocument().apply {
+                        put("\$set", BsonDocument().apply {
+                            put("latest", BsonBoolean(false))
+                        })
                     }
-                }
+                )
             }
-        }.values
-        questions.forEach {
-            println("${it.name} ${it.validated}")
         }
     }
 }

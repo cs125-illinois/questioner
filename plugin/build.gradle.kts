@@ -27,6 +27,7 @@ dependencies {
     implementation("com.google.guava:guava:30.1.1-jre")
     implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.12.3")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.12.3")
+    implementation("org.mongodb:mongodb-driver:3.12.8")
 
     testImplementation("io.kotest:kotest-runner-junit5:4.4.3")
 }
