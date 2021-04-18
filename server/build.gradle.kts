@@ -31,7 +31,7 @@ task("createProperties") {
         val properties = Properties().also {
             it["version"] = project.version.toString()
         }
-        File(projectDir, "src/main/resources/edu.illinois.cs.cs125.jsp.server.version")
+        File(projectDir, "src/main/resources/edu.illinois.cs.cs125.questioner.server.version")
             .printWriter().use { printWriter ->
                 printWriter.print(
                     StringWriter().also { properties.store(it, null) }.buffer.toString()

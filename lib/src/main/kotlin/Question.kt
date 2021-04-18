@@ -57,9 +57,8 @@ data class Question(
     var kotlinTemplate: String?,
     val importWhitelist: Set<String>,
     val importBlacklist: Set<String>,
+    val slug: String = slugify.slugify(name)
 ) {
-    val slug = slugify.slugify(name)
-
     fun toJson() = moshi.adapter(Question::class.java).toJson(this)
 
     @JsonClass(generateAdapter = true)

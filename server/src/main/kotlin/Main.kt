@@ -1,39 +1,44 @@
 package edu.illinois.cs.cs125.questioner.server
 
-import com.github.slugify.Slugify
-import com.ryanharter.ktor.moshi.moshi
-import com.squareup.moshi.JsonClass
-import com.squareup.moshi.Moshi
-import com.squareup.moshi.Types
-import edu.illinois.cs.cs125.jsp.server.moshi.Adapters
-import edu.illinois.cs.cs125.questioner.lib.Question
-import edu.illinois.cs.cs125.questioner.lib.TestResults
-import io.ktor.application.Application
-import io.ktor.application.call
-import io.ktor.application.install
-import io.ktor.features.ContentNegotiation
-import io.ktor.http.HttpStatusCode
-import io.ktor.request.receive
-import io.ktor.response.respond
-import io.ktor.routing.get
-import io.ktor.routing.post
-import io.ktor.routing.routing
-import io.ktor.server.engine.embeddedServer
-import io.ktor.server.netty.Netty
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-import mu.KotlinLogging
-import java.lang.Error
-import java.time.Instant
-import kotlin.system.exitProcess
-import edu.illinois.cs.cs125.jeed.core.moshi.Adapters as JeedAdapters
 import com.mongodb.MongoClient
 import com.mongodb.MongoClientURI
 import com.mongodb.client.MongoCollection
 import com.mongodb.client.model.Filters
+import com.mongodb.client.model.Sorts
+import com.ryanharter.ktor.moshi.moshi
+import com.squareup.moshi.JsonClass
+import com.squareup.moshi.Moshi
+import edu.illinois.cs.cs125.jsp.server.moshi.Adapters
+import edu.illinois.cs.cs125.questioner.lib.Question
+import edu.illinois.cs.cs125.questioner.lib.TestResults
+import io.ktor.application.*
+import io.ktor.features.*
+import io.ktor.http.*
+import io.ktor.request.*
+import io.ktor.response.*
+import io.ktor.routing.*
+import io.ktor.server.engine.*
+import io.ktor.server.netty.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import mu.KotlinLogging
 import org.bson.BsonDocument
+import java.time.Instant
+import kotlin.collections.List
+import kotlin.collections.associateBy
+import kotlin.collections.component1
+import kotlin.collections.component2
+import kotlin.collections.filter
+import kotlin.collections.filterNotNull
+import kotlin.collections.forEach
+import kotlin.collections.map
+import kotlin.collections.set
+import kotlin.collections.toMutableMap
+import kotlin.system.exitProcess
+import edu.illinois.cs.cs125.jeed.core.moshi.Adapters as JeedAdapters
 
-val logger = KotlinLogging.logger {}
+private val moshi = Moshi.Builder().build()
+private val logger = KotlinLogging.logger {}
 private const val SEED = 124
 
 private val collection: MongoCollection<BsonDocument> = run {
@@ -43,38 +48,25 @@ private val collection: MongoCollection<BsonDocument> = run {
     MongoClient(mongoUri).getDatabase(database).getCollection("questioner", BsonDocument::class.java)
 }
 
+private fun getQuestion(slug: String) = collection.find(
+    Filters.and(Filters.eq("slug", slug), Filters.eq("latest", true))
+).sort(Sorts.descending("updated")).first()?.let {
+    moshi.adapter(Question::class.java).fromJson(it.toJson())
+}
+
+private fun getQuestions() = collection.distinct("slug", String::class.java).map { getQuestion(it) }.filterNotNull()
+
 object Questions {
-    private val moshi = Moshi.Builder().build()
+    val questions = getQuestions().associateBy { it.slug }.toMutableMap()
 
-    val availableQuestions: MutableMap<String, Question> = mutableMapOf()
-    val prevalidated: MutableSet<String> = mutableSetOf()
-
-    private val slugify = Slugify()
-
-    init {
-        moshi.adapter<Map<String, Question>>(
-            Types.newParameterizedType(
-                Map::class.java,
-                String::class.java,
-                Question::class.java
-            )
-        )
-            .fromJson(this::class.java.getResource("/questions.json").readText())?.also { questions ->
-                check(questions.isNotEmpty()) { "No questions loaded" }
-                questions.values.forEach { question ->
-                    val slugified = slugify.slugify(question.name)
-                    availableQuestions[slugified] =
-                        this::class.java.getResource("/${question.metadata.contentHash}-validated.json")?.let {
-                            prevalidated.add(slugified)
-                            moshi.adapter(Question::class.java).fromJson(it.readText())
-                        } ?: question
-                }
-                assert(availableQuestions.keys.size == questions.keys.size)
-            } ?: error("Couldn't load questions")
+    fun load(path: String): Question? {
+        questions[path] = getQuestion(path) ?: return null
+        return questions[path]
     }
 
     suspend fun test(submission: Submission): TestResults {
-        val question = availableQuestions[submission.path] ?: error("No question ${submission.path}")
+        val question = load(submission.path) ?: error("No question ${submission.path}")
+
         if (!question.validated) {
             val start = Instant.now().toEpochMilli()
             logger.info("Validating ${question.name}")
@@ -102,7 +94,6 @@ data class QuestionStatus(
     val path: String,
     val name: String,
     val version: String,
-    val prevalidated: Boolean,
     val validated: Boolean,
     val kotlin: Boolean
 )
@@ -125,12 +116,11 @@ private val serverStarted = Instant.now()
 data class Status(val started: Instant = serverStarted, var questions: List<QuestionStatus>)
 
 fun getStatus(kotlinOnly: Boolean = false) = Status(
-    questions = Questions.availableQuestions.map { (path, question) ->
+    questions = Questions.questions.map { (path, question) ->
         QuestionStatus(
             path,
             question.name,
             question.metadata.version,
-            Questions.prevalidated.contains(path),
             question.validated,
             question.hasKotlin
         )
@@ -156,7 +146,7 @@ fun Application.questioner() {
         }
         get("/question/java/{path}") {
             val path = call.parameters["path"] ?: return@get call.respond(HttpStatusCode.BadRequest)
-            val question = Questions.availableQuestions[path] ?: return@get call.respond(HttpStatusCode.NotFound)
+            val question = Questions.load(path) ?: return@get call.respond(HttpStatusCode.NotFound)
             call.respond(
                 QuestionDescription(
                     path,
@@ -172,7 +162,7 @@ fun Application.questioner() {
         }
         get("/question/kotlin/{path}") {
             val path = call.parameters["path"] ?: return@get call.respond(HttpStatusCode.BadRequest)
-            val question = Questions.availableQuestions[path] ?: return@get call.respond(HttpStatusCode.NotFound)
+            val question = Questions.load(path) ?: return@get call.respond(HttpStatusCode.NotFound)
             if (!question.hasKotlin) {
                 return@get call.respond(HttpStatusCode.NotFound)
             }
@@ -191,8 +181,7 @@ fun Application.questioner() {
         post("/") {
             withContext(Dispatchers.IO) {
                 val submission = call.receive<Submission>()
-                Questions.availableQuestions[submission.path]
-                    ?: return@withContext call.respond(HttpStatusCode.NotFound)
+                Questions.load(submission.path) ?: return@withContext call.respond(HttpStatusCode.NotFound)
                 @Suppress("TooGenericExceptionCaught")
                 try {
                     val results = Questions.test(submission)
@@ -210,5 +199,10 @@ fun Application.questioner() {
 }
 
 fun main() {
+    logger.debug(
+        Questions.questions.entries.sortedBy { it.key }.joinToString("\n") { (key, value) ->
+            "$key -> ${value.name}"
+        }
+    )
     embeddedServer(Netty, port = 8888, module = Application::questioner).start(wait = true)
 }
