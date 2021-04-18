@@ -1,2 +1,2 @@
 rootProject.name = "questioner"
-include("lib", "plugin")
+include("lib", "plugin", "server")

@@ -1,6 +1,9 @@
 package edu.illinois.cs.cs125.questioner.lib
 
+import com.github.slugify.Slugify
 import com.squareup.moshi.JsonClass
+import com.squareup.moshi.Moshi
+import com.squareup.moshi.Types
 import edu.illinois.cs.cs125.jeed.core.CheckstyleArguments
 import edu.illinois.cs.cs125.jeed.core.CheckstyleFailed
 import edu.illinois.cs.cs125.jeed.core.CheckstyleResults
@@ -33,6 +36,9 @@ import kotlin.math.max
 import kotlin.random.Random
 import edu.illinois.cs.cs125.jenisol.core.solution as jenisol
 
+private val slugify = Slugify()
+private val moshi = Moshi.Builder().build()
+
 @Suppress("MemberVisibilityCanBePrivate", "LargeClass", "TooManyFunctions")
 @JsonClass(generateAdapter = true)
 data class Question(
@@ -49,8 +55,10 @@ data class Question(
     var javaTemplate: String?,
     var kotlinTemplate: String?,
     val importWhitelist: Set<String>,
-    val importBlacklist: Set<String>
+    val importBlacklist: Set<String>,
 ) {
+    val slug = slugify.slugify(name)
+
     @JsonClass(generateAdapter = true)
     data class Metadata(
         val contentHash: String,
@@ -909,4 +917,19 @@ private fun String.kotlinDeTemplate(template: String?): String {
             lines.slice((start + 1) until end).joinToString("\n").trimIndent()
         }
     }
+}
+
+fun loadFromResources(): Map<String, Question> {
+    return moshi.adapter<Map<String, Question>>(
+        Types.newParameterizedType(
+            Map::class.java,
+            String::class.java,
+            Question::class.java
+        )
+    ).fromJson(object {}::class.java.getResource("/questions.json")!!.readText())!!.toMutableMap().also { questions ->
+        questions.entries.forEach { (slug, question) ->
+            object {}::class.java.getResource("/${question.metadata.contentHash}-validated.json")?.readText()
+                ?.also { it -> questions[slug] = moshi.adapter(Question::class.java).fromJson(it)!! }
+        }
+    }.toMap()
 }

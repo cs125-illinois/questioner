@@ -8,6 +8,7 @@ dependencies {
 
     implementation(kotlin("stdlib"))
     implementation("com.squareup.moshi:moshi-kotlin-codegen:1.12.0")
+    implementation("com.github.slugify:slugify:2.5")
 
     api("com.github.cs125-illinois.jeed:core:2021.4.2")
     api("com.github.cs125-illinois.jenisol:core:2021.4.2")

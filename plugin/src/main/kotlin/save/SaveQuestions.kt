@@ -2,6 +2,7 @@
 
 package edu.illinois.cs.cs125.questioner.plugin.save
 
+import com.squareup.moshi.JsonClass
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.Types
 import edu.illinois.cs.cs125.questioner.lib.Question
@@ -19,6 +20,9 @@ import java.util.regex.Pattern
 import java.util.stream.Collectors
 
 private val moshi = Moshi.Builder().build()
+
+@JsonClass(generateAdapter = true)
+data class PathFile(val path: String, val contents: String)
 
 @Suppress("unused")
 open class SaveQuestions : DefaultTask() {
@@ -41,13 +45,7 @@ open class SaveQuestions : DefaultTask() {
                         String::class.java,
                         Question::class.java
                     )
-                )
-                    .indent("  ")
-                    .toJson(
-                        project.getQuestions().map {
-                            it.name to it
-                        }.toMap()
-                    )
+                ).indent("  ").toJson(project.getQuestions().associateBy { it.name })
             )
         }
     }
@@ -69,7 +67,7 @@ fun List<ParsedJavaFile>.findQuestions(allPaths: List<String>): List<Question> {
         }
     }
 
-    val byFullName = map { it.fullName to it }.toMap()
+    val byFullName = associate { it.fullName to it }
 
     val solutions = filter { it.correct != null }
     solutions.map { it.correct!!.name }.groupingBy { it }.eachCount().filter { it.value > 1 }.also { duplicates ->
@@ -84,7 +82,7 @@ fun List<ParsedJavaFile>.findQuestions(allPaths: List<String>): List<Question> {
     }
 
     val otherFiles = filter { it.correct == null }
-    val usedFiles = solutions.map { it.path to "Correct" }.toMap().toMutableMap()
+    val usedFiles = solutions.associate { it.path to "Correct" }.toMutableMap()
     val knownFiles = map { it.path }
 
     val questions = solutions.map { solution ->
@@ -92,28 +90,23 @@ fun List<ParsedJavaFile>.findQuestions(allPaths: List<String>): List<Question> {
         require(solution.packageName != "") { "Solutions should not have an empty package name" }
         require(solution.className != "") { "Solutions should not have an empty class name" }
 
+
         try {
             val allContentHash = if (Files.isRegularFile(Paths.get(solution.path))) {
                 Files.walk(Paths.get(solution.path).parent).filter { path ->
                     Files.isRegularFile(path)
                 }.map { File(it.toString()) }.collect(Collectors.toList()).toMutableList().sortedBy { it.path }
-                    .map { it.path to it.readText() }.toMap()
+                    .map { PathFile(it.path, it.readText()) }
             } else {
-                mapOf()
+                listOf()
             }.let {
-                moshi.adapter<Map<String, String>>(
-                    Types.newParameterizedType(
-                        Map::class.java,
-                        String::class.java,
-                        String::class.java
-                    )
-                )
+                moshi.adapter<List<PathFile>>(Types.newParameterizedType(List::class.java, PathFile::class.java))
                     .indent("  ")
                     .toJson(it)
             }.let { json ->
                 MessageDigest.getInstance("SHA-256").let { digest ->
                     digest.digest(json.toByteArray())
-                }.fold("", { str, it -> str + "%02x".format(it) })
+                }.fold("") { str, it -> str + "%02x".format(it) }
             }
 
             val neighborImports = Files.walk(Paths.get(solution.path).parent, 1).filter {
@@ -354,8 +347,8 @@ val importsToRemove = annotationsToRemove.map { "edu.illinois.cs.cs125.questione
 val packagesToRemove = setOf("edu.illinois.cs.cs125.jenisol")
 
 private val emailRegex = Pattern.compile(
-    "[a-zA-Z0-9\\+\\.\\_\\%\\-\\+]{1,256}" +
-            "\\@" +
+    "[a-zA-Z0-9+._%\\-]{1,256}" +
+            "@" +
             "[a-zA-Z0-9][a-zA-Z0-9\\-]{0,64}" +
             "(" +
             "\\." +
