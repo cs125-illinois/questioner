@@ -954,3 +954,7 @@ fun loadFromFiles(questionsFile: File, validationDirectory: File): Map<String, Q
         }
     }.toMap()
 }
+
+fun Collection<Question>.toJSON(): String =
+    moshi.adapter<List<Question>>(Types.newParameterizedType(List::class.java, Question::class.java))
+        .toJson(this.toList())

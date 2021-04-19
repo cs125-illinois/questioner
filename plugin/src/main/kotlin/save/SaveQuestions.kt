@@ -15,6 +15,7 @@ import org.intellij.markdown.parser.MarkdownParser
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Paths
+import java.security.DigestInputStream
 import java.security.MessageDigest
 import java.util.regex.Pattern
 import java.util.stream.Collectors
@@ -93,20 +94,24 @@ fun List<ParsedJavaFile>.findQuestions(allPaths: List<String>): List<Question> {
 
         try {
             val allContentHash = if (Files.isRegularFile(Paths.get(solution.path))) {
-                Files.walk(Paths.get(solution.path).parent).filter { path ->
-                    Files.isRegularFile(path)
-                }.map { File(it.toString()) }.collect(Collectors.toList()).toMutableList().sortedBy { it.path }
-                    .map { PathFile(it.path, it.readText()) }
+                val md = MessageDigest.getInstance("MD5")
+                Files.walk(Paths.get(solution.path).parent)
+                    .filter { Files.isRegularFile(it) }
+                    .map { File(it.toString()) }
+                    .collect(Collectors.toList())
+                    .toMutableList()
+                    .sortedBy { it.path }
+                    .forEach {
+                        DigestInputStream(it.inputStream(), md).apply {
+                            while (available() > 0) {
+                                read()
+                            }
+                            close()
+                        }
+                    }
+                md.digest().fold("") { str, it -> str + "%02x".format(it) }
             } else {
-                listOf()
-            }.let {
-                moshi.adapter<List<PathFile>>(Types.newParameterizedType(List::class.java, PathFile::class.java))
-                    .indent("  ")
-                    .toJson(it)
-            }.let { json ->
-                MessageDigest.getInstance("SHA-256").let { digest ->
-                    digest.digest(json.toByteArray())
-                }.fold("") { str, it -> str + "%02x".format(it) }
+                ""
             }
 
             val neighborImports = Files.walk(Paths.get(solution.path).parent, 1).filter {
