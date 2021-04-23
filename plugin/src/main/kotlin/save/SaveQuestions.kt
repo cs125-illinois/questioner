@@ -344,7 +344,8 @@ val annotationsToDestroy =
         "RandomType",
         "InstanceValidator",
         "CheckSource",
-        "Ignore"
+        "Ignore",
+        "Compare"
     )
 
 val importsToRemove = annotationsToRemove.map { "edu.illinois.cs.cs125.questioner.lib.$it" }.toSet() +
