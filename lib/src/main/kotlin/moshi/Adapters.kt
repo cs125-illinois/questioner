@@ -1,6 +1,6 @@
 @file:Suppress("unused")
 
-package edu.illinois.cs.cs125.jsp.server.moshi
+package edu.illinois.cs.cs125.questioner.lib.moshi
 
 import com.squareup.moshi.FromJson
 import com.squareup.moshi.ToJson

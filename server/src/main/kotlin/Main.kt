@@ -8,9 +8,9 @@ import com.mongodb.client.model.Sorts
 import com.ryanharter.ktor.moshi.moshi
 import com.squareup.moshi.JsonClass
 import com.squareup.moshi.Moshi
-import edu.illinois.cs.cs125.jsp.server.moshi.Adapters
 import edu.illinois.cs.cs125.questioner.lib.Question
 import edu.illinois.cs.cs125.questioner.lib.TestResults
+import edu.illinois.cs.cs125.questioner.lib.moshi.Adapters
 import io.ktor.application.*
 import io.ktor.features.*
 import io.ktor.http.*

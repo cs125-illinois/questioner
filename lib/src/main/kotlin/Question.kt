@@ -30,15 +30,20 @@ import edu.illinois.cs.cs125.jenisol.core.Settings
 import edu.illinois.cs.cs125.jenisol.core.SubmissionDesignError
 import edu.illinois.cs.cs125.jenisol.core.TestResult
 import edu.illinois.cs.cs125.jenisol.core.safePrint
+import edu.illinois.cs.cs125.questioner.lib.moshi.Adapters
 import java.io.File
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.ReflectPermission
 import kotlin.math.max
 import kotlin.random.Random
 import edu.illinois.cs.cs125.jenisol.core.solution as jenisol
+import edu.illinois.cs.cs125.jeed.core.moshi.Adapters as JeedAdapters
 
 private val slugify = Slugify()
-private val moshi = Moshi.Builder().build()
+private val moshi = Moshi.Builder().apply {
+    Adapters.forEach { add(it) }
+    JeedAdapters.forEach { add(it) }
+}.build()
 
 @Suppress("MemberVisibilityCanBePrivate", "LargeClass", "TooManyFunctions")
 @JsonClass(generateAdapter = true)
@@ -59,7 +64,7 @@ data class Question(
     val importBlacklist: Set<String>,
     val slug: String = slugify.slugify(name)
 ) {
-    fun toJson() = moshi.adapter(Question::class.java).toJson(this)
+    fun toJson(): String = moshi.adapter(Question::class.java).toJson(this)
 
     @JsonClass(generateAdapter = true)
     data class Metadata(
@@ -582,6 +587,7 @@ data class Question(
                     }
                 check(solutionThrew == null) { "Solution not expected to throw: $solutionThrew" }
             }
+            results.checkSize()
         }
 
         alternativeSolutions.forEach { alsoCorrect ->
@@ -602,6 +608,7 @@ data class Question(
                         }?.explanation
                     check(solutionThrew == null) { "Solution not expected to throw: $solutionThrew" }
                 }
+                results.checkSize()
             }
         }
 
@@ -640,6 +647,7 @@ data class Question(
             ).also {
                 require(!it.succeeded) { "Incorrect submission was not rejected:\n${wrong.contents}" }
                 it.validate(wrong.reason, wrong.contents, isMutated)
+                it.checkSize()
             }
         }
 
@@ -676,6 +684,7 @@ data class Question(
             submissionTimeout = (results.taskResults!!.interval.length.toDouble() * metadata.timeoutMultiplier).toLong()
                 .coerceAtLeast(metadata.minTimeout)
             solutionPrinted = results.taskResults!!.outputLines.size
+            results.checkSize()
         }
 
         check(submissionTimeout > 0)
@@ -694,6 +703,7 @@ data class Question(
                 require(results.succeeded) {
                     "Solution did not pass the test suite after validation: ${results.summary}\n$contents"
                 }
+                results.checkSize()
             }
         }
 
@@ -707,6 +717,7 @@ data class Question(
             ).also {
                 require(!it.succeeded) { "Incorrect submission was not rejected:\n${wrong.contents}" }
                 it.validate(wrong.reason, wrong.contents, isMutated)
+                it.checkSize()
             }
         }
 
@@ -729,8 +740,9 @@ data class Question(
         const val MAX_TEST_COUNT = 1024 * 1024
         const val SUBMISSION_TEST_MULTIPLIER = 2
         const val SOLUTION_TEST_OUTPUT_LINES = 102400
-        const val MIN_OUTPUT_LINES = 10240
+        const val MIN_OUTPUT_LINES = 1024
         const val OUTPUT_LINE_MULTIPLIER = 8
+        const val DEFAULT_MAX_OUTPUT_SIZE = 8 * 1024 * 1024
 
         @Transient
         val SAFE_PERMISSIONS =
@@ -855,6 +867,11 @@ data class TestResults(
                 "Expected submission to fail tests: ${summary}\n$contents"
             }
         }
+    }
+
+    fun toJson(): String = moshi.adapter(TestResults::class.java).toJson(this)
+    fun checkSize(maxSize: Int = Question.DEFAULT_MAX_OUTPUT_SIZE) = toJson().length.also {
+        check(it < maxSize) { "Output is too large: $it > $maxSize" }
     }
 }
 

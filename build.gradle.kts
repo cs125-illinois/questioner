@@ -10,7 +10,7 @@ plugins {
 }
 subprojects {
     group = "com.github.cs125-illinois.questioner"
-    version = "2021.4.4"
+    version = "2021.4.5"
 }
 allprojects {
     repositories {
