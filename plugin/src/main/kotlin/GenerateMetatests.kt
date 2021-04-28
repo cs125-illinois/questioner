@@ -90,7 +90,7 @@ import java.nio.file.Path
 private val validator =
     Validator(Path.of(object {}::class.java.getResource("/questions.json")!!.toURI()).parent.toFile(), seed = 124)
 
-@Suppress("MaxLineLength")
+@Suppress("MaxLineLength", "LargeClass")
 class $klass : StringSpec({
 $testBlock
 })
