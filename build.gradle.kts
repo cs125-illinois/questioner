@@ -1,16 +1,16 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    val kotlinVersion = "1.4.32"
+    val kotlinVersion = "1.5.0"
     kotlin("jvm") version kotlinVersion apply false
     kotlin("kapt") version kotlinVersion apply false
-    id("org.jmailen.kotlinter") version "3.4.0" apply false
+    id("org.jmailen.kotlinter") version "3.4.1" apply false
 
     id("com.github.ben-manes.versions") version "0.38.0"
 }
 subprojects {
     group = "com.github.cs125-illinois.questioner"
-    version = "2021.4.5"
+    version = "2021.4.6"
 }
 allprojects {
     repositories {
