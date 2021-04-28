@@ -17,8 +17,9 @@ fun verify(results: TestResult<Int, One<IntArray>>) {
     if (pivotLocation == -1) {
         return
     }
-    val solution = results.solution.parameters.first.clone()
-    val submission = results.submission.parameters.first.clone()
+    val solution = results.solution.parameters.first.copyOf()
+    val submission = results.submission.parameters.first.copyOf()
+
     Truth.assertWithMessage("Partitioned arrays are not the same size")
         .that(submission.size)
         .isEqualTo(solution.size)

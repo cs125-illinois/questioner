@@ -1,9 +1,8 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    val kotlinVersion = "1.5.0"
-    kotlin("jvm") version kotlinVersion apply false
-    kotlin("kapt") version kotlinVersion apply false
+    kotlin("jvm") version "1.4.32" apply false
+    kotlin("kapt") version "1.4.32" apply false
     id("org.jmailen.kotlinter") version "3.4.1" apply false
 
     id("com.github.ben-manes.versions") version "0.38.0"
@@ -11,6 +10,14 @@ plugins {
 subprojects {
     group = "com.github.cs125-illinois.questioner"
     version = "2021.4.6"
+    configurations.all {
+        resolutionStrategy {
+            force(
+                "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.4.32",
+                "org.jetbrains.kotlin:kotlin-script-runtime:1.4.32"
+            )
+        }
+    }
 }
 allprojects {
     repositories {
@@ -36,8 +43,8 @@ tasks.dependencyUpdates {
         componentSelection {
             all {
                 if (listOf("alpha", "beta", "rc", "cr", "m", "preview", "b", "ea", "eap", "pr").any { qualifier ->
-                    candidate.version.matches(Regex("(?i).*[.-]$qualifier[.\\d-+]*"))
-                }) {
+                        candidate.version.matches(Regex("(?i).*[.-]$qualifier[.\\d-+]*"))
+                    }) {
                     reject("Release candidate")
                 }
             }

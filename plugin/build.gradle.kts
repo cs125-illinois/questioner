@@ -13,6 +13,7 @@ dependencies {
     antlr("org.antlr:antlr4:4.9.2")
 
     implementation(kotlin("stdlib"))
+    implementation(kotlin("reflect"))
     implementation(gradleApi())
     implementation(project(":lib"))
     implementation("com.github.cs125-illinois.jeed:core:2021.4.5")

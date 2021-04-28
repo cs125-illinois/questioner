@@ -14,6 +14,7 @@ dependencies {
     kapt("com.squareup.moshi:moshi-kotlin-codegen:1.12.0")
 
     implementation(kotlin("stdlib"))
+    implementation(kotlin("reflect"))
     implementation(project(":lib"))
 
     implementation("io.ktor:ktor-server-netty:1.5.3")
