@@ -288,6 +288,7 @@ fun List<ParsedJavaFile>.findQuestions(allPaths: List<String>): List<Question> {
                     solution.correct.checkstyle,
                     solution.correct.solutionThrows,
                     solution.correct.maxTestCount,
+                    solution.correct.minTestCount,
                     kotlinSolution?.description,
                     solution.citation
                 ),

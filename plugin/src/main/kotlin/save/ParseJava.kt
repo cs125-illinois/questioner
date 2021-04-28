@@ -85,6 +85,7 @@ data class ParsedJavaFile(val path: String, val contents: String) {
                 val checkstyle = parameters["checkstyle"]?.toBoolean() ?: Correct.DEFAULT_CHECKSTYLE
                 val solutionThrows = parameters["solutionThrows"]?.toBoolean() ?: Correct.DEFAULT_THROWS
                 val maxTestCount = parameters["maxTestCount"]?.toInt() ?: Correct.DEFAULT_MAX_TEST_COUNT
+                val minTestCount = parameters["minTestCount"]?.toInt() ?: Correct.DEFAULT_MIN_TEST_COUNT
                 val description = annotation.comment().let { comment ->
                     markdownParser.buildMarkdownTreeFromString(comment).let { astNode ->
                         HtmlGenerator(comment, astNode, CommonMarkFlavourDescriptor()).generateHtml()
@@ -102,7 +103,8 @@ data class ParsedJavaFile(val path: String, val contents: String) {
                     mutate,
                     checkstyle,
                     solutionThrows,
-                    maxTestCount
+                    maxTestCount,
+                    minTestCount
                 )
             }
         } catch (e: Exception) {

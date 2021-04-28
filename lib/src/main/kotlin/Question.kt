@@ -80,6 +80,7 @@ data class Question(
         val checkstyle: Boolean,
         val solutionThrows: Boolean,
         val maxTestCount: Int,
+        val minTestCount: Int,
         val kotlinDescription: String?,
         val citation: Citation?
     )
@@ -438,7 +439,7 @@ data class Question(
             )
             else -> {
                 require(requiredTestCount > 0) { "requiredTestCount not set" }
-                val testCount = (requiredTestCount * SUBMISSION_TEST_MULTIPLIER).coerceAtLeast(MIN_TEST_COUNT)
+                val testCount = (requiredTestCount * SUBMISSION_TEST_MULTIPLIER).coerceAtLeast(metadata.minTestCount)
                 Pair(
                     passedSettings.copy(
                         seed = seed,
@@ -736,7 +737,6 @@ data class Question(
         const val DEFAULT_SOLUTION_TIMEOUT = 4096L
         const val DEFAULT_KNOWN_INCORRECT_TIMEOUT = 4096L
         const val MAX_START_MULTIPLE_COUNT = 128
-        const val MIN_TEST_COUNT = 128
         const val MAX_TEST_COUNT = 1024 * 1024
         const val SUBMISSION_TEST_MULTIPLIER = 2
         const val SOLUTION_TEST_OUTPUT_LINES = 102400
