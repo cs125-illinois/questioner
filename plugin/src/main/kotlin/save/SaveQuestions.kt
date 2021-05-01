@@ -4,11 +4,14 @@ package edu.illinois.cs.cs125.questioner.plugin.save
 
 import com.squareup.moshi.JsonClass
 import com.squareup.moshi.Moshi
-import com.squareup.moshi.Types
 import edu.illinois.cs.cs125.questioner.lib.Question
+import edu.illinois.cs.cs125.questioner.lib.loadQuestions
+import edu.illinois.cs.cs125.questioner.lib.saveQuestions
 import org.gradle.api.DefaultTask
-import org.gradle.api.Project
+import org.gradle.api.file.FileCollection
 import org.gradle.api.plugins.JavaPluginConvention
+import org.gradle.api.tasks.InputFiles
+import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
 import org.intellij.markdown.flavours.commonmark.CommonMarkFlavourDescriptor
 import org.intellij.markdown.parser.MarkdownParser
@@ -26,42 +29,37 @@ private val moshi = Moshi.Builder().build()
 data class PathFile(val path: String, val contents: String)
 
 @Suppress("unused")
-open class SaveQuestions : DefaultTask() {
+abstract class SaveQuestions : DefaultTask() {
     init {
         group = "Build"
         description = "Save questions to JSON."
     }
 
+    @InputFiles
+    val inputFiles: FileCollection = project.convention.getPlugin(JavaPluginConvention::class.java)
+        .sourceSets.getByName("main").allSource.filter { it.name.endsWith(".java") || it.name.endsWith(".kt") }
+
+    @OutputFile
+    val outputFile = File(project.buildDir, "questioner/questions.json")
+
     @TaskAction
     fun save() {
-        val resourcesDirectory = File(project.buildDir, "questioner")
-        project.convention.getPlugin(JavaPluginConvention::class.java)
-            .sourceSets.getByName("main").resources { it.srcDirs(resourcesDirectory) }
-        File(resourcesDirectory, "questions.json").let { file ->
-            file.parentFile.mkdirs()
-            file.writeText(
-                moshi.adapter<Map<String, Question>>(
-                    Types.newParameterizedType(
-                        Map::class.java,
-                        String::class.java,
-                        Question::class.java
-                    )
-                ).indent("  ").toJson(project.getQuestions().associateBy { it.name })
-            )
-        }
+        val existingQuestions = outputFile.loadQuestions().values.associateBy { it.metadata.contentHash }
+        inputFiles.filter { it.name.endsWith(".java") }
+            .map { ParsedJavaFile(it) }
+            .findQuestions(inputFiles.map { it.path }, existingQuestions)
+            .associateBy { it.name }
+            .also {
+                outputFile.saveQuestions(it)
+            }
     }
 }
 
-fun Project.getQuestions(): List<Question> {
-    val allFiles = convention.getPlugin(JavaPluginConvention::class.java)
-        .sourceSets.getByName("main").allSource
-        .filter { it.name.endsWith(".java") || it.name.endsWith(".kt") }
-    val parsedJavaFiles = allFiles.filter { it.name.endsWith(".java") }.map { ParsedJavaFile(it) }
-    return parsedJavaFiles.findQuestions(allFiles.map { it.path })
-}
-
 @Suppress("LongMethod", "ComplexMethod")
-fun List<ParsedJavaFile>.findQuestions(allPaths: List<String>): List<Question> {
+fun List<ParsedJavaFile>.findQuestions(
+    allPaths: List<String>,
+    existingQuestions: Map<String, Question>
+): List<Question> {
     map { it.fullName }.groupingBy { it }.eachCount().filter { it.value > 1 }.also { duplicates ->
         if (duplicates.isNotEmpty()) {
             error("Files with duplicate qualified names found: ${duplicates.keys}")
@@ -84,6 +82,7 @@ fun List<ParsedJavaFile>.findQuestions(allPaths: List<String>): List<Question> {
 
     val otherFiles = filter { it.correct == null }
     val usedFiles = solutions.associate { it.path to "Correct" }.toMutableMap()
+    val skippedFiles = mutableListOf<String>()
     val knownFiles = map { it.path }
 
     val questions = solutions.map { solution ->
@@ -91,27 +90,38 @@ fun List<ParsedJavaFile>.findQuestions(allPaths: List<String>): List<Question> {
         require(solution.packageName != "") { "Solutions should not have an empty package name" }
         require(solution.className != "") { "Solutions should not have an empty class name" }
 
-
+        val myUsedFiles = mutableListOf<String>()
         try {
+            val associatedFiles = if (Files.isRegularFile(Paths.get(solution.path))) {
+                Files.walk(Paths.get(solution.path).parent)
+                    .filter { Files.isRegularFile(it) && !Files.isDirectory(it) }
+                    .map { it.toString() }
+                    .filter { it.endsWith(".java") || it.endsWith(".kt") }
+                    .map { File(it) }
+                    .collect(Collectors.toList())
+                    .toList()
+                    .sortedBy { it.path }
+            } else {
+                listOf()
+            }
             val allContentHash = if (Files.isRegularFile(Paths.get(solution.path))) {
                 val md = MessageDigest.getInstance("MD5")
-                Files.walk(Paths.get(solution.path).parent)
-                    .filter { Files.isRegularFile(it) }
-                    .map { File(it.toString()) }
-                    .collect(Collectors.toList())
-                    .toMutableList()
-                    .sortedBy { it.path }
-                    .forEach {
-                        DigestInputStream(it.inputStream(), md).apply {
-                            while (available() > 0) {
-                                read()
-                            }
-                            close()
+                associatedFiles.forEach {
+                    DigestInputStream(it.inputStream(), md).apply {
+                        while (available() > 0) {
+                            read()
                         }
+                        close()
                     }
+                }
                 md.digest().fold("") { str, it -> str + "%02x".format(it) }
             } else {
                 ""
+            }
+
+            existingQuestions[allContentHash]?.also { question ->
+                skippedFiles.addAll(question.metadata.usedFiles)
+                return@map question
             }
 
             val neighborImports = Files.walk(Paths.get(solution.path).parent, 1).filter {
@@ -145,6 +155,7 @@ fun List<ParsedJavaFile>.findQuestions(allPaths: List<String>): List<Question> {
                     }?.also {
                         require(it.path !in usedFiles) { "File $it.path was already used as ${usedFiles[it.path]}" }
                         usedFiles[it.path] = "Starter"
+                        myUsedFiles.add(it.path)
                     }
 
             val importNames = solution.listedImports.filter { it in byFullName } + neighborImports
@@ -158,6 +169,7 @@ fun List<ParsedJavaFile>.findQuestions(allPaths: List<String>): List<Question> {
             }?.also {
                 require(it.path !in usedFiles) { "File $it.path was already used as ${usedFiles[it.path]}" }
                 usedFiles[it.path] = "Template"
+                myUsedFiles.add(it.path)
             }?.readText()?.stripPackage()
 
             var kotlinTemplate = File("${solution.path.replace(".java$".toRegex(), ".kt")}.hbs").let {
@@ -169,6 +181,7 @@ fun List<ParsedJavaFile>.findQuestions(allPaths: List<String>): List<Question> {
             }?.also {
                 require(it.path !in usedFiles) { "File $it.path was already used as ${usedFiles[it.path]}" }
                 usedFiles[it.path] = "Template"
+                myUsedFiles.add(it.path)
             }?.readText()?.stripPackage()
 
             val javaCleanSpec = CleanSpec(javaTemplate != null, solution.wrapWith, importNames)
@@ -184,6 +197,7 @@ fun List<ParsedJavaFile>.findQuestions(allPaths: List<String>): List<Question> {
                             }
                         }
                         usedFiles[it.path] = "Incorrect"
+                        myUsedFiles.add(it.path)
                     }
                     .also {
                         require(it.isNotEmpty()) {
@@ -198,6 +212,7 @@ fun List<ParsedJavaFile>.findQuestions(allPaths: List<String>): List<Question> {
                                         "File $it.path was already used as ${usedFiles[it.path]}"
                                     }
                                     usedFiles[it.path] = "Incorrect"
+                                    myUsedFiles.add(it.path)
                                 }
                                 .map { it.toIncorrectFile(kotlinCleanSpec) }
                         )
@@ -211,6 +226,7 @@ fun List<ParsedJavaFile>.findQuestions(allPaths: List<String>): List<Question> {
                             "File $it.path was already used as ${usedFiles[it.path]}"
                         }
                         usedFiles[it.path] = "Alternate"
+                        myUsedFiles.add(it.path)
                     }.map {
                         it.toAlternateFile(javaCleanSpec)
                     }.toMutableList().apply {
@@ -222,6 +238,7 @@ fun List<ParsedJavaFile>.findQuestions(allPaths: List<String>): List<Question> {
                                         "File $it.path was already used as ${usedFiles[it.path]}"
                                     }
                                     usedFiles[it.path] = "Correct"
+                                    myUsedFiles.add(it.path)
                                 }
                                 .map { it.toAlternateFile(kotlinCleanSpec) }
                         )
@@ -229,6 +246,7 @@ fun List<ParsedJavaFile>.findQuestions(allPaths: List<String>): List<Question> {
 
             val common = importNames.map {
                 usedFiles[byFullName[it]!!.path] = "Common"
+                myUsedFiles.add(byFullName[it]!!.path)
                 byFullName[it]?.contents?.stripPackage() ?: error("Couldn't find import $it")
             }
 
@@ -241,6 +259,7 @@ fun List<ParsedJavaFile>.findQuestions(allPaths: List<String>): List<Question> {
                     "File $it.path was already used as ${usedFiles[it.path]}"
                 }
                 usedFiles[it.path] = "Starter"
+                myUsedFiles.add(it.path)
                 it.toStarterFile(kotlinCleanSpec)
             }
 
@@ -290,7 +309,8 @@ fun List<ParsedJavaFile>.findQuestions(allPaths: List<String>): List<Question> {
                     solution.correct.maxTestCount,
                     solution.correct.minTestCount,
                     kotlinSolution?.description,
-                    solution.citation
+                    solution.citation,
+                    myUsedFiles
                 ),
                 Question.FlatFile(
                     solution.className,
@@ -312,7 +332,7 @@ fun List<ParsedJavaFile>.findQuestions(allPaths: List<String>): List<Question> {
             throw Exception("Problem parsing ${solution.path}: $e")
         }
     }
-    allPaths.filter { !usedFiles.containsKey(it) }.forEach {
+    allPaths.filter { !usedFiles.containsKey(it) && !skippedFiles.contains(it) }.forEach {
         println("WARNING: $it will not be included in the build")
     }
     return questions

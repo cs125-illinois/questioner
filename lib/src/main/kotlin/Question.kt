@@ -82,7 +82,8 @@ data class Question(
         val maxTestCount: Int,
         val minTestCount: Int,
         val kotlinDescription: String?,
-        val citation: Citation?
+        val citation: Citation?,
+        val usedFiles: List<String> = listOf()
     )
 
     fun getTemplate(language: Language) = when (language) {
@@ -938,40 +939,54 @@ private fun String.kotlinDeTemplate(template: String?): String {
     }
 }
 
-fun loadFromResources(): Map<String, Question> {
-    return moshi.adapter<Map<String, Question>>(
-        Types.newParameterizedType(
-            Map::class.java,
-            String::class.java,
-            Question::class.java
-        )
-    ).fromJson(object {}::class.java.getResource("/questions.json")!!.readText())!!.toMutableMap().also { questions ->
-        questions.entries.forEach { (slug, question) ->
-            object {}::class.java.getResource("/${question.metadata.contentHash}-validated.json")?.readText()
-                ?.also { it -> questions[slug] = moshi.adapter(Question::class.java).fromJson(it)!! }
-        }
-    }.toMap()
-}
+fun Question.validationFile(sourceDir: String) = File(
+    sourceDir,
+    "${metadata.packageName.replace(".", File.separator)}/.validation.json"
+)
 
-fun loadFromFiles(questionsFile: File, validationDirectory: File): Map<String, Question> {
-    require(questionsFile.exists())
+fun loadFromPath(questionsFile: File, sourceDir: String): Map<String, Question> {
     return moshi.adapter<Map<String, Question>>(
         Types.newParameterizedType(
             Map::class.java,
             String::class.java,
             Question::class.java
         )
-    ).fromJson(questionsFile.readText())!!.toMutableMap().also { questions ->
-        questions.entries.forEach { (slug, question) ->
-            File(validationDirectory, "${question.metadata.contentHash}-validated.json").also {
-                if (it.exists()) {
-                    questions[slug] = moshi.adapter(Question::class.java).fromJson(it.readText())!!
-                }
-            }
+    ).fromJson(questionsFile.readText())!!.toMutableMap().mapValues { (_, question) ->
+        val validationPath = question.validationFile(sourceDir)
+        if (!validationPath.exists()) {
+            return@mapValues question
         }
+        val validatedQuestion = moshi.adapter(Question::class.java).fromJson(validationPath.readText())!!
+        if (question.metadata.contentHash != validatedQuestion.metadata.contentHash) {
+            return@mapValues question
+        }
+        validatedQuestion
     }.toMap()
 }
 
 fun Collection<Question>.toJSON(): String =
     moshi.adapter<List<Question>>(Types.newParameterizedType(List::class.java, Question::class.java))
         .toJson(this.toList())
+
+fun File.loadQuestions() = try {
+    moshi.adapter<Map<String, Question>>(
+        Types.newParameterizedType(
+            Map::class.java,
+            String::class.java,
+            Question::class.java
+        )
+    ).fromJson(readText())!!
+} catch (e: Exception) {
+    mapOf()
+}
+
+fun File.saveQuestions(questions: Map<String, Question>) =
+    writeText(
+        moshi.adapter<Map<String, Question>>(
+            Types.newParameterizedType(
+                Map::class.java,
+                String::class.java,
+                Question::class.java
+            )
+        ).indent("  ").toJson(questions)
+    )

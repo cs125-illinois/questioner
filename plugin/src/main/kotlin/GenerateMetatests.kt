@@ -1,8 +1,10 @@
 package edu.illinois.cs.cs125.questioner.plugin
 
 import edu.illinois.cs.cs125.questioner.lib.Question
-import edu.illinois.cs.cs125.questioner.lib.loadFromFiles
+import edu.illinois.cs.cs125.questioner.lib.loadFromPath
 import org.gradle.api.DefaultTask
+import org.gradle.api.tasks.InputFile
+import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
 import java.io.File
 
@@ -13,6 +15,12 @@ open class GenerateMetatests : DefaultTask() {
         description = "Generate question metatests from JSON."
     }
 
+    @InputFile
+    val input: File = File(project.buildDir, "questioner/questions.json")
+
+    @OutputFile
+    val output: File = project.file("src/test/kotlin/TestQuestions.kt")
+
     @TaskAction
     fun generate() {
         val testRoot = project.file("src/test/kotlin")
@@ -21,20 +29,12 @@ open class GenerateMetatests : DefaultTask() {
         } else {
             testRoot.mkdirs()
         }
-        loadFromFiles(
-            File(project.buildDir, "questioner/questions.json"),
-            File(project.buildDir, "resources/main")
-        ).values.organizeTests().first().let { (packageName, questions) ->
-            val klass = if (questions.size == 1) {
-                "Test${questions.first().klass}"
-            } else {
-                "TestQuestions"
-            }
-            val name = "$klass.kt"
-
-            testRoot.resolve(packageName.replace(".", "/")).resolve(name).also {
+        val sourceRoot = project.javaSourceDir()
+        loadFromPath(input, sourceRoot.path).values.organizeTests().first().let { (packageName, questions) ->
+            val klass = "TestQuestions"
+            output.also {
                 it.parentFile.mkdirs()
-                it.writeText(questions.generateTest(packageName, klass))
+                it.writeText(questions.generateTest(packageName, klass, sourceRoot))
             }
         }
     }
@@ -61,7 +61,7 @@ fun Collection<Question>.organizeTests() = map {
     byPackage
 }.entries.sortedBy { it.key.length }
 
-fun List<Question>.generateTest(packageName: String, klass: String): String {
+fun List<Question>.generateTest(packageName: String, klass: String, sourceRoot: File): String {
     val testBlock = filter { it.metadata.packageName.startsWith(packageName) }
         .sortedBy { it.name }
         .joinToString(separator = "\n") {
@@ -74,7 +74,9 @@ fun List<Question>.generateTest(packageName: String, klass: String): String {
     } else {
         ""
     }
-    return """${packageNameBlock}import edu.illinois.cs.cs125.questioner.lib.Validator
+    return """${packageNameBlock}@file:Suppress("SpellCheckingInspection")
+
+import edu.illinois.cs.cs125.questioner.lib.Validator
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.core.test.isFocused
 import java.nio.file.Path
@@ -87,9 +89,11 @@ import java.nio.file.Path
 
 /* ktlint-disable max-line-length */
 
-private val validator =
-    Validator(Path.of(object {}::class.java.getResource("/questions.json")!!.toURI()).parent.toFile(), seed = 124)
-
+private val validator = Validator(
+    Path.of(object {}::class.java.getResource("/questions.json")!!.toURI()).toFile(),
+    "${sourceRoot.path}",
+    seed = 124
+)
 @Suppress("MaxLineLength", "LargeClass")
 class $klass : StringSpec({
 $testBlock

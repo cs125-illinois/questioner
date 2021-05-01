@@ -9,7 +9,7 @@ plugins {
 }
 subprojects {
     group = "com.github.cs125-illinois.questioner"
-    version = "2021.4.7"
+    version = "2021.5.0"
     configurations.all {
         resolutionStrategy {
             force(

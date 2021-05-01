@@ -6,8 +6,8 @@ import java.io.File
 private val moshi = Moshi.Builder().build()
 
 @Suppress("unused")
-class Validator(private val questionsPath: File, private val seed: Int) {
-    private val questions = loadFromResources().also {
+class Validator(questionsFile: File, private val sourceDir: String, private val seed: Int) {
+    private val questions = loadFromPath(questionsFile, sourceDir).also {
         assert(it.isNotEmpty())
     }
 
@@ -26,7 +26,7 @@ class Validator(private val questionsPath: File, private val seed: Int) {
                 report.summary()
             }
             println("$name: $output")
-            File(questionsPath.toString(), "${question.metadata.contentHash}-validated.json")
+            question.validationFile(sourceDir)
                 .writeText(moshi.adapter(Question::class.java).indent("  ").toJson(questions[name]))
         }
     }

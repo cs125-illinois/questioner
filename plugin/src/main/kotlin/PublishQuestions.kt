@@ -4,7 +4,7 @@ import com.mongodb.MongoClient
 import com.mongodb.MongoClientURI
 import com.mongodb.client.model.Filters
 import com.mongodb.client.model.UpdateOptions
-import edu.illinois.cs.cs125.questioner.lib.loadFromFiles
+import edu.illinois.cs.cs125.questioner.lib.loadFromPath
 import edu.illinois.cs.cs125.questioner.lib.toJSON
 import org.bson.*
 import org.gradle.api.DefaultTask
@@ -42,10 +42,8 @@ open class PublishQuestions : DefaultTask() {
             null
         }
 
-        val questions = loadFromFiles(
-            File(project.buildDir, "questioner/questions.json"),
-            File(project.buildDir, "resources/main")
-        ).values
+        val questions =
+            loadFromPath(File(project.buildDir, "questioner/questions.json"), project.javaSourceDir().path).values
         if (collection != null) {
             questions.forEach { question ->
                 collection.updateOne(
