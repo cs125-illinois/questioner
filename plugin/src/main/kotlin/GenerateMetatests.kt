@@ -65,9 +65,9 @@ fun List<Question>.generateTest(packageName: String, klass: String, sourceRoot: 
     val testBlock = filter { it.metadata.packageName.startsWith(packageName) }
         .sortedBy { it.name }
         .joinToString(separator = "\n") {
-            """    "${it.name} (${it.metadata.packageName}) should validate" {
-        validator.validate("${it.name}", verbose = false, force = testCase.isFocused())
-    }"""
+            """  "${it.name} (${it.metadata.packageName}) should validate" {
+    validator.validate("${it.name}", verbose = false, force = testCase.isFocused())
+  }"""
         }
     val packageNameBlock = if (packageName.isNotEmpty()) {
         "package $packageName\n\n"
@@ -90,9 +90,9 @@ import java.nio.file.Path
 /* ktlint-disable max-line-length */
 
 private val validator = Validator(
-    Path.of(object {}::class.java.getResource("/questions.json")!!.toURI()).toFile(),
-    "${sourceRoot.path}",
-    seed = 124
+  Path.of(object {}::class.java.getResource("/questions.json")!!.toURI()).toFile(),
+  "${sourceRoot.path}",
+  seed = 124
 )
 @Suppress("MaxLineLength", "LargeClass")
 class $klass : StringSpec({
