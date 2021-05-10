@@ -17,7 +17,7 @@ dependencies {
     implementation(kotlin("reflect"))
     implementation(project(":lib"))
 
-    implementation("io.ktor:ktor-server-netty:1.5.3")
+    implementation("io.ktor:ktor-server-netty:1.5.4")
     implementation("com.squareup.moshi:moshi-kotlin-codegen:1.12.0")
     implementation("com.github.cs125-illinois:ktor-moshi:1.0.3")
     implementation("com.github.slugify:slugify:2.5")

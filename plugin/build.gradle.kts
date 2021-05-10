@@ -16,10 +16,10 @@ dependencies {
     implementation(kotlin("reflect"))
     implementation(gradleApi())
     implementation(project(":lib"))
-    implementation("com.github.cs125-illinois.jeed:core:2021.4.5")
-    implementation("com.github.cs125-illinois.jenisol:core:2021.4.2")
+    implementation("com.github.cs125-illinois.jeed:core:2021.5.0")
+    implementation("com.github.cs125-illinois.jenisol:core:2021.5.0")
     implementation("com.squareup.moshi:moshi:1.12.0")
-    implementation("org.jetbrains:markdown:0.2.2") {
+    implementation("org.jetbrains:markdown:0.2.3") {
         exclude(module = "kotlin-runtime")
         exclude(module = "kotlin-js")
     }
@@ -30,7 +30,7 @@ dependencies {
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.12.3")
     implementation("org.mongodb:mongodb-driver:3.12.8")
 
-    testImplementation("io.kotest:kotest-runner-junit5:4.4.3")
+    testImplementation("io.kotest:kotest-runner-junit5:4.5.0")
 }
 tasks.compileKotlin {
     dependsOn(tasks.generateGrammarSource)
