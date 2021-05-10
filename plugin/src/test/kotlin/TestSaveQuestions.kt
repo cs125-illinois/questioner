@@ -33,7 +33,7 @@ import edu.illinois.cs.cs125.questioner.lib.Correct;
   timeoutMultiplier=8.0
 )
 @Import(paths="examples.second, examples.first")
-@WrapWith
+@Wrap
 public class Second {
   public void correct() { }
 }

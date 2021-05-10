@@ -4,9 +4,8 @@ package edu.illinois.cs.cs125.questioner.plugin.save
 
 import com.squareup.moshi.JsonClass
 import com.squareup.moshi.Moshi
-import edu.illinois.cs.cs125.questioner.lib.Question
-import edu.illinois.cs.cs125.questioner.lib.loadQuestions
-import edu.illinois.cs.cs125.questioner.lib.saveQuestions
+import edu.illinois.cs.cs125.jenisol.core.*
+import edu.illinois.cs.cs125.questioner.lib.*
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.FileCollection
 import org.gradle.api.plugins.JavaPluginConvention
@@ -58,7 +57,7 @@ abstract class SaveQuestions : DefaultTask() {
 @Suppress("LongMethod", "ComplexMethod")
 fun List<ParsedJavaFile>.findQuestions(
     allPaths: List<String>,
-    existingQuestions: Map<String, Question>
+    existingQuestions: Map<String, Question> = mapOf()
 ): List<Question> {
     map { it.fullName }.groupingBy { it }.eachCount().filter { it.value > 1 }.also { duplicates ->
         if (duplicates.isNotEmpty()) {
@@ -267,7 +266,7 @@ fun List<ParsedJavaFile>.findQuestions(
 
             if (solution.wrapWith != null) {
                 require(javaTemplate == null && kotlinTemplate == null) {
-                    "Can't use both a template and @WrapWith"
+                    "Can't use both a template and @Wrap"
                 }
 
                 solution.clean(javaCleanSpec)
@@ -340,33 +339,32 @@ fun List<ParsedJavaFile>.findQuestions(
 
 val annotationsToRemove =
     setOf(
-        "Correct",
-        "Import",
-        "Incorrect",
-        "Starter",
-        "SuppressWarnings",
-        "Suppress",
-        "Override",
-        "Whitelist",
-        "Blacklist",
-        "DesignOnly",
-        "WrapWith",
-        "AlsoCorrect"
+        Correct::class.java.simpleName,
+        Incorrect::class.java.simpleName,
+        Starter::class.java.simpleName,
+        SuppressWarnings::class.java.simpleName,
+        Suppress::class.java.simpleName,
+        Override::class.java.simpleName,
+        Whitelist::class.java.simpleName,
+        Blacklist::class.java.simpleName,
+        DesignOnly::class.java.simpleName,
+        Wrap::class.java.simpleName,
+        AlsoCorrect::class.java.simpleName
     )
 val annotationsToDestroy =
     setOf(
-        "FixedParameters",
-        "RandomParameters",
-        "Verify",
-        "Both",
-        "FilterParameters",
-        "SimpleType",
-        "EdgeType",
-        "RandomType",
-        "InstanceValidator",
-        "CheckSource",
-        "Ignore",
-        "Compare"
+        FixedParameters::class.java.simpleName,
+        RandomParameters::class.java.simpleName,
+        Verify::class.java.simpleName,
+        Both::class.java.simpleName,
+        FilterParameters::class.java.simpleName,
+        SimpleType::class.java.simpleName,
+        EdgeType::class.java.simpleName,
+        RandomType::class.java.simpleName,
+        InstanceValidator::class.java.simpleName,
+        CheckSource::class.java.simpleName,
+        Ignore::class.java.simpleName,
+        Compare::class.java.simpleName
     )
 
 val importsToRemove = annotationsToRemove.map { "edu.illinois.cs.cs125.questioner.lib.$it" }.toSet() +

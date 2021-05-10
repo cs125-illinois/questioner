@@ -148,7 +148,7 @@ data class ParsedJavaFile(val path: String, val contents: String) {
         }
     }.firstOrNull()
 
-    val wrapWith = topLevelClass.getAnnotation(WrapWith::class.java)?.let { className }
+    val wrapWith = topLevelClass.getAnnotation(Wrap::class.java)?.let { className }
 
     val citation = topLevelClass.getAnnotation(Cite::class.java)?.let { annotation ->
         @Suppress("TooGenericExceptionCaught")
@@ -157,7 +157,7 @@ data class ParsedJavaFile(val path: String, val contents: String) {
                 Question.Citation(parameters["source"]!!, parameters["link"])
             }
         } catch (e: Exception) {
-            error("Couldn't parse @WrapWith metadata for $path: $e")
+            error("Couldn't parse @Wrap metadata for $path: $e")
         }
     }
 
@@ -306,7 +306,7 @@ data class ParsedJavaFile(val path: String, val contents: String) {
                         require(lines.find {
                             it.contains("TEMPLATE_START") || it.contains("TEMPLATE_END")
                         } == null) {
-                            "@WrapWith should not use template delimiters"
+                            "@Wrap should not use template delimiters"
                         }
                     }.joinToString("\n").trimIndent().trim()
                 }

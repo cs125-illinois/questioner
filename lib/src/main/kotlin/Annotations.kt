@@ -75,7 +75,7 @@ annotation class Whitelist(val paths: String)
 annotation class Blacklist(val paths: String)
 
 @Target(AnnotationTarget.CLASS)
-annotation class WrapWith(val klass: String = "Question")
+annotation class Wrap
 
 @Target(AnnotationTarget.CLASS)
 annotation class Cite(val source: String, val link: String = "")

@@ -40,7 +40,6 @@ class QuestionerPlugin : Plugin<Project> {
         generateMetatests.dependsOn(project.tasks.getByName("processResources"))
         project.afterEvaluate {
             project.tasks.getByName("processResources").dependsOn(saveQuestions)
-            project.tasks.getByName("compileTestKotlin").dependsOn(generateMetatests)
         }
         if (configuration.token != null) {
             val publishAll = project.tasks.create("publishQuestions")

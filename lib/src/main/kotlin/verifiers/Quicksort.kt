@@ -8,6 +8,7 @@ import edu.illinois.cs.cs125.jenisol.core.TestResult
 import edu.illinois.cs.cs125.jenisol.core.TestResult.Differs
 import java.util.*
 
+@Suppress("USELESS_CAST")
 fun verify(results: TestResult<Int, One<IntArray>>) {
     val pivotLocation = results.solution.returned
     if (pivotLocation != results.submission.returned) {
@@ -17,8 +18,10 @@ fun verify(results: TestResult<Int, One<IntArray>>) {
     if (pivotLocation == -1) {
         return
     }
-    val solution = results.solution.parameters.first.copyOf()
-    val submission = results.submission.parameters.first.copyOf()
+    val solutionParameters = results.solution.parameters as One<IntArray>
+    val submissionParameters = results.submission.parameters as One<IntArray>
+    val solution = solutionParameters.first.copyOf()
+    val submission = submissionParameters.first.copyOf()
 
     Truth.assertWithMessage("Partitioned arrays are not the same size")
         .that(submission.size)

@@ -221,7 +221,7 @@ data class ParsedKotlinFile(val path: String, val contents: String) {
                     require(lines.find {
                         it.contains("TEMPLATE_START") || it.contains("TEMPLATE_END")
                     } == null) {
-                        "@WrapWith should not use template delimiters"
+                        "@Wrap should not use template delimiters"
                     }
                 }.joinToString("\n").trimIndent().trim()
             }
