@@ -74,7 +74,7 @@ fun List<Question>.generateTest(packageName: String, klass: String, sourceRoot: 
     } else {
         ""
     }
-    return """${packageNameBlock}@file:Suppress("SpellCheckingInspection")
+    return """$packageNameBlock@file:Suppress("SpellCheckingInspection")
 
 import edu.illinois.cs.cs125.questioner.lib.Validator
 import io.kotest.core.spec.style.StringSpec

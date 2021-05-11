@@ -4,8 +4,29 @@ package edu.illinois.cs.cs125.questioner.plugin.save
 
 import com.squareup.moshi.JsonClass
 import com.squareup.moshi.Moshi
-import edu.illinois.cs.cs125.jenisol.core.*
-import edu.illinois.cs.cs125.questioner.lib.*
+import edu.illinois.cs.cs125.jenisol.core.Both
+import edu.illinois.cs.cs125.jenisol.core.CheckSource
+import edu.illinois.cs.cs125.jenisol.core.Compare
+import edu.illinois.cs.cs125.jenisol.core.DesignOnly
+import edu.illinois.cs.cs125.jenisol.core.EdgeType
+import edu.illinois.cs.cs125.jenisol.core.FilterParameters
+import edu.illinois.cs.cs125.jenisol.core.FixedParameters
+import edu.illinois.cs.cs125.jenisol.core.InstanceValidator
+import edu.illinois.cs.cs125.jenisol.core.RandomParameters
+import edu.illinois.cs.cs125.jenisol.core.RandomType
+import edu.illinois.cs.cs125.jenisol.core.SimpleType
+import edu.illinois.cs.cs125.jenisol.core.Verify
+import edu.illinois.cs.cs125.questioner.lib.AlsoCorrect
+import edu.illinois.cs.cs125.questioner.lib.Blacklist
+import edu.illinois.cs.cs125.questioner.lib.Correct
+import edu.illinois.cs.cs125.questioner.lib.Ignore
+import edu.illinois.cs.cs125.questioner.lib.Incorrect
+import edu.illinois.cs.cs125.questioner.lib.Question
+import edu.illinois.cs.cs125.questioner.lib.Starter
+import edu.illinois.cs.cs125.questioner.lib.Whitelist
+import edu.illinois.cs.cs125.questioner.lib.Wrap
+import edu.illinois.cs.cs125.questioner.lib.loadQuestions
+import edu.illinois.cs.cs125.questioner.lib.saveQuestions
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.FileCollection
 import org.gradle.api.plugins.JavaPluginConvention
@@ -201,7 +222,7 @@ fun List<ParsedJavaFile>.findQuestions(
                     .also {
                         require(it.isNotEmpty()) {
                             "Solution ${solution.correct.name} (${solution.path}) did not provide any counterexamples " +
-                                    "annotated with @Incorrect"
+                                "annotated with @Incorrect"
                         }
                     }.map { it.toIncorrectFile(javaCleanSpec) }.toMutableList().apply {
                         addAll(
@@ -368,17 +389,17 @@ val annotationsToDestroy =
     )
 
 val importsToRemove = annotationsToRemove.map { "edu.illinois.cs.cs125.questioner.lib.$it" }.toSet() +
-        "edu.illinois.cs.cs125.questioner.lib.Ignore"
+    "edu.illinois.cs.cs125.questioner.lib.Ignore"
 val packagesToRemove = setOf("edu.illinois.cs.cs125.jenisol")
 
 private val emailRegex = Pattern.compile(
     "[a-zA-Z0-9+._%\\-]{1,256}" +
-            "@" +
-            "[a-zA-Z0-9][a-zA-Z0-9\\-]{0,64}" +
-            "(" +
-            "\\." +
-            "[a-zA-Z0-9][a-zA-Z0-9\\-]{0,25}" +
-            ")+"
+        "@" +
+        "[a-zA-Z0-9][a-zA-Z0-9\\-]{0,64}" +
+        "(" +
+        "\\." +
+        "[a-zA-Z0-9][a-zA-Z0-9\\-]{0,25}" +
+        ")+"
 )
 
 fun String.isEmail(): Boolean = emailRegex.matcher(this).matches()

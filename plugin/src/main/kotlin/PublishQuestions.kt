@@ -6,7 +6,9 @@ import com.mongodb.client.model.Filters
 import com.mongodb.client.model.UpdateOptions
 import edu.illinois.cs.cs125.questioner.lib.loadFromPath
 import edu.illinois.cs.cs125.questioner.lib.toJSON
-import org.bson.*
+import org.bson.BsonBoolean
+import org.bson.BsonDateTime
+import org.bson.BsonDocument
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.TaskAction
@@ -16,7 +18,7 @@ import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
-import java.util.*
+import java.util.Date
 
 open class PublishQuestions : DefaultTask() {
     @Input
@@ -54,10 +56,13 @@ open class PublishQuestions : DefaultTask() {
                         Filters.eq("metadata.contentHash", question.metadata.contentHash)
                     ),
                     BsonDocument().apply {
-                        put("\$set", BsonDocument.parse(question.toJson()).apply {
-                            put("updated", BsonDateTime(Date().time))
-                            put("latest", BsonBoolean(true))
-                        })
+                        put(
+                            "\$set",
+                            BsonDocument.parse(question.toJson()).apply {
+                                put("updated", BsonDateTime(Date().time))
+                                put("latest", BsonBoolean(true))
+                            }
+                        )
                     },
                     UpdateOptions().upsert(true)
                 )
@@ -69,9 +74,12 @@ open class PublishQuestions : DefaultTask() {
                         Filters.ne("metadata.contentHash", question.metadata.contentHash)
                     ),
                     BsonDocument().apply {
-                        put("\$set", BsonDocument().apply {
-                            put("latest", BsonBoolean(false))
-                        })
+                        put(
+                            "\$set",
+                            BsonDocument().apply {
+                                put("latest", BsonBoolean(false))
+                            }
+                        )
                     }
                 )
             }

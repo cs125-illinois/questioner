@@ -2,8 +2,16 @@ package edu.illinois.cs.cs125.questioner.plugin.save
 
 import edu.illinois.cs.cs125.questioner.antlr.KotlinLexer
 import edu.illinois.cs.cs125.questioner.antlr.KotlinParser
-import edu.illinois.cs.cs125.questioner.lib.*
-import org.antlr.v4.runtime.*
+import edu.illinois.cs.cs125.questioner.lib.AlsoCorrect
+import edu.illinois.cs.cs125.questioner.lib.Incorrect
+import edu.illinois.cs.cs125.questioner.lib.Question
+import edu.illinois.cs.cs125.questioner.lib.Starter
+import org.antlr.v4.runtime.BaseErrorListener
+import org.antlr.v4.runtime.CharStream
+import org.antlr.v4.runtime.CharStreams
+import org.antlr.v4.runtime.CommonTokenStream
+import org.antlr.v4.runtime.RecognitionException
+import org.antlr.v4.runtime.Recognizer
 import org.apache.tools.ant.filters.StringInputStream
 import org.intellij.markdown.flavours.commonmark.CommonMarkFlavourDescriptor
 import org.intellij.markdown.html.HtmlGenerator
@@ -77,7 +85,6 @@ data class ParsedKotlinFile(val path: String, val contents: String) {
             reason,
             Question.Language.kotlin
         )
-
     }
 
     val className: String = if (topLevelFile) {
@@ -169,7 +176,7 @@ data class ParsedKotlinFile(val path: String, val contents: String) {
             parseTree.preamble().fileAnnotations().fileAnnotation()?.flatMap { it.unescapedAnnotation() }
                 ?.filter { annotation ->
                     annotation.identifier()?.text != null &&
-                            annotationsToRemove.contains(annotation.identifier().text.removePrefix("@"))
+                        annotationsToRemove.contains(annotation.identifier().text.removePrefix("@"))
                 }?.forEach { context ->
                     (context.start.startIndex.toLine()..context.stop.stopIndex.toLine()).forEach {
                         toRemove.add(it)
@@ -218,9 +225,11 @@ data class ParsedKotlinFile(val path: String, val contents: String) {
                 val start = context.start.line
                 val end = context.stop.line
                 split("\n").subList(start, end - 1).also { lines ->
-                    require(lines.find {
-                        it.contains("TEMPLATE_START") || it.contains("TEMPLATE_END")
-                    } == null) {
+                    require(
+                        lines.find {
+                            it.contains("TEMPLATE_START") || it.contains("TEMPLATE_END")
+                        } == null
+                    ) {
                         "@Wrap should not use template delimiters"
                     }
                 }.joinToString("\n").trimIndent().trim()

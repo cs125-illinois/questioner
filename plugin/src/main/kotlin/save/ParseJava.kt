@@ -6,8 +6,22 @@ import edu.illinois.cs.cs125.jeed.core.Source
 import edu.illinois.cs.cs125.jeed.core.checkstyle
 import edu.illinois.cs.cs125.questioner.antlr.JavaLexer
 import edu.illinois.cs.cs125.questioner.antlr.JavaParser
-import edu.illinois.cs.cs125.questioner.lib.*
-import org.antlr.v4.runtime.*
+import edu.illinois.cs.cs125.questioner.lib.AlsoCorrect
+import edu.illinois.cs.cs125.questioner.lib.Blacklist
+import edu.illinois.cs.cs125.questioner.lib.Cite
+import edu.illinois.cs.cs125.questioner.lib.Correct
+import edu.illinois.cs.cs125.questioner.lib.CorrectData
+import edu.illinois.cs.cs125.questioner.lib.Incorrect
+import edu.illinois.cs.cs125.questioner.lib.Question
+import edu.illinois.cs.cs125.questioner.lib.Starter
+import edu.illinois.cs.cs125.questioner.lib.Whitelist
+import edu.illinois.cs.cs125.questioner.lib.Wrap
+import org.antlr.v4.runtime.BaseErrorListener
+import org.antlr.v4.runtime.CharStream
+import org.antlr.v4.runtime.CharStreams
+import org.antlr.v4.runtime.CommonTokenStream
+import org.antlr.v4.runtime.RecognitionException
+import org.antlr.v4.runtime.Recognizer
 import org.apache.tools.ant.filters.StringInputStream
 import org.intellij.markdown.flavours.commonmark.CommonMarkFlavourDescriptor
 import org.intellij.markdown.html.HtmlGenerator
@@ -303,9 +317,11 @@ data class ParsedJavaFile(val path: String, val contents: String) {
                     val start = context.classDeclaration().start.line
                     val end = context.classDeclaration().stop.line
                     split("\n").subList(start, end - 1).also { lines ->
-                        require(lines.find {
-                            it.contains("TEMPLATE_START") || it.contains("TEMPLATE_END")
-                        } == null) {
+                        require(
+                            lines.find {
+                                it.contains("TEMPLATE_START") || it.contains("TEMPLATE_END")
+                            } == null
+                        ) {
                             "@Wrap should not use template delimiters"
                         }
                     }.joinToString("\n").trimIndent().trim()
@@ -359,7 +375,6 @@ internal fun String.parseJava() = CharStreams.fromStream(StringInputStream(this)
     }
 }
 
-
 fun JavaParser.CompilationUnitContext.topLevelClass(): JavaParser.TypeDeclarationContext =
     children.filterIsInstance<JavaParser.TypeDeclarationContext>().filter {
         it.classDeclaration() != null || it.interfaceDeclaration() != null
@@ -379,14 +394,14 @@ fun JavaParser.TypeDeclarationContext.getAnnotations(annotation: Class<*>): List
     }.map { it.annotation() }
 
 fun JavaParser.AnnotationContext.parameterMap(): Map<String, String> =
-    elementValuePairs()?.elementValuePair()?.map {
+    elementValuePairs()?.elementValuePair()?.associate {
         it.IDENTIFIER().toString() to it.elementValue().expression().primary().literal().let { literal ->
             literal.STRING_LITERAL()
                 ?: literal.integerLiteral()?.DECIMAL_LITERAL()
                 ?: literal.BOOL_LITERAL()
                 ?: literal.floatLiteral()?.FLOAT_LITERAL()
         }.toString().removeSurrounding("\"")
-    }?.toMap() ?: mapOf()
+    } ?: mapOf()
 
 fun JavaParser.AnnotationContext.comment(): String {
     return when {
