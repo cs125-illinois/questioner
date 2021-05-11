@@ -8,7 +8,7 @@ plugins {
 }
 subprojects {
     group = "com.github.cs125-illinois.questioner"
-    version = "2021.5.3"
+    version = "2021.5.4"
     tasks.withType<KotlinCompile> {
         val javaVersion = JavaVersion.VERSION_1_8.toString()
         sourceCompatibility = javaVersion
@@ -17,16 +17,9 @@ subprojects {
             jvmTarget = javaVersion
         }
     }
-    /*
-    configurations.all {
-        resolutionStrategy {
-            force(
-                "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.5.0",
-                "org.jetbrains.kotlin:kotlin-script-runtime:1.5.0"
-            )
-        }
+    tasks.withType<Test> {
+        useJUnitPlatform()
     }
-     */
 }
 allprojects {
     repositories {
@@ -40,9 +33,9 @@ allprojects {
 }
 tasks.dependencyUpdates {
     fun String.isNonStable() = !(
-            listOf("RELEASE", "FINAL", "GA", "JRE").any { toUpperCase().contains(it) }
-                    || "^[0-9,.v-]+(-r)?$".toRegex().matches(this)
-            )
+        listOf("RELEASE", "FINAL", "GA", "JRE").any { toUpperCase().contains(it) }
+            || "^[0-9,.v-]+(-r)?$".toRegex().matches(this)
+        )
     rejectVersionIf { candidate.version.isNonStable() }
     gradleReleaseChannel = "current"
 }

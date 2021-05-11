@@ -55,5 +55,6 @@ class QuestionerPlugin : Plugin<Project> {
         project.convention.getPlugin(JavaPluginConvention::class.java)
             .sourceSets.getByName("main").resources { it.srcDirs(File(project.buildDir, "questioner")) }
         project.tasks.register("questionerTesting", TestingTask::class.java)
+        project.tasks.register("cleanQuestions", CleanQuestions::class.java)
     }
 }

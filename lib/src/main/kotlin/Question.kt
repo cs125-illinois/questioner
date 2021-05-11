@@ -26,6 +26,7 @@ import edu.illinois.cs.cs125.jeed.core.kompile
 import edu.illinois.cs.cs125.jeed.core.ktLint
 import edu.illinois.cs.cs125.jeed.core.moshi.CompiledSourceResult
 import edu.illinois.cs.cs125.jenisol.core.CapturedResult
+import edu.illinois.cs.cs125.jenisol.core.ParameterGroup
 import edu.illinois.cs.cs125.jenisol.core.Settings
 import edu.illinois.cs.cs125.jenisol.core.SubmissionDesignError
 import edu.illinois.cs.cs125.jenisol.core.TestResult
@@ -52,7 +53,7 @@ data class Question(
     val klass: String,
     val metadata: Metadata,
     val question: FlatFile,
-    val correct: FlatFile,
+    val correct: FlatFileWithComplexity,
     val alternativeSolutions: List<FlatFile>,
     val incorrect: List<IncorrectFile>,
     val common: List<String>?,
@@ -99,6 +100,14 @@ data class Question(
 
     @JsonClass(generateAdapter = true)
     data class FlatFile(val klass: String, val contents: String, val language: Language)
+
+    @JsonClass(generateAdapter = true)
+    data class FlatFileWithComplexity(
+        val klass: String,
+        val contents: String,
+        val language: Language,
+        val complexity: Int
+    )
 
     @JsonClass(generateAdapter = true)
     data class IncorrectFile(val klass: String, val contents: String, val reason: Reason, val language: Language) {
@@ -303,10 +312,10 @@ data class Question(
             }
             val klass = it.first()
             if (!(
-                        language == Language.kotlin &&
-                                solution.skipReceiver &&
-                                klass == "${compilationDefinedClass}Kt"
-                        )
+                    language == Language.kotlin &&
+                        solution.skipReceiver &&
+                        klass == "${compilationDefinedClass}Kt"
+                    )
             ) {
                 if (klass != compilationDefinedClass) {
                     message =
@@ -362,6 +371,12 @@ data class Question(
 
     @Transient
     var slowestFailingContent = ""
+
+    @Transient
+    var slowestFailingFailed = false
+
+    @Transient
+    var slowestFailingInputs: ParameterGroup? = null
 
     var solutionPrinted = 0
 
@@ -547,6 +562,8 @@ data class Question(
                 if (correct == false && results.size > requiredTestCount) {
                     requiredTestCount = results.size
                     slowestFailingContent = compiledSubmission.source.contents
+                    slowestFailingFailed = results.any { it.failed }
+                    slowestFailingInputs = results.find { it.failed }?.parameters
                 }
                 testResults.complete.testing =
                     TestResults.TestingResult(results.map { it.asTestResult(compiledSubmission.source) }, results.size)
@@ -556,6 +573,7 @@ data class Question(
     }
 
     var validated = false
+    var validationSeed: Int? = null
 
     data class ValidationReport(
         val incorrect: Int,
@@ -563,11 +581,8 @@ data class Question(
         val requiredTestCount: Int,
         val kotlin: Boolean,
         val kotlinIncorrect: Int,
-        val slowestFailing: String?,
         val timeout: Long
-    ) {
-        fun summary() = copy(slowestFailing = null).toString()
-    }
+    )
 
     @Suppress("LongMethod", "ComplexMethod")
     suspend fun initialize(addMutations: Boolean = true, seed: Int = Random.nextInt()): ValidationReport {
@@ -615,26 +630,26 @@ data class Question(
         }
 
         val incorrectToTest = (
-                incorrect + if (metadata.mutate && addMutations) {
-                    templateSubmission(
-                        if (getTemplate(Language.java) != null) {
-                            "// TEMPLATE_START\n" + correct.contents + "\n// TEMPLATE_END \n"
-                        } else {
-                            correct.contents
-                        }
-                    ).allMutations(random = Random(seed))
-                        .map { it.contents.kotlinDeTemplate(getTemplate(Language.java)) }
-                        // Templated questions sometimes will mutate the template
-                        .filter { it != correct.contents }
-                        .map { IncorrectFile(klass, it, IncorrectFile.Reason.TEST, Language.java) }
-                } else {
-                    listOf()
-                }.also { incorrect ->
-                    check(incorrect.all { it.contents != correct.contents }) {
-                        "Incorrect solution identical to correct solution"
+            incorrect + if (metadata.mutate && addMutations) {
+                templateSubmission(
+                    if (getTemplate(Language.java) != null) {
+                        "// TEMPLATE_START\n" + correct.contents + "\n// TEMPLATE_END \n"
+                    } else {
+                        correct.contents
                     }
+                ).allMutations(random = Random(seed))
+                    .map { it.contents.kotlinDeTemplate(getTemplate(Language.java)) }
+                    // Templated questions sometimes will mutate the template
+                    .filter { it != correct.contents }
+                    .map { IncorrectFile(klass, it, IncorrectFile.Reason.TEST, Language.java) }
+            } else {
+                listOf()
+            }.also { incorrect ->
+                check(incorrect.all { it.contents != correct.contents }) {
+                    "Incorrect solution identical to correct solution"
                 }
-                ).also {
+            }
+            ).also {
                 check(incorrect.isNotEmpty()) { "No incorrect examples found" }
             }
 
@@ -664,15 +679,37 @@ data class Question(
             requiredTestCount,
             hasKotlin,
             incorrect.count { it.language == Language.kotlin },
-            slowestFailingContent,
             submissionTimeout
         )
         check(requiredTestCount > 0)
+        if (requiredTestCount > metadata.maxTestCount) {
+            if (slowestFailingFailed) {
+                error(
+                    """Found incorrect input $slowestFailingInputs for the following incorrect code,
+                        |but it took too many tests (${requiredTestCount} > ${metadata.maxTestCount}):
+                        |---
+                        |$slowestFailingContent
+                        |---
+                        |Perhaps add this input to @FixedParameters?
+                        """.trimMargin()
+                )
+            } else {
+                error(
+                    """Unable to find a failing input for the following incorrect code:
+                        |---
+                        |$slowestFailingContent
+                        |---
+                        |Perhaps add an input to @FixedParameters, or disable this mutation using // mutate-disable?
+                        """.trimMargin()
+                )
+            }
+        }
         require(requiredTestCount <= metadata.maxTestCount) {
             "Requires too many tests: $report"
         }
 
         validated = true
+        validationSeed = seed
 
         test(
             correct.contents,
@@ -731,7 +768,7 @@ data class Question(
 
     val hasKotlin =
         metadata.kotlinDescription != null && alternativeSolutions.find { it.language == Language.kotlin } != null &&
-                ((javaStarter != null) == (kotlinStarter != null))
+            ((javaStarter != null) == (kotlinStarter != null))
 
     companion object {
         const val DEFAULT_RETURN_TIMEOUT = 1024

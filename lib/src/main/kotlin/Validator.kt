@@ -20,12 +20,7 @@ class Validator(questionsFile: File, private val sourceDir: String, private val 
             return
         }
         question.initialize(seed = seed).also { report ->
-            val output = if (verbose) {
-                report.toString()
-            } else {
-                report.summary()
-            }
-            println("$name: $output")
+            println("$name: $report")
             question.validationFile(sourceDir)
                 .writeText(moshi.adapter(Question::class.java).indent("  ").toJson(questions[name]))
         }

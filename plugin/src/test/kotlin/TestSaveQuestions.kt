@@ -45,7 +45,7 @@ public class Second {
 
                 parsedFile.correct shouldNotBe null
                 parsedFile.type shouldBe "Correct"
-                parsedFile.wrapWith shouldBe "Question"
+                parsedFile.wrapWith shouldBe "Second"
 
                 parsedFile.correct!!.also {
                     it.name shouldBe "Test"

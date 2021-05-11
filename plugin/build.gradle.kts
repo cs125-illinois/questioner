@@ -38,6 +38,9 @@ tasks.compileKotlin {
 tasks.compileTestKotlin {
     dependsOn(tasks.generateGrammarSource)
 }
+tasks.lintKotlinMain {
+    dependsOn(tasks.generateGrammarSource)
+}
 tasks.generateGrammarSource {
     outputDirectory = File(projectDir, "src/main/java/edu/illinois/cs/cs125/questioner/antlr")
     arguments.addAll(

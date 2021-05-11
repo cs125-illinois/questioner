@@ -4,6 +4,8 @@ import com.google.googlejavaformat.java.Formatter
 import edu.illinois.cs.cs125.jeed.core.CheckstyleArguments
 import edu.illinois.cs.cs125.jeed.core.Source
 import edu.illinois.cs.cs125.jeed.core.checkstyle
+import edu.illinois.cs.cs125.jeed.core.complexity
+import edu.illinois.cs.cs125.jeed.core.fromSnippet
 import edu.illinois.cs.cs125.questioner.antlr.JavaLexer
 import edu.illinois.cs.cs125.questioner.antlr.JavaParser
 import edu.illinois.cs.cs125.questioner.lib.AlsoCorrect
@@ -175,7 +177,7 @@ data class ParsedJavaFile(val path: String, val contents: String) {
         }
     }
 
-    fun toCleanSolution(cleanSpec: CleanSpec): Question.FlatFile {
+    fun toCleanSolution(cleanSpec: CleanSpec): Question.FlatFileWithComplexity {
         val solutionContent = clean(cleanSpec).let { content ->
             Source.fromJava(content).checkstyle(CheckstyleArguments(failOnError = false)).let { results ->
                 val removeLines = results.errors.filter { error ->
@@ -184,7 +186,18 @@ data class ParsedJavaFile(val path: String, val contents: String) {
                 content.lines().filterIndexed { index, _ -> !removeLines.contains(index + 1) }.joinToString("\n")
             }
         }
-        return Question.FlatFile(className, solutionContent, Question.Language.java)
+        val complexity = if (cleanSpec.notClass) {
+            Source.fromSnippet(solutionContent)
+        } else {
+            Source(mapOf("$className.java" to solutionContent))
+        }.complexity().let {
+            if (cleanSpec.notClass) {
+                it.lookup("")
+            } else {
+                it.lookup(className, "$className.java")
+            }
+        }.complexity
+        return Question.FlatFileWithComplexity(className, solutionContent, Question.Language.java, complexity)
     }
 
     fun toIncorrectFile(cleanSpec: CleanSpec): Question.IncorrectFile {

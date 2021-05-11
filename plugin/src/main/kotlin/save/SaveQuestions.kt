@@ -408,7 +408,9 @@ data class CleanSpec(
     val hasTemplate: Boolean = false,
     val wrappedClass: String? = null,
     val importNames: List<String> = listOf()
-)
+) {
+    val notClass = hasTemplate || wrappedClass != null
+}
 
 internal fun String.stripPackage(): String {
     val packageLine = lines().indexOfFirst { it.trim().startsWith("package ") }
