@@ -93,11 +93,6 @@ data class ParsedJavaFile(val path: String, val contents: String) {
                 val version = parameters["version"] ?: error("version field not set on @Correct")
                 val author = parameters["author"] ?: error("author field not set on @Correct")
                 assert(author.isEmail()) { "author field is not an email address" }
-                val points = parameters["points"]?.toInt() ?: Correct.DEFAULT_POINTS
-                val timeoutMultiplier = parameters["timeoutMultiplier"]?.toDouble()
-                    ?: Correct.DEFAULT_TIMEOUT_MULTIPLIER
-                val minTimeout = parameters["minTimeout"]?.toLong() ?: Correct.DEFAULT_MIN_TIMEOUT
-                val mutate = parameters["mutate"]?.toBoolean() ?: Correct.DEFAULT_MUTATE
                 val checkstyle = parameters["checkstyle"]?.toBoolean() ?: Correct.DEFAULT_CHECKSTYLE
                 val solutionThrows = parameters["solutionThrows"]?.toBoolean() ?: Correct.DEFAULT_THROWS
                 val maxTestCount = parameters["maxTestCount"]?.toInt() ?: Correct.DEFAULT_MAX_TEST_COUNT
@@ -113,10 +108,6 @@ data class ParsedJavaFile(val path: String, val contents: String) {
                     version,
                     author,
                     description,
-                    points,
-                    timeoutMultiplier,
-                    minTimeout,
-                    mutate,
                     checkstyle,
                     solutionThrows,
                     maxTestCount,
@@ -177,7 +168,7 @@ data class ParsedJavaFile(val path: String, val contents: String) {
         }
     }
 
-    fun toCleanSolution(cleanSpec: CleanSpec): Question.FlatFileWithComplexity {
+    fun toCleanSolution(cleanSpec: CleanSpec): Question.FlatFile {
         val solutionContent = clean(cleanSpec).let { content ->
             Source.fromJava(content).checkstyle(CheckstyleArguments(failOnError = false)).let { results ->
                 val removeLines = results.errors.filter { error ->
@@ -197,7 +188,16 @@ data class ParsedJavaFile(val path: String, val contents: String) {
                 it.lookup(className, "$className.java")
             }
         }.complexity
-        return Question.FlatFileWithComplexity(className, solutionContent, Question.Language.java, complexity)
+        return Question.FlatFile(className, solutionContent, Question.Language.java, complexity)
+    }
+
+    fun extractTemplate(): String? {
+        val correctSolution = toCleanSolution(CleanSpec(false, null)).contents
+        val templateStart = Regex("""//.*TEMPLATE_START""").find(correctSolution)?.range?.start ?: return null
+        val templateEnd = correctSolution.indexOf("TEMPLATE_END")
+        val start = correctSolution.substring(0 until templateStart)
+        val end = correctSolution.substring((templateEnd + "TEMPLATE_END".length) until correctSolution.length)
+        return "$start{{{ contents }}}$end"
     }
 
     fun toIncorrectFile(cleanSpec: CleanSpec): Question.IncorrectFile {
@@ -210,7 +210,14 @@ data class ParsedJavaFile(val path: String, val contents: String) {
             "TIMEOUT" -> Question.IncorrectFile.Reason.TIMEOUT
             else -> error("Invalid incorrect reason: $incorrect: $path")
         }
-        return Question.IncorrectFile(className, clean(cleanSpec), reason, Question.Language.java)
+        return Question.IncorrectFile(
+            className,
+            clean(cleanSpec),
+            reason,
+            Question.Language.java,
+            path,
+            starter != null
+        )
     }
 
     fun toAlternateFile(cleanSpec: CleanSpec): Question.FlatFile {
@@ -249,13 +256,8 @@ data class ParsedJavaFile(val path: String, val contents: String) {
             .trim()
     }
 
-    private var cleaned: String? = null
-
     @Suppress("ComplexMethod")
     fun clean(cleanSpec: CleanSpec): String {
-        if (cleaned != null) {
-            return cleaned!!
-        }
         val (template, wrapWith, importNames) = cleanSpec
 
         val toRemove = mutableSetOf<Int>()
@@ -293,6 +295,14 @@ data class ParsedJavaFile(val path: String, val contents: String) {
                     toRemove.add(it)
                 }
             }
+            classBodyDeclaration.modifier().mapNotNull { it.classOrInterfaceModifier()?.annotation() }
+                .forEach { annotation ->
+                    if (annotation.qualifiedName()?.asString()!! in annotationsToRemove) {
+                        (annotation.start.startIndex.toLine()..annotation.stop.stopIndex.toLine()).forEach {
+                            toRemove.add(it)
+                        }
+                    }
+                }
         }
 
         return contents
@@ -314,9 +324,7 @@ data class ParsedJavaFile(val path: String, val contents: String) {
                         .joinToString("\n")
                 }
             }.javaDeTemplate(template, wrapWith)
-            .stripPackage().also {
-                cleaned = it
-            }
+            .stripPackage()
     }
 
     var usedImports: List<String> = listOf()

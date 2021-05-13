@@ -27,10 +27,7 @@ import edu.illinois.cs.cs125.questioner.lib.Correct;
   name="Test",
   version="2020.6.0",
   author="challen@illinois.edu",
-  points=90,
-  mutate=false,
-  minTimeout=64,
-  timeoutMultiplier=8.0
+  mutate=false
 )
 @Import(paths="examples.second, examples.first")
 @Wrap
@@ -51,11 +48,8 @@ public class Second {
                     it.name shouldBe "Test"
                     it.version shouldBe "2020.6.0"
                     it.author shouldBe "challen@illinois.edu"
-                    it.points shouldBe 90
                     it.mutate shouldBe false
                     it.description shouldBe "<p>Here is a <em>description</em>.</p>"
-                    it.timeoutMultiplier shouldBe 8.0
-                    it.minTimeout shouldBe 64
                 }
             }
         }

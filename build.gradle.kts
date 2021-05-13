@@ -8,7 +8,7 @@ plugins {
 }
 subprojects {
     group = "com.github.cs125-illinois.questioner"
-    version = "2021.5.4"
+    version = "2021.5.6"
     tasks.withType<KotlinCompile> {
         val javaVersion = JavaVersion.VERSION_1_8.toString()
         sourceCompatibility = javaVersion
@@ -26,6 +26,7 @@ allprojects {
         mavenCentral()
         maven("https://jitpack.io")
         maven("https://dl.bintray.com/jetbrains/markdown")
+        mavenLocal()
     }
     tasks.withType<Test> {
         enableAssertions = true

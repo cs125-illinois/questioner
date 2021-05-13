@@ -7,6 +7,7 @@ import com.squareup.moshi.Moshi
 import edu.illinois.cs.cs125.jenisol.core.Both
 import edu.illinois.cs.cs125.jenisol.core.CheckSource
 import edu.illinois.cs.cs125.jenisol.core.Compare
+import edu.illinois.cs.cs125.jenisol.core.Configure
 import edu.illinois.cs.cs125.jenisol.core.DesignOnly
 import edu.illinois.cs.cs125.jenisol.core.EdgeType
 import edu.illinois.cs.cs125.jenisol.core.FilterParameters
@@ -18,6 +19,7 @@ import edu.illinois.cs.cs125.jenisol.core.SimpleType
 import edu.illinois.cs.cs125.jenisol.core.Verify
 import edu.illinois.cs.cs125.questioner.lib.AlsoCorrect
 import edu.illinois.cs.cs125.questioner.lib.Blacklist
+import edu.illinois.cs.cs125.questioner.lib.Cite
 import edu.illinois.cs.cs125.questioner.lib.Correct
 import edu.illinois.cs.cs125.questioner.lib.Ignore
 import edu.illinois.cs.cs125.questioner.lib.Incorrect
@@ -204,11 +206,37 @@ fun List<ParsedJavaFile>.findQuestions(
                 myUsedFiles.add(it.path)
             }?.readText()?.stripPackage()
 
-            val javaCleanSpec = CleanSpec(javaTemplate != null, solution.wrapWith, importNames)
-            val kotlinCleanSpec = CleanSpec(kotlinTemplate != null, solution.wrapWith, importNames)
+            val kotlinSolution = kotlinFiles.find { it.alternateSolution != null && it.description != null }
+            if (kotlinFiles.any { it.alternateSolution != null }) {
+                check(kotlinSolution != null) {
+                    "Found Kotlin solutions but no description comment"
+                }
+            }
+
+            val hasJavaTemplate = solution.contents.lines().let { lines ->
+                lines.any { it.contains("TEMPLATE_START") } && lines.any { it.contains("TEMPLATE_END") }
+            }
+            val hasKotlinTemplate = kotlinSolution?.contents?.lines()?.let { lines ->
+                lines.any { it.contains("TEMPLATE_START") } && lines.any { it.contains("TEMPLATE_END") }
+            } ?: false
+
+            val javaCleanSpec = CleanSpec(hasJavaTemplate, solution.wrapWith, importNames)
+            val kotlinCleanSpec = CleanSpec(hasKotlinTemplate, solution.wrapWith, importNames)
+
+            if (hasJavaTemplate && javaTemplate == null && solution.wrapWith == null) {
+                javaTemplate = solution.extractTemplate() ?: error(
+                    "Can't extract Java template"
+                )
+            }
+
+            if (hasKotlinTemplate && kotlinTemplate == null && solution.wrapWith == null) {
+                kotlinTemplate = kotlinSolution!!.extractTemplate() ?: error(
+                    "Can't extract Kotlin template"
+                )
+            }
 
             val incorrectExamples =
-                otherFiles.filter { it.packageName.startsWith("${solution.packageName}.") }
+                otherFiles.asSequence().filter { it.packageName.startsWith("${solution.packageName}.") }
                     .filter { it.incorrect != null }
                     .onEach {
                         if (it.path in usedFiles) {
@@ -218,12 +246,6 @@ fun List<ParsedJavaFile>.findQuestions(
                         }
                         usedFiles[it.path] = "Incorrect"
                         myUsedFiles.add(it.path)
-                    }
-                    .also {
-                        require(it.isNotEmpty()) {
-                            "Solution ${solution.correct.name} (${solution.path}) did not provide any counterexamples " +
-                                "annotated with @Incorrect"
-                        }
                     }.map { it.toIncorrectFile(javaCleanSpec) }.toMutableList().apply {
                         addAll(
                             kotlinFiles.filter { it.incorrect != null }
@@ -283,8 +305,6 @@ fun List<ParsedJavaFile>.findQuestions(
                 it.toStarterFile(kotlinCleanSpec)
             }
 
-            val kotlinSolution = kotlinFiles.find { it.alternateSolution != null && it.description != null }
-
             if (solution.wrapWith != null) {
                 require(javaTemplate == null && kotlinTemplate == null) {
                     "Can't use both a template and @Wrap"
@@ -320,10 +340,6 @@ fun List<ParsedJavaFile>.findQuestions(
                     solution.correct.version,
                     solution.correct.author,
                     solution.correct.description,
-                    solution.correct.points,
-                    solution.correct.timeoutMultiplier,
-                    solution.correct.minTimeout,
-                    solution.correct.mutate,
                     solution.correct.checkstyle,
                     solution.correct.solutionThrows,
                     solution.correct.maxTestCount,
@@ -349,7 +365,7 @@ fun List<ParsedJavaFile>.findQuestions(
                 solution.blacklist.toSet()
             )
         } catch (e: Exception) {
-            throw Exception("Problem parsing ${solution.path}: $e")
+            throw Exception("Processing ${solution.path} failed:\n${e.message}")
         }
     }
     allPaths.filter { !usedFiles.containsKey(it) && !skippedFiles.contains(it) }.forEach {
@@ -370,7 +386,9 @@ val annotationsToRemove =
         Blacklist::class.java.simpleName,
         DesignOnly::class.java.simpleName,
         Wrap::class.java.simpleName,
-        AlsoCorrect::class.java.simpleName
+        AlsoCorrect::class.java.simpleName,
+        Configure::class.java.simpleName,
+        Cite::class.java.simpleName
     )
 val annotationsToDestroy =
     setOf(

@@ -10,10 +10,6 @@ data class CorrectData(
     val version: String,
     val author: String,
     val description: String,
-    val points: Int = Correct.DEFAULT_POINTS,
-    val timeoutMultiplier: Double = Correct.DEFAULT_TIMEOUT_MULTIPLIER,
-    val minTimeout: Long = Correct.DEFAULT_MIN_TIMEOUT,
-    val mutate: Boolean = Correct.DEFAULT_MUTATE,
     val checkstyle: Boolean = Correct.DEFAULT_CHECKSTYLE,
     val solutionThrows: Boolean = Correct.DEFAULT_THROWS,
     val maxTestCount: Int = Correct.DEFAULT_MAX_TEST_COUNT,
@@ -26,36 +22,22 @@ annotation class Correct(
     val name: String,
     val version: String,
     val author: String,
-    val points: Int = DEFAULT_POINTS,
-    val timeoutMultiplier: Double = DEFAULT_TIMEOUT_MULTIPLIER,
-    val minTimeout: Long = DEFAULT_MIN_TIMEOUT,
-    val mutate: Boolean = DEFAULT_MUTATE,
     val checkstyle: Boolean = DEFAULT_CHECKSTYLE,
     val solutionThrows: Boolean = DEFAULT_THROWS,
     val minTestCount: Int = DEFAULT_MIN_TEST_COUNT,
-    val maxTestCount: Int = DEFAULT_MAX_TEST_COUNT
+    val maxTestCount: Int = DEFAULT_MAX_TEST_COUNT,
+    val minMutationCount: Int = DEFAULT_MIN_MUTATION_COUNT,
+    val maxMutationCount: Int = DEFAULT_MAX_MUTATION_COUNT,
+    val minIncorrectCount: Int = DEFAULT_MIN_INCORRECT_COUNT
 ) {
     companion object {
-        const val DEFAULT_POINTS = 100
-        const val DEFAULT_TIMEOUT_MULTIPLIER = 4.0
-        const val DEFAULT_MIN_TIMEOUT = 512L
-        const val DEFAULT_MUTATE = true
         const val DEFAULT_CHECKSTYLE = true
         const val DEFAULT_THROWS = false
         const val DEFAULT_MIN_TEST_COUNT = 128
         const val DEFAULT_MAX_TEST_COUNT = 1024
-    }
-}
-
-@Target(AnnotationTarget.FUNCTION)
-annotation class Test(
-    val points: Int = 100,
-    val timeoutMultiplier: Double = DEFAULT_TRADITIONAL_TIMEOUT_MULTIPLIER,
-    val minTimeout: Long = DEFAULT_MIN_TIMEOUT
-) {
-    companion object {
-        const val DEFAULT_TRADITIONAL_TIMEOUT_MULTIPLIER = 4.0
-        const val DEFAULT_MIN_TIMEOUT = 128L
+        const val DEFAULT_MIN_MUTATION_COUNT = 0
+        const val DEFAULT_MAX_MUTATION_COUNT = 32
+        const val DEFAULT_MIN_INCORRECT_COUNT = 4
     }
 }
 

@@ -4,7 +4,6 @@ import edu.illinois.cs.cs125.questioner.lib.Question
 import edu.illinois.cs.cs125.questioner.lib.loadFromPath
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.InputFile
-import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
 import java.io.File
 
@@ -18,23 +17,30 @@ open class GenerateMetatests : DefaultTask() {
     @InputFile
     val input: File = File(project.buildDir, "questioner/questions.json")
 
-    @OutputFile
-    val output: File = project.file("src/test/kotlin/TestQuestions.kt")
-
     @TaskAction
     fun generate() {
+        val sourceRoot = project.javaSourceDir()
+        val tests = loadFromPath(input, sourceRoot.path).values.organizeTests()
+        if (tests.isEmpty()) {
+            logger.warn("No questions found.")
+            return
+        }
+
         val testRoot = project.file("src/test/kotlin")
         if (testRoot.exists()) {
             require(testRoot.isDirectory) { "test generation destination must be a directory" }
         } else {
             testRoot.mkdirs()
         }
-        val sourceRoot = project.javaSourceDir()
-        loadFromPath(input, sourceRoot.path).values.organizeTests().first().let { (packageName, questions) ->
-            val klass = "TestQuestions"
-            output.also {
+
+        tests.first().let { (packageName, questions) ->
+            project.file("src/test/kotlin/TestAllQuestions.kt").also {
                 it.parentFile.mkdirs()
-                it.writeText(questions.generateTest(packageName, klass, sourceRoot))
+                it.writeText(questions.generateTest(packageName, "TestAllQuestions", sourceRoot))
+            }
+            project.file("src/test/kotlin/TestQuestions.kt").also {
+                it.parentFile.mkdirs()
+                it.writeText(questions.generateTest(packageName, "TestQuestions", sourceRoot, true))
             }
         }
     }
@@ -61,8 +67,9 @@ fun Collection<Question>.organizeTests() = map {
     byPackage
 }.entries.sortedBy { it.key.length }
 
-fun List<Question>.generateTest(packageName: String, klass: String, sourceRoot: File): String {
+fun List<Question>.generateTest(packageName: String, klass: String, sourceRoot: File, onlyNotValidated: Boolean = false): String {
     val testBlock = filter { it.metadata.packageName.startsWith(packageName) }
+        .filter { !onlyNotValidated || !it.validated }
         .sortedBy { it.name }
         .joinToString(separator = "\n") {
             """  "${it.name} (${it.metadata.packageName}) should validate" {

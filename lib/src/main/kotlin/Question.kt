@@ -17,7 +17,6 @@ import edu.illinois.cs.cs125.jeed.core.KtLintResults
 import edu.illinois.cs.cs125.jeed.core.Sandbox
 import edu.illinois.cs.cs125.jeed.core.Source
 import edu.illinois.cs.cs125.jeed.core.TemplatingFailed
-import edu.illinois.cs.cs125.jeed.core.allMutations
 import edu.illinois.cs.cs125.jeed.core.checkstyle
 import edu.illinois.cs.cs125.jeed.core.compile
 import edu.illinois.cs.cs125.jeed.core.fromTemplates
@@ -25,6 +24,7 @@ import edu.illinois.cs.cs125.jeed.core.getStackTraceForSource
 import edu.illinois.cs.cs125.jeed.core.kompile
 import edu.illinois.cs.cs125.jeed.core.ktLint
 import edu.illinois.cs.cs125.jeed.core.moshi.CompiledSourceResult
+import edu.illinois.cs.cs125.jeed.core.mutationStream
 import edu.illinois.cs.cs125.jenisol.core.CapturedResult
 import edu.illinois.cs.cs125.jenisol.core.ParameterGroup
 import edu.illinois.cs.cs125.jenisol.core.Settings
@@ -53,7 +53,7 @@ data class Question(
     val klass: String,
     val metadata: Metadata,
     val question: FlatFile,
-    val correct: FlatFileWithComplexity,
+    val correct: FlatFile,
     val alternativeSolutions: List<FlatFile>,
     val incorrect: List<IncorrectFile>,
     val common: List<String>?,
@@ -74,10 +74,6 @@ data class Question(
         val version: String,
         val author: String,
         val javaDescription: String,
-        val points: Int,
-        val timeoutMultiplier: Double,
-        val minTimeout: Long,
-        val mutate: Boolean,
         val checkstyle: Boolean,
         val solutionThrows: Boolean,
         val maxTestCount: Int,
@@ -99,18 +95,22 @@ data class Question(
     enum class Language { java, kotlin }
 
     @JsonClass(generateAdapter = true)
-    data class FlatFile(val klass: String, val contents: String, val language: Language)
-
-    @JsonClass(generateAdapter = true)
-    data class FlatFileWithComplexity(
+    data class FlatFile(
         val klass: String,
         val contents: String,
         val language: Language,
-        val complexity: Int
+        val complexity: Int? = null
     )
 
     @JsonClass(generateAdapter = true)
-    data class IncorrectFile(val klass: String, val contents: String, val reason: Reason, val language: Language) {
+    data class IncorrectFile(
+        val klass: String,
+        val contents: String,
+        val reason: Reason,
+        val language: Language,
+        val path: String?,
+        val starter: Boolean
+    ) {
         enum class Reason { DESIGN, COMPILE, TEST, CHECKSTYLE, TIMEOUT }
     }
 
@@ -585,29 +585,10 @@ data class Question(
     )
 
     @Suppress("LongMethod", "ComplexMethod")
-    suspend fun initialize(addMutations: Boolean = true, seed: Int = Random.nextInt()): ValidationReport {
+    suspend fun initialize(seed: Int = Random.nextInt()): ValidationReport {
         val jenisolSettings = Settings(shrink = false)
 
-        test(
-            correct.contents,
-            jenisolSettings,
-            correct = true,
-            seed = seed
-        ).also { results ->
-            require(results.succeeded) {
-                "Solution did not pass the test suite: ${results.summary} ${correct.contents}"
-            }
-            if (!metadata.solutionThrows) {
-                val solutionThrew =
-                    results.complete.testing?.tests?.find {
-                        it.jenisol?.solution?.threw != null
-                    }
-                check(solutionThrew == null) { "Solution not expected to throw: $solutionThrew" }
-            }
-            results.checkSize()
-        }
-
-        alternativeSolutions.forEach { alsoCorrect ->
+        (setOf(correct) + alternativeSolutions).forEach { alsoCorrect ->
             test(
                 alsoCorrect.contents,
                 jenisolSettings,
@@ -622,39 +603,44 @@ data class Question(
                     val solutionThrew =
                         results.complete.testing?.tests?.find {
                             it.jenisol?.solution?.threw != null
-                        }?.explanation
-                    check(solutionThrew == null) { "Solution not expected to throw: $solutionThrew" }
+                        }?.jenisol?.solution?.threw
+                    check(solutionThrew == null) {
+                        "Solution threw $solutionThrew but not expected to throw\n" +
+                            "Perhaps you need to add solutionThrows = true to @Correct"
+                    }
                 }
                 results.checkSize()
             }
         }
 
-        val incorrectToTest = (
-            incorrect + if (metadata.mutate && addMutations) {
-                templateSubmission(
-                    if (getTemplate(Language.java) != null) {
-                        "// TEMPLATE_START\n" + correct.contents + "\n// TEMPLATE_END \n"
-                    } else {
-                        correct.contents
-                    }
-                ).allMutations(random = Random(seed))
-                    .map { it.contents.kotlinDeTemplate(getTemplate(Language.java)) }
-                    // Templated questions sometimes will mutate the template
-                    .filter { it != correct.contents }
-                    .map { IncorrectFile(klass, it, IncorrectFile.Reason.TEST, Language.java) }
+        val mutations = templateSubmission(
+            if (getTemplate(Language.java) != null) {
+                "// TEMPLATE_START\n" + correct.contents + "\n// TEMPLATE_END \n"
             } else {
-                listOf()
-            }.also { incorrect ->
-                check(incorrect.all { it.contents != correct.contents }) {
-                    "Incorrect solution identical to correct solution"
+                correct.contents
+            }
+        ).mutationStream(random = Random(seed)).take(64).toList()
+            .map {
+                // Mutations will sometimes break the entire template
+                try {
+                    it.contents.kotlinDeTemplate(getTemplate(Language.java))
+                } catch (e: Exception) {
+                    correct.contents
                 }
             }
-            ).also {
-                check(incorrect.isNotEmpty()) { "No incorrect examples found" }
-            }
+            // Templated questions sometimes will mutate the template
+            .filter { it != correct.contents }
+            .take(32)
+            .map { IncorrectFile(klass, it, IncorrectFile.Reason.TEST, Language.java, null, false) }
 
-        incorrectToTest.forEachIndexed { index, wrong ->
-            val isMutated = index >= incorrect.size
+        val allIncorrect = (incorrect + mutations).also { allIncorrect ->
+            check(allIncorrect.all { it.contents != correct.contents }) {
+                "Incorrect solution identical to correct solution"
+            }
+            check(allIncorrect.isNotEmpty()) { "No incorrect examples found" }
+        }
+
+        mutations.forEach { wrong ->
             test(
                 wrong.contents,
                 jenisolSettings,
@@ -663,24 +649,40 @@ data class Question(
                 seed = seed
             ).also {
                 require(!it.succeeded) { "Incorrect submission was not rejected:\n${wrong.contents}" }
-                it.validate(wrong.reason, wrong.contents, isMutated)
+                it.validate(wrong.reason, wrong.contents, true)
                 it.checkSize()
             }
         }
 
-        submissionTimeout = if (submissionTimeout == 0L) {
-            1
-        } else {
-            submissionTimeout
+        incorrect.forEach { wrong ->
+            val previousTestCount = requiredTestCount
+            test(
+                wrong.contents,
+                jenisolSettings,
+                correct = false,
+                language = wrong.language,
+                seed = seed
+            ).also {
+                require(!it.succeeded) { "Incorrect submission was not rejected:\n${wrong.contents}" }
+                it.validate(wrong.reason, wrong.contents, false)
+                it.checkSize()
+            }
+            if (requiredTestCount == previousTestCount && !wrong.starter) {
+                println("WARN: ${wrong.path} did not increase the test count and may not be needed")
+            }
         }
+
+        submissionTimeout = submissionTimeout.coerceAtLeast(1)
+
         val report = ValidationReport(
-            incorrectToTest.size,
-            (incorrectToTest.size - incorrect.size),
+            allIncorrect.size,
+            mutations.size,
             requiredTestCount,
             hasKotlin,
             incorrect.count { it.language == Language.kotlin },
             submissionTimeout
         )
+
         check(requiredTestCount > 0)
         if (requiredTestCount > metadata.maxTestCount) {
             if (slowestFailingFailed) {
@@ -720,8 +722,8 @@ data class Question(
             require(results.succeeded) {
                 "Untimed solution did not pass the test suite after validation: ${results.summary} ${correct.contents}"
             }
-            submissionTimeout = (results.taskResults!!.interval.length.toDouble() * metadata.timeoutMultiplier).toLong()
-                .coerceAtLeast(metadata.minTimeout)
+            submissionTimeout = (results.taskResults!!.interval.length.toDouble() * DEFAULT_TIMEOUT_MULTIPLIER).toLong()
+                .coerceAtLeast(DEFAULT_MIN_TIMEOUT)
             solutionPrinted = results.taskResults!!.outputLines.size
             results.checkSize()
         }
@@ -746,7 +748,7 @@ data class Question(
             }
         }
 
-        incorrectToTest.forEachIndexed { index, wrong ->
+        (incorrect + mutations).forEachIndexed { index, wrong ->
             val isMutated = index >= incorrect.size
             test(
                 wrong.contents,
@@ -773,7 +775,7 @@ data class Question(
     companion object {
         const val DEFAULT_RETURN_TIMEOUT = 1024
         const val DEFAULT_SOLUTION_TIMEOUT = 4096L
-        const val DEFAULT_KNOWN_INCORRECT_TIMEOUT = 4096L
+        const val DEFAULT_KNOWN_INCORRECT_TIMEOUT = 1096L
         const val MAX_START_MULTIPLE_COUNT = 128
         const val MAX_TEST_COUNT = 1024 * 1024
         const val SUBMISSION_TEST_MULTIPLIER = 2
@@ -781,6 +783,8 @@ data class Question(
         const val MIN_OUTPUT_LINES = 1024
         const val OUTPUT_LINE_MULTIPLIER = 8
         const val DEFAULT_MAX_OUTPUT_SIZE = 8 * 1024 * 1024
+        const val DEFAULT_MIN_TIMEOUT = 128L
+        const val DEFAULT_TIMEOUT_MULTIPLIER = 4.0
 
         @Transient
         val SAFE_PERMISSIONS =
@@ -981,7 +985,7 @@ fun Question.validationFile(sourceDir: String) = File(
     "${metadata.packageName.replace(".", File.separator)}/.validation.json"
 )
 
-fun loadFromPath(questionsFile: File, sourceDir: String): Map<String, Question> {
+fun loadFromPath(questionsFile: File, sourceDir: String, validated: Boolean = true): Map<String, Question> {
     return moshi.adapter<Map<String, Question>>(
         Types.newParameterizedType(
             Map::class.java,
@@ -989,15 +993,19 @@ fun loadFromPath(questionsFile: File, sourceDir: String): Map<String, Question> 
             Question::class.java
         )
     ).fromJson(questionsFile.readText())!!.toMutableMap().mapValues { (_, question) ->
-        val validationPath = question.validationFile(sourceDir)
-        if (!validationPath.exists()) {
-            return@mapValues question
+        if (validated) {
+            val validationPath = question.validationFile(sourceDir)
+            if (!validationPath.exists()) {
+                return@mapValues question
+            }
+            val validatedQuestion = moshi.adapter(Question::class.java).fromJson(validationPath.readText())!!
+            if (question.metadata.contentHash != validatedQuestion.metadata.contentHash) {
+                return@mapValues question
+            }
+            validatedQuestion
+        } else {
+            question
         }
-        val validatedQuestion = moshi.adapter(Question::class.java).fromJson(validationPath.readText())!!
-        if (question.metadata.contentHash != validatedQuestion.metadata.contentHash) {
-            return@mapValues question
-        }
-        validatedQuestion
     }.toMap()
 }
 

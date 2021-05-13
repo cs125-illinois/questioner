@@ -83,7 +83,9 @@ data class ParsedKotlinFile(val path: String, val contents: String) {
             className,
             clean(cleanSpec),
             reason,
-            Question.Language.kotlin
+            Question.Language.kotlin,
+            path,
+            starter != null
         )
     }
 
@@ -146,13 +148,8 @@ data class ParsedKotlinFile(val path: String, val contents: String) {
             null
         }
 
-    private var cleaned: String? = null
-
     @Suppress("ComplexMethod")
     fun clean(cleanSpec: CleanSpec): String {
-        if (cleaned != null) {
-            return cleaned!!
-        }
         val (hasTemplate, wrapWith, importNames) = cleanSpec
         val toRemove = mutableSetOf<Int>()
         parseTree.preamble()?.packageHeader()?.also {
@@ -182,6 +179,15 @@ data class ParsedKotlinFile(val path: String, val contents: String) {
                         toRemove.add(it)
                     }
                 }
+            parseTree.topLevelObject().mapNotNull { it.functionDeclaration()?.modifierList()?.annotations() }
+                .flatten().mapNotNull { it.annotation() }.filter { annotation ->
+                    annotation.LabelReference()?.text != null &&
+                        annotationsToRemove.contains(annotation.LabelReference().text.removePrefix("@"))
+                }.forEach { context ->
+                    (context.start.startIndex.toLine()..context.stop.stopIndex.toLine()).forEach {
+                        toRemove.add(it)
+                    }
+                }
         } else {
             topLevelClass!!.DelimitedComment()?.also { node ->
                 (node.symbol.startIndex.toLine()..node.symbol.stopIndex.toLine()).forEach { toRemove.add(it) }
@@ -201,15 +207,26 @@ data class ParsedKotlinFile(val path: String, val contents: String) {
         return contents
             .split("\n")
             .filterIndexed { index, _ -> (index + 1) !in toRemove }
-            .joinToString("\n")
+            .joinToString("\n") { line ->
+                Regex("""//.*mutate-disable""").find(line)?.let {
+                    line.substring(0 until it.range.first).trimEnd()
+                } ?: line
+            }
             .trim()
             .kotlinDeTemplate(hasTemplate, wrapWith)
-            .stripPackage().also {
-                cleaned = it
-            }
+            .stripPackage()
     }
 
     var usedImports: List<String> = listOf()
+
+    fun extractTemplate(): String? {
+        val correctSolution = clean(CleanSpec(false, null))
+        val templateStart = Regex("""//.*TEMPLATE_START""").find(correctSolution)?.range?.start ?: return null
+        val templateEnd = correctSolution.indexOf("TEMPLATE_END")
+        val start = correctSolution.substring(0 until templateStart)
+        val end = correctSolution.substring((templateEnd + "TEMPLATE_END".length) until correctSolution.length)
+        return "$start{{{ contents }}}$end"
+    }
 
     private fun String.kotlinDeTemplate(hasTemplate: Boolean, wrappedClass: String?) = when {
         wrappedClass != null && topLevelFile -> {

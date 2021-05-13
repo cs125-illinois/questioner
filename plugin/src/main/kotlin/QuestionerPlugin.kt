@@ -13,7 +13,7 @@ import java.io.File
 import java.util.UUID
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-data class QuestionerConfig(val token: String?, val publish: Map<String, String> = mapOf()) {
+data class QuestionerConfig(val token: String? = null, val publish: Map<String, String>? = mapOf()) {
     init {
         require(token == null || UUID.fromString(token) != null) { "Invalid UUID: $token" }
     }
@@ -29,11 +29,18 @@ fun Project.javaSourceDir(): File =
 @Suppress("unused")
 class QuestionerPlugin : Plugin<Project> {
     override fun apply(project: Project) {
-        val configurationFile = project.file("questioner.yaml").also {
-            require(it.exists()) { "Could not load questioner.yaml configuration file" }
+        val configuration = project.file("questioner.yaml").let {
+            if (it.exists()) {
+                try {
+                    ObjectMapper(YAMLFactory()).apply { registerModule(KotlinModule()) }.readValue(it)
+                } catch (e: Exception) {
+                    project.logger.warn("Invalid questioner.yaml file.")
+                    QuestionerConfig()
+                }
+            } else {
+                QuestionerConfig()
+            }
         }
-        val configuration = ObjectMapper(YAMLFactory()).apply { registerModule(KotlinModule()) }
-            .readValue<QuestionerConfig>(configurationFile)
 
         val saveQuestions = project.tasks.register("saveQuestions", SaveQuestions::class.java).get()
         val generateMetatests = project.tasks.register("generateQuestionMetatests", GenerateMetatests::class.java).get()
@@ -43,7 +50,7 @@ class QuestionerPlugin : Plugin<Project> {
         }
         if (configuration.token != null) {
             val publishAll = project.tasks.create("publishQuestions")
-            configuration.publish.entries.forEach { (name, url) ->
+            configuration.publish?.entries?.forEach { (name, url) ->
                 val publishQuestions =
                     project.tasks.register("${name}PublishQuestions", PublishQuestions::class.java).get()
                 publishQuestions.token = configuration.token
@@ -56,5 +63,9 @@ class QuestionerPlugin : Plugin<Project> {
             .sourceSets.getByName("main").resources { it.srcDirs(File(project.buildDir, "questioner")) }
         project.tasks.register("questionerTesting", TestingTask::class.java)
         project.tasks.register("cleanQuestions", CleanQuestions::class.java)
+
+        val reconfigureTesting = project.tasks.register("reconfigureTesting", ReconfigureTesting::class.java).get()
+        project.tasks.getByName("test").dependsOn(reconfigureTesting)
+        project.tasks.getByName("test").mustRunAfter(reconfigureTesting)
     }
 }
