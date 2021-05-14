@@ -97,12 +97,12 @@ data class ParsedKotlinFile(val path: String, val contents: String) {
 
     fun toAlternateFile(cleanSpec: CleanSpec): Question.FlatFile {
         check(alternateSolution != null) { "Not an alternate solution file" }
-        return Question.FlatFile(className, clean(cleanSpec), Question.Language.kotlin)
+        return Question.FlatFile(className, clean(cleanSpec), Question.Language.kotlin, path)
     }
 
     fun toStarterFile(cleanSpec: CleanSpec): Question.FlatFile {
         check(starter != null) { "Not an starter code file" }
-        return Question.FlatFile(className, clean(cleanSpec), Question.Language.kotlin)
+        return Question.FlatFile(className, clean(cleanSpec), Question.Language.kotlin, path)
     }
 
     @Suppress("unused")

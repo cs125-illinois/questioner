@@ -351,7 +351,8 @@ fun List<ParsedJavaFile>.findQuestions(
                 Question.FlatFile(
                     solution.className,
                     solution.removeImports(importNames).stripPackage(),
-                    Question.Language.java
+                    Question.Language.java,
+                    solution.path
                 ),
                 solution.toCleanSolution(javaCleanSpec),
                 alternateSolutions,

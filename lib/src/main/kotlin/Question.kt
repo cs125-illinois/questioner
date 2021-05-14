@@ -99,6 +99,7 @@ data class Question(
         val klass: String,
         val contents: String,
         val language: Language,
+        val path: String?,
         val complexity: Int? = null
     )
 
@@ -588,6 +589,7 @@ data class Question(
     suspend fun initialize(seed: Int = Random.nextInt()): ValidationReport {
         val jenisolSettings = Settings(shrink = false)
 
+        var tooLarge = false
         (setOf(correct) + alternativeSolutions).forEach { alsoCorrect ->
             test(
                 alsoCorrect.contents,
@@ -609,7 +611,6 @@ data class Question(
                             "Perhaps you need to add solutionThrows = true to @Correct"
                     }
                 }
-                results.checkSize()
             }
         }
 
@@ -630,7 +631,7 @@ data class Question(
             }
             // Templated questions sometimes will mutate the template
             .filter { it != correct.contents }
-            .take(32)
+            .take(64)
             .map { IncorrectFile(klass, it, IncorrectFile.Reason.TEST, Language.java, null, false) }
 
         val allIncorrect = (incorrect + mutations).also { allIncorrect ->
@@ -650,7 +651,6 @@ data class Question(
             ).also {
                 require(!it.succeeded) { "Incorrect submission was not rejected:\n${wrong.contents}" }
                 it.validate(wrong.reason, wrong.contents, true)
-                it.checkSize()
             }
         }
 
@@ -665,9 +665,8 @@ data class Question(
             ).also {
                 require(!it.succeeded) { "Incorrect submission was not rejected:\n${wrong.contents}" }
                 it.validate(wrong.reason, wrong.contents, false)
-                it.checkSize()
             }
-            if (requiredTestCount == previousTestCount && !wrong.starter) {
+            if (requiredTestCount <= metadata.maxTestCount && requiredTestCount == previousTestCount && !wrong.starter) {
                 println("WARN: ${wrong.path} did not increase the test count and may not be needed")
             }
         }
@@ -693,6 +692,7 @@ data class Question(
                         |$slowestFailingContent
                         |---
                         |Perhaps add this input to @FixedParameters?
+                        |${correct.path}
                         """.trimMargin()
                 )
             } else {
@@ -702,6 +702,7 @@ data class Question(
                         |$slowestFailingContent
                         |---
                         |Perhaps add an input to @FixedParameters, or disable this mutation using // mutate-disable?
+                        |${correct.path}
                         """.trimMargin()
                 )
             }
@@ -725,7 +726,12 @@ data class Question(
             submissionTimeout = (results.taskResults!!.interval.length.toDouble() * DEFAULT_TIMEOUT_MULTIPLIER).toLong()
                 .coerceAtLeast(DEFAULT_MIN_TIMEOUT)
             solutionPrinted = results.taskResults!!.outputLines.size
-            results.checkSize()
+            results.isTooLarge().also {
+                if (it) {
+                    println("WARN: submission produced too much output\n---\n${correct.contents}---")
+                }
+                tooLarge = it
+            }
         }
 
         check(submissionTimeout > 0)
@@ -744,7 +750,12 @@ data class Question(
                 require(results.succeeded) {
                     "Solution did not pass the test suite after validation: ${results.summary}\n$contents"
                 }
-                results.checkSize()
+                results.isTooLarge().also {
+                    if (it) {
+                        println("WARN: submission produced too much output\n---\n${contents}---")
+                    }
+                    tooLarge = it
+                }
             }
         }
 
@@ -755,13 +766,19 @@ data class Question(
                 jenisolSettings,
                 language = wrong.language,
                 seed = seed
-            ).also {
-                require(!it.succeeded) { "Incorrect submission was not rejected:\n${wrong.contents}" }
-                it.validate(wrong.reason, wrong.contents, isMutated)
-                it.checkSize()
+            ).also { results ->
+                require(!results.succeeded) { "Incorrect submission was not rejected:\n${wrong.contents}" }
+                results.validate(wrong.reason, wrong.contents, isMutated)
+                results.isTooLarge().also {
+                    if (it) {
+                        println("WARN: submission produced too much output\n---\n${wrong.contents}---")
+                    }
+                    tooLarge = it
+                }
             }
         }
 
+        check(!tooLarge) { "Testing produced too much output." }
         return report
     }
 
@@ -912,9 +929,7 @@ data class TestResults(
     }
 
     fun toJson(): String = moshi.adapter(TestResults::class.java).toJson(this)
-    fun checkSize(maxSize: Int = Question.DEFAULT_MAX_OUTPUT_SIZE) = toJson().length.also {
-        check(it < maxSize) { "Output is too large: $it > $maxSize" }
-    }
+    fun isTooLarge(maxSize: Int = Question.DEFAULT_MAX_OUTPUT_SIZE) = toJson().length > maxSize
 }
 
 fun TestResult<*, *>.asTestResult(source: Source) = TestResults.TestingResult.TestResult(

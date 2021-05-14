@@ -188,7 +188,7 @@ data class ParsedJavaFile(val path: String, val contents: String) {
                 it.lookup(className, "$className.java")
             }
         }.complexity
-        return Question.FlatFile(className, solutionContent, Question.Language.java, complexity)
+        return Question.FlatFile(className, solutionContent, Question.Language.java, path, complexity)
     }
 
     fun extractTemplate(): String? {
@@ -222,12 +222,12 @@ data class ParsedJavaFile(val path: String, val contents: String) {
 
     fun toAlternateFile(cleanSpec: CleanSpec): Question.FlatFile {
         check(alternateSolution != null) { "Not an alternate solution file" }
-        return Question.FlatFile(className, clean(cleanSpec), Question.Language.java)
+        return Question.FlatFile(className, clean(cleanSpec), Question.Language.java, path)
     }
 
     fun toStarterFile(cleanSpec: CleanSpec): Question.FlatFile {
         check(starter != null) { "Not an starter code file" }
-        return Question.FlatFile(className, clean(cleanSpec), Question.Language.java)
+        return Question.FlatFile(className, clean(cleanSpec), Question.Language.java, path)
     }
 
     private val chars = contents.toCharArray()
