@@ -167,6 +167,10 @@ fun List<ParsedJavaFile>.findQuestions(
                 ParsedKotlinFile(File(it))
             }
 
+            if (solution.autoStarter) {
+                solution.extractStarter()
+            }
+
             val javaStarter =
                 otherFiles.filter { it.packageName.startsWith("${solution.packageName}.") }
                     .filter { it.starter != null }.let {
@@ -179,6 +183,12 @@ fun List<ParsedJavaFile>.findQuestions(
                         usedFiles[it.path] = "Starter"
                         myUsedFiles.add(it.path)
                     }
+            if (solution.autoStarter) {
+                check(javaStarter == null) {
+                    "autoStarter set to true but found a file marked as @Starter. Please remove it.\n" +
+                        javaStarter!!.path
+                }
+            }
 
             val importNames = solution.listedImports.filter { it in byFullName } + neighborImports
 
@@ -213,6 +223,10 @@ fun List<ParsedJavaFile>.findQuestions(
                 }
             }
 
+            if (solution.autoStarter) {
+                kotlinSolution?.extractStarter(solution.wrapWith)
+            }
+
             val hasJavaTemplate = solution.contents.lines().let { lines ->
                 lines.any { it.contains("TEMPLATE_START") } && lines.any { it.contains("TEMPLATE_END") }
             }
@@ -239,10 +253,8 @@ fun List<ParsedJavaFile>.findQuestions(
                 otherFiles.asSequence().filter { it.packageName.startsWith("${solution.packageName}.") }
                     .filter { it.incorrect != null }
                     .onEach {
-                        if (it.path in usedFiles) {
-                            require(usedFiles[it.path] == "Starter") {
-                                "File $it.path was already used as ${usedFiles[it.path]}"
-                            }
+                        require(usedFiles[it.path] !in usedFiles) {
+                            "File $it.path was already used as ${usedFiles[it.path]}"
                         }
                         usedFiles[it.path] = "Incorrect"
                         myUsedFiles.add(it.path)
@@ -292,9 +304,13 @@ fun List<ParsedJavaFile>.findQuestions(
                 byFullName[it]?.contents?.stripPackage() ?: error("Couldn't find import $it")
             }
 
-            val javaStarterFile = javaStarter?.toStarterFile(javaCleanSpec)
+            val javaStarterFile = if (solution.autoStarter) {
+                solution.extractStarter() ?: error("autoStarter enabled but starter generation failed")
+            } else {
+                javaStarter?.toStarterFile(javaCleanSpec)
+            }
 
-            val kotlinStarterFile = kotlinFiles.filter { it.starter != null }.also {
+            var kotlinStarterFile = kotlinFiles.filter { it.starter != null }.also {
                 require(it.size <= 1) { "Provided multiple file with Kotlin starter code" }
             }.firstOrNull()?.let {
                 require(it.path !in usedFiles || usedFiles[it.path] == "Incorrect") {
@@ -303,6 +319,14 @@ fun List<ParsedJavaFile>.findQuestions(
                 usedFiles[it.path] = "Starter"
                 myUsedFiles.add(it.path)
                 it.toStarterFile(kotlinCleanSpec)
+            }
+
+            if (solution.autoStarter) {
+                val autoStarter = kotlinSolution!!.extractStarter(solution.wrapWith)
+                if (autoStarter != null && kotlinStarterFile != null) {
+                    error("autoStarter succeeded but Kotlin starter file found. Please remove it.\n" + kotlinStarterFile.path)
+                }
+                kotlinStarterFile = autoStarter
             }
 
             if (solution.wrapWith != null) {

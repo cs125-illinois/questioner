@@ -634,7 +634,24 @@ data class Question(
             .take(64)
             .map { IncorrectFile(klass, it, IncorrectFile.Reason.TEST, Language.java, null, false) }
 
-        val allIncorrect = (incorrect + mutations).also { allIncorrect ->
+        val allIncorrect = (incorrect + mutations).toMutableList().also {
+            if (javaStarter != null) {
+                it.add(
+                    IncorrectFile(
+                        javaStarter.klass, javaStarter.contents, IncorrectFile.Reason.TEST, javaStarter.language,
+                        null, true
+                    )
+                )
+            }
+            if (kotlinStarter != null) {
+                it.add(
+                    IncorrectFile(
+                        kotlinStarter.klass, kotlinStarter.contents, IncorrectFile.Reason.TEST, kotlinStarter.language,
+                        null, true
+                    )
+                )
+            }
+        }.also { allIncorrect ->
             check(allIncorrect.all { it.contents != correct.contents }) {
                 "Incorrect solution identical to correct solution"
             }

@@ -63,10 +63,6 @@ data class ParsedKotlinFile(val path: String, val contents: String) {
         }?.valueArgument()?.find {
             it.simpleIdentifier().text == "reason"
         }?.expression()?.text?.removeSurrounding("\"") ?: "test"
-    } ?: if (starter != null) {
-        "test"
-    } else {
-        null
     }
 
     fun toIncorrectFile(cleanSpec: CleanSpec): Question.IncorrectFile {
@@ -226,6 +222,58 @@ data class ParsedKotlinFile(val path: String, val contents: String) {
         val start = correctSolution.substring(0 until templateStart)
         val end = correctSolution.substring((templateEnd + "TEMPLATE_END".length) until correctSolution.length)
         return "$start{{{ contents }}}$end"
+    }
+
+    fun extractStarter(wrappedClass: String?): Question.FlatFile? {
+        val correctSolution = clean(CleanSpec(false, null))
+        val parsed = correctSolution.parseKotlin()
+        val methodDeclaration = if (topLevelFile) {
+            parsed.tree.topLevelObject(0)?.functionDeclaration()
+        } else {
+            parsed.tree.topLevelObject(0)?.classDeclaration()?.classBody()?.classMemberDeclaration(0)
+                ?.functionDeclaration()
+        } ?: return null
+
+        val start = methodDeclaration.functionBody().start.startIndex
+        val end = methodDeclaration.functionBody().stop.stopIndex
+        val returnType = methodDeclaration.type().let {
+            if (it.isEmpty()) {
+                "Unit"
+            } else {
+                check(it.last().start.startIndex > methodDeclaration.identifier().start.startIndex) {
+                    "Couldn't find method return type"
+                }
+                it.last().text
+            }
+        }
+        val starterReturn = when {
+            returnType == "Unit" -> ""
+            returnType.endsWith("?") -> " null"
+            returnType == "Byte" -> " 0"
+            returnType == "Short" -> " 0"
+            returnType == "Int" -> " 0"
+            returnType == "Long" -> " 0"
+            returnType == "Float" -> " 0.0"
+            returnType == "Double" -> " 0.0"
+            returnType == "Char" -> " ' '"
+            returnType == "Boolean" -> " false"
+            returnType == "String" -> " \"\""
+            else -> error("Can't generate empty Kotlin return for type $returnType")
+        }
+        val prefix = (start + 1 until correctSolution.length).find { i -> !correctSolution[i].isWhitespace() }.let {
+            check(it != null) { "Couldn't find method contents" }
+            it - 1
+        }
+        val postfix = (end - 1 downTo start).find { i -> !correctSolution[i].isWhitespace() }.let {
+            check(it != null) { "Couldn't find method contents" }
+            it + 1
+        }
+        return (correctSolution.substring(0..prefix)
+            + "return$starterReturn"
+            + correctSolution.substring(postfix until correctSolution.length))
+            .kotlinDeTemplate(false, wrappedClass).let {
+                Question.FlatFile(className, it, Question.Language.kotlin, null)
+            }
     }
 
     private fun String.kotlinDeTemplate(hasTemplate: Boolean, wrappedClass: String?) = when {

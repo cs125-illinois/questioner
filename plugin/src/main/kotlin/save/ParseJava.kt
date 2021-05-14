@@ -131,10 +131,6 @@ data class ParsedJavaFile(val path: String, val contents: String) {
         } catch (e: Exception) {
             error("Couldn't parse @Incorrect metadata for $path: $e")
         }
-    } ?: if (starter != null) {
-        "test"
-    } else {
-        null
     }
 
     val alternateSolution = topLevelClass.getAnnotation(AlsoCorrect::class.java)
@@ -156,6 +152,16 @@ data class ParsedJavaFile(val path: String, val contents: String) {
     }.firstOrNull()
 
     val wrapWith = topLevelClass.getAnnotation(Wrap::class.java)?.let { className }
+    val autoStarter = topLevelClass.getAnnotation(Wrap::class.java)?.let { annotation ->
+        @Suppress("TooGenericExceptionCaught")
+        try {
+            annotation.parameterMap().let { parameters ->
+                parameters["autoStarter"].toBoolean()
+            }
+        } catch (e: Exception) {
+            error("Couldn't parse @Wrap metadata for $path: $e")
+        }
+    } ?: false
 
     val citation = topLevelClass.getAnnotation(Cite::class.java)?.let { annotation ->
         @Suppress("TooGenericExceptionCaught")
@@ -198,6 +204,49 @@ data class ParsedJavaFile(val path: String, val contents: String) {
         val start = correctSolution.substring(0 until templateStart)
         val end = correctSolution.substring((templateEnd + "TEMPLATE_END".length) until correctSolution.length)
         return "$start{{{ contents }}}$end"
+    }
+
+    fun extractStarter(): Question.FlatFile? {
+        val correctSolution = toCleanSolution(CleanSpec(false, null)).contents
+        val parsed = correctSolution.parseJava()
+        val methodDeclaration = parsed.tree
+            .typeDeclaration(0)
+            ?.classDeclaration()
+            ?.classBody()
+            ?.classBodyDeclaration(0)
+            ?.memberDeclaration()
+            ?.methodDeclaration() ?: return null
+        val start = methodDeclaration.methodBody().start.startIndex
+        val end = methodDeclaration.methodBody().stop.stopIndex
+        val returnType = methodDeclaration.typeTypeOrVoid().text
+        val starterReturn = when {
+            returnType == "void" -> ""
+            returnType == "String" -> " \"\""
+            returnType.capitalize() == returnType || returnType.endsWith("[]") -> " null"
+            returnType == "byte" -> " 0"
+            returnType == "short" -> " 0"
+            returnType == "int" -> " 0"
+            returnType == "long" -> " 0"
+            returnType == "float" -> " 0.0"
+            returnType == "double" -> " 0.0"
+            returnType == "char" -> " ' '"
+            returnType == "boolean" -> " false"
+            else -> error("Invalid return type $returnType")
+        }
+        val prefix = (start + 1 until correctSolution.length).find { i -> !correctSolution[i].isWhitespace() }.let {
+            check(it != null) { "Couldn't find method contents" }
+            it - 1
+        }
+        val postfix = (end - 1 downTo start).find { i -> !correctSolution[i].isWhitespace() }.let {
+            check(it != null) { "Couldn't find method contents" }
+            it + 1
+        }
+        return (correctSolution.substring(0..prefix)
+            + "return$starterReturn;"
+            + correctSolution.substring(postfix until correctSolution.length))
+            .javaDeTemplate(false, wrapWith).let {
+                Question.FlatFile(className, it, Question.Language.java, null)
+            }
     }
 
     fun toIncorrectFile(cleanSpec: CleanSpec): Question.IncorrectFile {
