@@ -80,7 +80,8 @@ data class Question(
         val minTestCount: Int,
         val kotlinDescription: String?,
         val citation: Citation?,
-        val usedFiles: List<String> = listOf()
+        val usedFiles: List<String> = listOf(),
+        val focused: Boolean
     )
 
     fun getTemplate(language: Language) = when (language) {
@@ -1030,7 +1031,13 @@ fun loadFromPath(questionsFile: File, sourceDir: String, validated: Boolean = tr
             if (!validationPath.exists()) {
                 return@mapValues question
             }
-            val validatedQuestion = moshi.adapter(Question::class.java).fromJson(validationPath.readText())!!
+            val validatedQuestion = try {
+                moshi.adapter(Question::class.java).fromJson(validationPath.readText())!!
+            } catch (e: Exception) {
+                println("WARN: Validation file ${validationPath.path} does not match schema. Removing to be safe.")
+                validationPath.delete()
+                return@mapValues question
+            }
             if (question.metadata.contentHash != validatedQuestion.metadata.contentHash) {
                 return@mapValues question
             }

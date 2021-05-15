@@ -26,8 +26,7 @@ import edu.illinois.cs.cs125.questioner.lib.Correct;
 @Correct(
   name="Test",
   version="2020.6.0",
-  author="challen@illinois.edu",
-  mutate=false
+  author="challen@illinois.edu"
 )
 @Import(paths="examples.second, examples.first")
 @Wrap
@@ -48,7 +47,6 @@ public class Second {
                     it.name shouldBe "Test"
                     it.version shouldBe "2020.6.0"
                     it.author shouldBe "challen@illinois.edu"
-                    it.mutate shouldBe false
                     it.description shouldBe "<p>Here is a <em>description</em>.</p>"
                 }
             }

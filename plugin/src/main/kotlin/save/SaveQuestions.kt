@@ -370,7 +370,8 @@ fun List<ParsedJavaFile>.findQuestions(
                     solution.correct.minTestCount,
                     kotlinSolution?.description,
                     solution.citation,
-                    myUsedFiles
+                    myUsedFiles,
+                    solution.correct.focused
                 ),
                 Question.FlatFile(
                     solution.className,

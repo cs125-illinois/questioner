@@ -29,6 +29,7 @@ fun Project.javaSourceDir(): File =
 @Suppress("unused")
 class QuestionerPlugin : Plugin<Project> {
     override fun apply(project: Project) {
+        val config = project.extensions.create("questioner", QuestionerConfigExtension::class.java)
         val configuration = project.file("questioner.yaml").let {
             if (it.exists()) {
                 try {
@@ -47,9 +48,10 @@ class QuestionerPlugin : Plugin<Project> {
         generateMetatests.dependsOn(project.tasks.getByName("processResources"))
         project.afterEvaluate {
             project.tasks.getByName("processResources").dependsOn(saveQuestions)
+            generateMetatests.seed = config.seed
         }
         if (configuration.token != null) {
-            val publishAll = project.tasks.create("publishQuestions")
+            val publishAll = project.tasks.register("publishQuestions").get()
             configuration.publish?.entries?.forEach { (name, url) ->
                 val publishQuestions =
                     project.tasks.register("${name}PublishQuestions", PublishQuestions::class.java).get()
@@ -67,5 +69,7 @@ class QuestionerPlugin : Plugin<Project> {
         val reconfigureTesting = project.tasks.register("reconfigureTesting", ReconfigureTesting::class.java).get()
         project.tasks.getByName("test").dependsOn(reconfigureTesting)
         project.tasks.getByName("test").mustRunAfter(reconfigureTesting)
+        project.tasks.getByName("test").dependsOn(generateMetatests)
+        project.tasks.getByName("compileTestKotlin").dependsOn(generateMetatests)
     }
 }

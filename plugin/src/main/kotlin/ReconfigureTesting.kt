@@ -8,5 +8,6 @@ abstract class ReconfigureTesting : DefaultTask() {
     fun run() {
         project.tasks.getByName("compileJava").enabled = false
         project.tasks.getByName("compileKotlin").enabled = false
+        project.tasks.getByName("jar").enabled = false
     }
 }
