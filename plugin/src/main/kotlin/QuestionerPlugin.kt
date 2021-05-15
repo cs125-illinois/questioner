@@ -63,7 +63,6 @@ class QuestionerPlugin : Plugin<Project> {
         }
         project.convention.getPlugin(JavaPluginConvention::class.java)
             .sourceSets.getByName("main").resources { it.srcDirs(File(project.buildDir, "questioner")) }
-        project.tasks.register("questionerTesting", TestingTask::class.java)
         project.tasks.register("cleanQuestions", CleanQuestions::class.java)
 
         val reconfigureTesting = project.tasks.register("reconfigureTesting", ReconfigureTesting::class.java).get()
@@ -71,5 +70,13 @@ class QuestionerPlugin : Plugin<Project> {
         project.tasks.getByName("test").mustRunAfter(reconfigureTesting)
         project.tasks.getByName("test").dependsOn(generateMetatests)
         project.tasks.getByName("compileTestKotlin").dependsOn(generateMetatests)
+        try {
+            project.tasks.getByName("formatKotlinTest").dependsOn(generateMetatests)
+        } catch (e: Exception) {
+        }
+        try {
+            project.tasks.getByName("lintKotlinTest").dependsOn(generateMetatests)
+        } catch (e: Exception) {
+        }
     }
 }

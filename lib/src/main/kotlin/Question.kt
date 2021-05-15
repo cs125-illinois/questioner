@@ -4,47 +4,39 @@ import com.github.slugify.Slugify
 import com.squareup.moshi.JsonClass
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.Types
-import edu.illinois.cs.cs125.jeed.core.CheckstyleArguments
 import edu.illinois.cs.cs125.jeed.core.CheckstyleFailed
-import edu.illinois.cs.cs125.jeed.core.CheckstyleResults
 import edu.illinois.cs.cs125.jeed.core.CompilationArguments
 import edu.illinois.cs.cs125.jeed.core.CompilationFailed
-import edu.illinois.cs.cs125.jeed.core.CompiledSource
-import edu.illinois.cs.cs125.jeed.core.KompilationArguments
-import edu.illinois.cs.cs125.jeed.core.KtLintArguments
 import edu.illinois.cs.cs125.jeed.core.KtLintFailed
-import edu.illinois.cs.cs125.jeed.core.KtLintResults
 import edu.illinois.cs.cs125.jeed.core.Sandbox
 import edu.illinois.cs.cs125.jeed.core.Source
 import edu.illinois.cs.cs125.jeed.core.TemplatingFailed
-import edu.illinois.cs.cs125.jeed.core.checkstyle
 import edu.illinois.cs.cs125.jeed.core.compile
-import edu.illinois.cs.cs125.jeed.core.fromTemplates
-import edu.illinois.cs.cs125.jeed.core.getStackTraceForSource
-import edu.illinois.cs.cs125.jeed.core.kompile
-import edu.illinois.cs.cs125.jeed.core.ktLint
-import edu.illinois.cs.cs125.jeed.core.moshi.CompiledSourceResult
-import edu.illinois.cs.cs125.jeed.core.mutationStream
-import edu.illinois.cs.cs125.jenisol.core.CapturedResult
 import edu.illinois.cs.cs125.jenisol.core.ParameterGroup
 import edu.illinois.cs.cs125.jenisol.core.Settings
 import edu.illinois.cs.cs125.jenisol.core.SubmissionDesignError
-import edu.illinois.cs.cs125.jenisol.core.TestResult
-import edu.illinois.cs.cs125.jenisol.core.safePrint
 import edu.illinois.cs.cs125.questioner.lib.moshi.Adapters
 import java.io.File
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.ReflectPermission
 import kotlin.math.max
 import kotlin.random.Random
-import edu.illinois.cs.cs125.jenisol.core.solution as jenisol
 import edu.illinois.cs.cs125.jeed.core.moshi.Adapters as JeedAdapters
+import edu.illinois.cs.cs125.jenisol.core.solution as jenisol
 
-private val slugify = Slugify()
-private val moshi = Moshi.Builder().apply {
+val moshi: Moshi = Moshi.Builder().apply {
     Adapters.forEach { add(it) }
     JeedAdapters.forEach { add(it) }
 }.build()
+
+private val sharedClassWhitelist = setOf(
+    "java.lang.",
+    "java.io.PrintStream",
+    "kotlin.Metadata",
+    "jdk.internal.reflect.",
+    "kotlin.reflect.jvm.",
+    "com.sun."
+)
 
 @Suppress("MemberVisibilityCanBePrivate", "LargeClass", "TooManyFunctions")
 @JsonClass(generateAdapter = true)
@@ -63,9 +55,10 @@ data class Question(
     var kotlinTemplate: String?,
     val importWhitelist: Set<String>,
     val importBlacklist: Set<String>,
-    val slug: String = slugify.slugify(name)
+    val slug: String = Slugify().slugify(name)
 ) {
-    fun toJson(): String = moshi.adapter(Question::class.java).toJson(this)
+    @Suppress("EnumNaming", "EnumEntryName")
+    enum class Language { java, kotlin }
 
     @JsonClass(generateAdapter = true)
     data class Metadata(
@@ -84,16 +77,8 @@ data class Question(
         val focused: Boolean
     )
 
-    fun getTemplate(language: Language) = when (language) {
-        Language.java -> javaTemplate
-        Language.kotlin -> kotlinTemplate
-    }
-
     @JsonClass(generateAdapter = true)
     data class Citation(val source: String, val link: String? = null)
-
-    @Suppress("EnumNaming", "EnumEntryName")
-    enum class Language { java, kotlin }
 
     @JsonClass(generateAdapter = true)
     data class FlatFile(
@@ -111,7 +96,8 @@ data class Question(
         val reason: Reason,
         val language: Language,
         val path: String?,
-        val starter: Boolean
+        val starter: Boolean,
+        var needed: Boolean = true
     ) {
         enum class Reason { DESIGN, COMPILE, TEST, CHECKSTYLE, TIMEOUT }
     }
@@ -120,9 +106,7 @@ data class Question(
     val compiledCommon by lazy {
         if (common?.isNotEmpty() == true) {
             val commonSources = common.mapIndexed { index, contents -> "Common$index.java" to contents }.toMap()
-            Source(commonSources).compile(
-                CompilationArguments(isolatedClassLoader = true, parameters = true)
-            )
+            Source(commonSources).compile(CompilationArguments(isolatedClassLoader = true, parameters = true))
         } else {
             null
         }
@@ -157,219 +141,24 @@ data class Question(
         }
     }
 
-    var executionDefinedClasses: List<String>? = null
-
-    fun Set<String>.topLevelClasses() = map { it.split("$").first() }.distinct()
-
     @delegate:Transient
     val solution by lazy {
         jenisol(compiledSolution.classLoader.loadClass(klass))
     }
 
+    fun toJson(): String = moshi.adapter(Question::class.java).toJson(this)
+
+    fun getTemplate(language: Language) = when (language) {
+        Language.java -> javaTemplate
+        Language.kotlin -> kotlinTemplate
+    }
+
+    fun Set<String>.topLevelClasses() = map { it.split("$").first() }.distinct()
+
     fun Language.extension() = when (this) {
         Language.java -> "java"
         Language.kotlin -> "kt"
     }
-
-    private fun templateSubmission(contents: String, language: Language = Language.java): Source {
-        val template = getTemplate(language)
-        val fileName = "$klass.${language.extension()}"
-        return if (template == null) {
-            Source(mapOf(fileName to contents))
-        } else {
-            Source.fromTemplates(
-                mapOf("$klass.${language.extension()}" to contents),
-                mapOf("$klass.${language.extension()}.hbs" to template)
-            )
-        }
-    }
-
-    @Suppress("ThrowsCount")
-    private fun compileSubmission(
-        contents: String,
-        parentClassLoader: ClassLoader,
-        testResults: TestResults,
-        failOnCheckstyle: Boolean = true
-    ): CompiledSource {
-        return try {
-            val actualParents = Pair(compiledCommon?.classLoader ?: parentClassLoader, compiledCommon?.fileManager)
-            val source = templateSubmission(contents).also {
-                if (getTemplate(Language.java) != null) {
-                    testResults.completedSteps.add(TestResults.Step.templateSubmission)
-                }
-            }
-            val compiledSource = source.compile(
-                CompilationArguments(
-                    parentClassLoader = actualParents.first,
-                    parentFileManager = actualParents.second,
-                    parameters = true
-                )
-            ).also {
-                testResults.complete.compileSubmission = CompiledSourceResult(it)
-                testResults.completedSteps.add(TestResults.Step.compileSubmission)
-            }
-            testResults.complete.checkstyle = source.checkstyle(CheckstyleArguments(failOnError = failOnCheckstyle))
-            testResults.completedSteps.add(TestResults.Step.checkstyle)
-            compiledSource
-        } catch (e: TemplatingFailed) {
-            testResults.failed.templateSubmission = e
-            testResults.failedSteps.add(TestResults.Step.templateSubmission)
-            throw e
-        } catch (e: CheckstyleFailed) {
-            testResults.failed.checkstyle = e
-            testResults.failedSteps.add(TestResults.Step.checkstyle)
-            throw e
-        } catch (e: CompilationFailed) {
-            testResults.failed.compileSubmission = e
-            testResults.failedSteps.add(TestResults.Step.compileSubmission)
-            throw e
-        }
-    }
-
-    @Suppress("ThrowsCount")
-    private fun kompileSubmission(
-        contents: String,
-        parentClassLoader: ClassLoader,
-        testResults: TestResults,
-        failOnKtlint: Boolean = true
-    ): CompiledSource {
-        return try {
-            val actualParents = Pair(compiledCommon?.classLoader ?: parentClassLoader, compiledCommon?.fileManager)
-            val source = templateSubmission(contents, Language.kotlin).also {
-                if (kotlinTemplate != null) {
-                    testResults.completedSteps.add(TestResults.Step.templateSubmission)
-                }
-            }
-            val compiledSource = source.kompile(
-                KompilationArguments(
-                    parentClassLoader = actualParents.first,
-                    parentFileManager = actualParents.second,
-                    parameters = true
-                )
-            ).also {
-                testResults.complete.compileSubmission = CompiledSourceResult(it)
-                testResults.completedSteps.add(TestResults.Step.compileSubmission)
-            }
-            testResults.complete.ktlint = source.ktLint(KtLintArguments(failOnError = failOnKtlint))
-            testResults.completedSteps.add(TestResults.Step.ktlint)
-            compiledSource
-        } catch (e: TemplatingFailed) {
-            testResults.failed.templateSubmission = e
-            testResults.failedSteps.add(TestResults.Step.templateSubmission)
-            throw e
-        } catch (e: KtLintFailed) {
-            testResults.failed.ktlint = e
-            testResults.failedSteps.add(TestResults.Step.ktlint)
-            throw e
-        } catch (e: CompilationFailed) {
-            testResults.failed.compileSubmission = e
-            testResults.failedSteps.add(TestResults.Step.compileSubmission)
-            throw e
-        }
-    }
-
-    private fun checkCompiledSubmission(
-        compiledSubmission: CompiledSource,
-        testResults: TestResults
-    ): String? = compiledSubmission.classLoader.definedClasses.topLevelClasses().let {
-        when {
-            it.isEmpty() -> {
-                testResults.failed.checkSubmission = "Submission defined no classes"
-                testResults.failedSteps.add(TestResults.Step.checkSubmission)
-                return null
-            }
-            it.size > 1 -> {
-                testResults.failed.checkSubmission = "Submission defined multiple classes"
-                testResults.failedSteps.add(TestResults.Step.checkSubmission)
-                return null
-            }
-        }
-        val klass = it.first()
-        if (compiledSubmission.source.type == Source.FileType.KOTLIN &&
-            solution.skipReceiver &&
-            klass == "${compilationDefinedClass}Kt"
-        ) {
-            return "${compilationDefinedClass}Kt"
-        }
-        if (klass != compilationDefinedClass) {
-            testResults.failed.checkSubmission =
-                "Submission defines incorrect class: ${it.first()} != $compilationDefinedClass"
-            testResults.failedSteps.add(TestResults.Step.checkSubmission)
-            return null
-        }
-        return klass
-    }
-
-    @Suppress("ReturnCount")
-    private fun checkExecutedSubmission(
-        taskResults: Sandbox.TaskResults<*>,
-        testResults: TestResults,
-        language: Language
-    ): Boolean {
-        var message: String? = null
-        taskResults.sandboxedClassLoader!!.definedClasses.topLevelClasses().let {
-            when {
-                it.isEmpty() -> message = "Submission defined no classes"
-                it.size > 1 -> message = "Submission defined multiple classes"
-            }
-            val klass = it.first()
-            if (!(
-                    language == Language.kotlin &&
-                        solution.skipReceiver &&
-                        klass == "${compilationDefinedClass}Kt"
-                    )
-            ) {
-                if (klass != compilationDefinedClass) {
-                    message =
-                        "Submission defines incorrect class: ${it.first()} != $compilationDefinedClass"
-                }
-            }
-        }
-        taskResults.sandboxedClassLoader?.loadedClasses?.find { imported ->
-            importBlacklist.any { imported.startsWith(it) }
-        }?.let {
-            message = "Cannot use $it for this problem"
-        }
-        taskResults.permissionRequests.filter { !it.granted }.let { denied ->
-            if (denied.isNotEmpty()) {
-                val deniedPermission = denied.find { it.permission.name.startsWith("loadClass") }
-                message = if (deniedPermission != null) {
-                    "Cannot use ${deniedPermission.permission.name.removePrefix("loadClass ")} for this problem"
-                } else {
-                    "Submission permission requests were denied: ${denied.first().permission}"
-                }
-            }
-        }
-        return if (message != null) {
-            testResults.failed.checkSubmission = message
-            testResults.failedSteps.add(TestResults.Step.checkSubmission)
-            false
-        } else {
-            true
-        }
-    }
-
-    @Transient
-    val sharedClassWhitelist = setOf(
-        "java.lang.",
-        "java.io.PrintStream",
-        "kotlin.Metadata",
-        "jdk.internal.reflect.",
-        "kotlin.reflect.jvm.",
-        "com.sun."
-    )
-
-    var javaClassWhitelist: MutableSet<String> = importWhitelist.toMutableSet().also {
-        it.addAll(sharedClassWhitelist)
-    }
-
-    var kotlinClassWhitelist: MutableSet<String> = importWhitelist.toMutableSet().also {
-        it.addAll(sharedClassWhitelist)
-        it.addAll(setOf("java.util.", "kotlin."))
-    }
-
-    var requiredTestCount = -1
-    var submissionTimeout = -1L
 
     @Transient
     var slowestFailingContent = ""
@@ -380,7 +169,44 @@ data class Question(
     @Transient
     var slowestFailingInputs: ParameterGroup? = null
 
+    val detemplatedJavaStarter = javaStarter?.contents
+    val detemplatedKotlinStarter = kotlinStarter?.contents
+
+    val hasKotlin =
+        metadata.kotlinDescription != null && alternativeSolutions.find { it.language == Language.kotlin } != null &&
+            ((javaStarter != null) == (kotlinStarter != null))
+
+    // Set during validation
+    var validated = false
+    var validationSeed: Int? = null
+    var requiredTestCount = -1
+    var submissionTimeout = -1L
     var solutionPrinted = 0
+    var executionDefinedClasses: List<String>? = null
+
+    @Transient
+    val defaultJavaClassWhitelist = importWhitelist.toMutableSet().also {
+        it.addAll(sharedClassWhitelist)
+    }.toSet()
+    var javaClassWhitelist = defaultJavaClassWhitelist.toMutableSet()
+
+    @Transient
+    val defaultKotlinClassWhitelist = importWhitelist.toMutableSet().also {
+        it.addAll(sharedClassWhitelist)
+        it.addAll(setOf("java.util.", "kotlin."))
+    }.toSet()
+    var kotlinClassWhitelist = defaultKotlinClassWhitelist.toMutableSet()
+
+    fun clearValidation() {
+        validated = false
+        validationSeed = null
+        requiredTestCount = -1
+        submissionTimeout = -1L
+        solutionPrinted = 0
+        executionDefinedClasses = null
+        javaClassWhitelist = defaultJavaClassWhitelist.toMutableSet()
+        kotlinClassWhitelist = defaultKotlinClassWhitelist.toMutableSet()
+    }
 
     @Suppress("ReturnCount", "LongMethod", "ComplexMethod", "LongParameterList")
     suspend fun test(
@@ -394,7 +220,7 @@ data class Question(
 
         require(validated || correct != null) { "Jenisol not validated for this question" }
 
-        val testResults = TestResults(TestResults.Type.jenisol)
+        val results = TestResults(TestResults.Type.jenisol)
 
         val failOnCheckstyle = if (correct == false) {
             false
@@ -408,30 +234,28 @@ data class Question(
                 compileSubmission(
                     contents,
                     InvertingClassLoader(setOf(klass)),
-                    testResults,
+                    results,
                     failOnCheckstyle
                 )
             } else {
                 kompileSubmission(
                     contents,
                     InvertingClassLoader(setOf(klass, "${klass}Kt")),
-                    testResults,
+                    results,
                     failOnCheckstyle
                 )
             }
         } catch (e: TemplatingFailed) {
-            return testResults
+            return results
         } catch (e: CheckstyleFailed) {
-            return testResults
+            return results
         } catch (e: CompilationFailed) {
-            return testResults
+            return results
         } catch (e: KtLintFailed) {
-            return testResults
+            return results
         }
 
-        val klassName = checkCompiledSubmission(compiledSubmission, testResults) ?: return testResults
-
-        testResults.skippedSteps.add(TestResults.Step.compileTest)
+        val klassName = checkCompiledSubmission(compiledSubmission, results) ?: return results
 
         val classWhiteList = if (language == Language.java) {
             javaClassWhitelist
@@ -475,7 +299,7 @@ data class Question(
                 solutionPrinted * OUTPUT_LINE_MULTIPLIER
             }.coerceAtLeast(MIN_OUTPUT_LINES)
 
-        Sandbox.execute(
+        val testingResults = Sandbox.execute(
             compiledSubmission.classLoader,
             Sandbox.ExecutionArguments(
                 timeout = testingTimeout,
@@ -486,326 +310,91 @@ data class Question(
             )
         ) { (classLoader, _) ->
             solution.submission(classLoader.loadClass(klassName), contents).test(settings, ::captureJeedOutput)
-        }.also { taskResults ->
-            testResults.taskResults = taskResults
-            if (!taskResults.timeout && taskResults.threw != null) {
-                return when (taskResults.threw) {
-                    is ClassNotFoundException -> {
-                        testResults.failedSteps.add(TestResults.Step.checkSubmission)
-                        testResults.failed.checkSubmission = "Class design error: could not find class $klass"
-                        testResults
+        }.also {
+            results.taskResults = it
+        }
+
+        if (!testingResults.timeout && testingResults.threw != null) {
+            when (testingResults.threw) {
+                is ClassNotFoundException -> {
+                    results.failedSteps.add(TestResults.Step.checkSubmission)
+                    results.failed.checkSubmission = "Class design error: could not find class $klass"
+                }
+                is SubmissionDesignError -> {
+                    results.failedSteps.add(TestResults.Step.checkSubmission)
+                    results.failed.checkSubmission = "Class design error: ${testingResults.threw?.message}"
+                }
+                is NoClassDefFoundError -> {
+                    results.failedSteps.add(TestResults.Step.checkSubmission)
+                    results.failed.checkSubmission =
+                        "Class design error: attempted to use unavailable class ${testingResults.threw?.message}"
+                }
+                else -> {
+                    val actualException = if (testingResults.threw is InvocationTargetException) {
+                        (testingResults.threw as InvocationTargetException).targetException ?: testingResults.threw
+                    } else {
+                        testingResults.threw
                     }
-                    is SubmissionDesignError -> {
-                        testResults.failedSteps.add(TestResults.Step.checkSubmission)
-                        testResults.failed.checkSubmission = "Class design error: ${taskResults.threw?.message}"
-                        testResults
-                    }
-                    is NoClassDefFoundError -> {
-                        testResults.failedSteps.add(TestResults.Step.checkSubmission)
-                        testResults.failed.checkSubmission =
-                            "Class design error: attempted to use unavailable class ${taskResults.threw?.message}"
-                        testResults
-                    }
-                    else -> {
-                        val actualException = if (taskResults.threw is InvocationTargetException) {
-                            (taskResults.threw as InvocationTargetException).targetException ?: taskResults.threw
-                        } else {
-                            taskResults.threw
-                        }
-                        testResults.failedSteps.add(TestResults.Step.checkSubmission)
-                        actualException?.printStackTrace()
-                        testResults.failed.checkSubmission =
-                            "Testing generated an unexpected error: $actualException"
-                        testResults
-                    }
+                    results.failedSteps.add(TestResults.Step.checkSubmission)
+                    results.failed.checkSubmission = "Testing generated an unexpected error: $actualException"
                 }
             }
+            return results
+        }
 
-            if (taskResults.timeout && !(correct == true && taskResults.returned != null)) {
-                testResults.timeout = true
-                testResults.failedSteps.add(TestResults.Step.test)
-            } else {
-                testResults.completedSteps.add(TestResults.Step.test)
-            }
+        results.timeout = testingResults.timeout
+        if (testingResults.returned == null) {
+            results.failedSteps.add(TestResults.Step.test)
+        } else {
+            results.completedSteps.add(TestResults.Step.test)
+        }
 
-            check(correct == null || (taskResults.timeout || taskResults.truncatedLines == 0)) {
-                "Truncated output during validation: ${taskResults.truncatedLines}"
-            }
+        check(correct == null || (testingResults.timeout || testingResults.truncatedLines == 0)) {
+            "Truncated output during validation: ${testingResults.truncatedLines}"
+        }
 
-            if (correct == true) {
-                if (language == Language.java) {
+        if (correct == true) {
+            when (language) {
+                Language.java -> {
                     javaClassWhitelist.addAll(
-                        taskResults.sandboxedClassLoader!!.loadedClasses.filter { klass ->
+                        testingResults.sandboxedClassLoader!!.loadedClasses.filter { klass ->
                             !klass.startsWith("edu.illinois.cs.cs125.jeed.core")
                         }
                     )
-                } else if (language == Language.kotlin) {
+                }
+                Language.kotlin -> {
                     kotlinClassWhitelist.addAll(
-                        taskResults.sandboxedClassLoader!!.loadedClasses.filter { klass ->
+                        testingResults.sandboxedClassLoader!!.loadedClasses.filter { klass ->
                             !klass.startsWith("edu.illinois.cs.cs125.jeed.core")
                         }
                     )
                 }
-                require(taskResults.truncatedLines == 0) { "Truncated output while testing solution" }
-                solutionPrinted = max(solutionPrinted, taskResults.outputLines.size)
-                if (executionDefinedClasses == null) {
-                    executionDefinedClasses = taskResults.sandboxedClassLoader!!.definedClasses.topLevelClasses()
-                }
             }
 
-            if (!checkExecutedSubmission(taskResults, testResults, language)) {
-                return testResults
-            }
-
-            if (correct == false && !taskResults.timeout) {
-                submissionTimeout = max(submissionTimeout, taskResults.executionInterval.length)
-            }
-            taskResults.returned?.let { results ->
-                if (correct == false && results.size > requiredTestCount) {
-                    requiredTestCount = results.size
-                    slowestFailingContent = compiledSubmission.source.contents
-                    slowestFailingFailed = results.any { it.failed }
-                    slowestFailingInputs = results.find { it.failed }?.parameters
-                }
-                testResults.complete.testing =
-                    TestResults.TestingResult(results.map { it.asTestResult(compiledSubmission.source) }, results.size)
-            }
+            require(testingResults.truncatedLines == 0) { "Truncated output while testing solution" }
+            solutionPrinted = max(solutionPrinted, testingResults.outputLines.size)
+            executionDefinedClasses =
+                executionDefinedClasses ?: testingResults.sandboxedClassLoader!!.definedClasses.topLevelClasses()
         }
-        return testResults
+
+        if (!checkExecutedSubmission(testingResults, results, language)) {
+            return results
+        }
+
+        if (correct == false && !testingResults.timeout) {
+            submissionTimeout = max(submissionTimeout, testingResults.executionInterval.length)
+        }
+
+        testingResults.returned?.let { it ->
+            if (correct == false) {
+                requiredTestCount = requiredTestCount.coerceAtLeast(it.size)
+            }
+            results.complete.testing =
+                TestResults.TestingResult(it.map { it.asTestResult(compiledSubmission.source) }, it.size)
+        }
+
+        return results
     }
-
-    var validated = false
-    var validationSeed: Int? = null
-
-    data class ValidationReport(
-        val incorrect: Int,
-        val mutations: Int,
-        val requiredTestCount: Int,
-        val kotlin: Boolean,
-        val kotlinIncorrect: Int,
-        val timeout: Long
-    )
-
-    @Suppress("LongMethod", "ComplexMethod")
-    suspend fun initialize(seed: Int = Random.nextInt()): ValidationReport {
-        val jenisolSettings = Settings(shrink = false)
-
-        var tooLarge = false
-        (setOf(correct) + alternativeSolutions).forEach { alsoCorrect ->
-            test(
-                alsoCorrect.contents,
-                jenisolSettings,
-                language = alsoCorrect.language,
-                correct = true,
-                seed = seed
-            ).also { results ->
-                require(results.succeeded) {
-                    "Solution did not pass the test suite: ${results.summary}\n${alsoCorrect.contents}"
-                }
-                if (!metadata.solutionThrows) {
-                    val solutionThrew =
-                        results.complete.testing?.tests?.find {
-                            it.jenisol?.solution?.threw != null
-                        }?.jenisol?.solution?.threw
-                    check(solutionThrew == null) {
-                        "Solution threw $solutionThrew but not expected to throw\n" +
-                            "Perhaps you need to add solutionThrows = true to @Correct"
-                    }
-                }
-            }
-        }
-
-        val mutations = templateSubmission(
-            if (getTemplate(Language.java) != null) {
-                "// TEMPLATE_START\n" + correct.contents + "\n// TEMPLATE_END \n"
-            } else {
-                correct.contents
-            }
-        ).mutationStream(random = Random(seed)).take(64).toList()
-            .map {
-                // Mutations will sometimes break the entire template
-                try {
-                    it.contents.kotlinDeTemplate(getTemplate(Language.java))
-                } catch (e: Exception) {
-                    correct.contents
-                }
-            }
-            // Templated questions sometimes will mutate the template
-            .filter { it != correct.contents }
-            .take(64)
-            .map { IncorrectFile(klass, it, IncorrectFile.Reason.TEST, Language.java, null, false) }
-
-        val allIncorrect = (incorrect + mutations).toMutableList().also {
-            if (javaStarter != null) {
-                it.add(
-                    IncorrectFile(
-                        javaStarter.klass, javaStarter.contents, IncorrectFile.Reason.TEST, javaStarter.language,
-                        null, true
-                    )
-                )
-            }
-            if (kotlinStarter != null) {
-                it.add(
-                    IncorrectFile(
-                        kotlinStarter.klass, kotlinStarter.contents, IncorrectFile.Reason.TEST, kotlinStarter.language,
-                        null, true
-                    )
-                )
-            }
-        }.also { allIncorrect ->
-            check(allIncorrect.all { it.contents != correct.contents }) {
-                "Incorrect solution identical to correct solution"
-            }
-            check(allIncorrect.isNotEmpty()) { "No incorrect examples found" }
-        }
-
-        mutations.forEach { wrong ->
-            test(
-                wrong.contents,
-                jenisolSettings,
-                correct = false,
-                language = wrong.language,
-                seed = seed
-            ).also {
-                require(!it.succeeded) { "Incorrect submission was not rejected:\n${wrong.contents}" }
-                it.validate(wrong.reason, wrong.contents, true)
-            }
-        }
-
-        incorrect.forEach { wrong ->
-            val previousTestCount = requiredTestCount
-            test(
-                wrong.contents,
-                jenisolSettings,
-                correct = false,
-                language = wrong.language,
-                seed = seed
-            ).also {
-                require(!it.succeeded) { "Incorrect submission was not rejected:\n${wrong.contents}" }
-                it.validate(wrong.reason, wrong.contents, false)
-            }
-            if (requiredTestCount <= metadata.maxTestCount && requiredTestCount == previousTestCount && !wrong.starter) {
-                println("WARN: ${wrong.path} did not increase the test count and may not be needed")
-            }
-        }
-
-        submissionTimeout = submissionTimeout.coerceAtLeast(1)
-
-        val report = ValidationReport(
-            allIncorrect.size,
-            mutations.size,
-            requiredTestCount,
-            hasKotlin,
-            incorrect.count { it.language == Language.kotlin },
-            submissionTimeout
-        )
-
-        check(requiredTestCount > 0)
-        if (requiredTestCount > metadata.maxTestCount) {
-            if (slowestFailingFailed) {
-                error(
-                    """Found incorrect input $slowestFailingInputs for the following incorrect code,
-                        |but it took too many tests (${requiredTestCount} > ${metadata.maxTestCount}):
-                        |---
-                        |$slowestFailingContent
-                        |---
-                        |Perhaps add this input to @FixedParameters?
-                        |${correct.path}
-                        """.trimMargin()
-                )
-            } else {
-                error(
-                    """Unable to find a failing input for the following incorrect code:
-                        |---
-                        |$slowestFailingContent
-                        |---
-                        |Perhaps add an input to @FixedParameters, or disable this mutation using // mutate-disable?
-                        |${correct.path}
-                        """.trimMargin()
-                )
-            }
-        }
-        require(requiredTestCount <= metadata.maxTestCount) {
-            "Requires too many tests: $report"
-        }
-
-        validated = true
-        validationSeed = seed
-
-        test(
-            correct.contents,
-            jenisolSettings,
-            seed = seed,
-            timeoutAdjustment = 1024.0
-        ).also { results ->
-            require(results.succeeded) {
-                "Untimed solution did not pass the test suite after validation: ${results.summary} ${correct.contents}"
-            }
-            submissionTimeout = (results.taskResults!!.interval.length.toDouble() * DEFAULT_TIMEOUT_MULTIPLIER).toLong()
-                .coerceAtLeast(DEFAULT_MIN_TIMEOUT)
-            solutionPrinted = results.taskResults!!.outputLines.size
-            results.isTooLarge().also {
-                if (it) {
-                    println("WARN: submission produced too much output\n---\n${correct.contents}---")
-                }
-                tooLarge = it
-            }
-        }
-
-        check(submissionTimeout > 0)
-
-        (listOf(Pair(correct.contents, Language.java)) + alternativeSolutions.map {
-            Pair(
-                it.contents,
-                it.language
-            )
-        }).forEach { (contents, language) ->
-            test(
-                contents,
-                language = language,
-                seed = seed
-            ).also { results ->
-                require(results.succeeded) {
-                    "Solution did not pass the test suite after validation: ${results.summary}\n$contents"
-                }
-                results.isTooLarge().also {
-                    if (it) {
-                        println("WARN: submission produced too much output\n---\n${contents}---")
-                    }
-                    tooLarge = it
-                }
-            }
-        }
-
-        (incorrect + mutations).forEachIndexed { index, wrong ->
-            val isMutated = index >= incorrect.size
-            test(
-                wrong.contents,
-                jenisolSettings,
-                language = wrong.language,
-                seed = seed
-            ).also { results ->
-                require(!results.succeeded) { "Incorrect submission was not rejected:\n${wrong.contents}" }
-                results.validate(wrong.reason, wrong.contents, isMutated)
-                results.isTooLarge().also {
-                    if (it) {
-                        println("WARN: submission produced too much output\n---\n${wrong.contents}---")
-                    }
-                    tooLarge = it
-                }
-            }
-        }
-
-        check(!tooLarge) { "Testing produced too much output." }
-        return report
-    }
-
-    var detemplatedJavaStarter = javaStarter?.contents
-    var detemplatedKotlinStarter = kotlinStarter?.contents
-
-    val hasKotlin =
-        metadata.kotlinDescription != null && alternativeSolutions.find { it.language == Language.kotlin } != null &&
-            ((javaStarter != null) == (kotlinStarter != null))
 
     companion object {
         const val DEFAULT_RETURN_TIMEOUT = 1024
@@ -832,174 +421,7 @@ data class Question(
     }
 }
 
-@JsonClass(generateAdapter = true)
-data class TestResults(
-    val type: Type,
-    val completedSteps: MutableSet<Step> = mutableSetOf(),
-    val complete: CompletedTasks = CompletedTasks(),
-    val failedSteps: MutableSet<Step> = mutableSetOf(),
-    val failed: FailedTasks = FailedTasks(),
-    val skippedSteps: MutableSet<Step> = mutableSetOf(),
-    var timeout: Boolean = false,
-    @Transient
-    var taskResults: Sandbox.TaskResults<*>? = null
-) {
-    @Suppress("EnumNaming", "EnumEntryName")
-    enum class Type { jenisol }
-
-    @Suppress("EnumNaming", "EnumEntryName")
-    enum class Step {
-        templateSubmission,
-        checkstyle,
-        ktlint,
-        compileSubmission,
-        checkSubmission,
-        compileTest,
-        test,
-    }
-
-    @JsonClass(generateAdapter = true)
-    data class CompletedTasks(
-        var compileSubmission: CompiledSourceResult? = null,
-        var checkstyle: CheckstyleResults? = null,
-        var ktlint: KtLintResults? = null,
-        var compileTest: CompiledSourceResult? = null,
-        var testing: TestingResult? = null
-    )
-
-    @JsonClass(generateAdapter = true)
-    data class TestingResult(
-        val tests: List<TestResult>,
-        val testCount: Int,
-        val passed: Boolean = tests.size == testCount && tests.none { !it.passed }
-    ) {
-        @JsonClass(generateAdapter = true)
-        data class TestResult(
-            val name: String,
-            val passed: Boolean,
-            val message: String? = null,
-            val arguments: String? = null,
-            val expected: String? = null,
-            val found: String? = null,
-            val explanation: String? = null,
-            val output: String? = null,
-            val complexity: Int? = null,
-            @Transient val jenisol: edu.illinois.cs.cs125.jenisol.core.TestResult<*, *>? = null,
-            val submissionStackTrace: String? = null
-        )
-    }
-
-    @JsonClass(generateAdapter = true)
-    data class FailedTasks(
-        var templateSubmission: TemplatingFailed? = null,
-        var compileSubmission: CompilationFailed? = null,
-        var checkstyle: CheckstyleFailed? = null,
-        var checkSubmission: String? = null,
-        var compileTest: CompilationFailed? = null,
-        var ktlint: KtLintFailed? = null
-    )
-
-    @Suppress("MemberVisibilityCanBePrivate", "unused")
-    val completed: Boolean
-        get() = completedSteps.contains(Step.test)
-    val succeeded: Boolean
-        get() = !timeout && complete.testing?.passed ?: false
-
-    val summary: String
-        get() = if (failed.templateSubmission != null) {
-            "Templating failed${failed.templateSubmission?.message?.let { ": $it" } ?: ""}"
-        } else if (failed.compileSubmission != null) {
-            "Compiling submission failed${failed.compileSubmission?.let { ": $it" } ?: ""}"
-        } else if (failed.checkstyle != null) {
-            "Checkstyle failed:${failed.checkstyle?.let { ": $it" } ?: ""}"
-        } else if (failed.ktlint != null) {
-            "Ktlint failed:${failed.ktlint?.let { ": $it" } ?: ""}"
-        } else if (failed.checkSubmission != null) {
-            "Checking submission failed: ${failed.checkSubmission}"
-        } else if (failed.compileTest != null) {
-            "Compiling test failed: ${failed.compileTest?.message?.let { ": $it" } ?: ""}"
-        } else if (timeout) {
-            "Testing timed out"
-        } else if (!succeeded) {
-            "Testing failed: ${complete.testing!!.tests.find { !it.passed }}"
-        } else {
-            "Passed"
-        }
-
-    fun validate(reason: Question.IncorrectFile.Reason, contents: String, isMutated: Boolean) {
-        when (reason) {
-            Question.IncorrectFile.Reason.COMPILE -> require(failed.compileSubmission != null) {
-                "Expected submission not to compile: ${summary}\n$contents"
-            }
-            Question.IncorrectFile.Reason.CHECKSTYLE -> require(failed.checkstyle != null) {
-                "Expected submission to fail checkstyle: ${summary}\n$contents"
-            }
-            Question.IncorrectFile.Reason.DESIGN -> require(failed.checkSubmission != null) {
-                "Expected submission to fail design: ${summary}\n$contents"
-            }
-            Question.IncorrectFile.Reason.TIMEOUT -> require(timeout || !succeeded) {
-                "Expected submission to timeout: ${summary}\n$contents"
-            }
-            else -> require(isMutated || (!timeout && complete.testing?.passed == false)) {
-                "Expected submission to fail tests: ${summary}\n$contents"
-            }
-        }
-    }
-
-    fun toJson(): String = moshi.adapter(TestResults::class.java).toJson(this)
-    fun isTooLarge(maxSize: Int = Question.DEFAULT_MAX_OUTPUT_SIZE) = toJson().length > maxSize
-}
-
-fun TestResult<*, *>.asTestResult(source: Source) = TestResults.TestingResult.TestResult(
-    solutionExecutable.name,
-    succeeded,
-    verifierThrew?.message,
-    parameters.toString(),
-    @Suppress("TooGenericExceptionCaught")
-    solution.returned?.safePrint(),
-    submission.returned?.safePrint(),
-    if (!succeeded) {
-        explain()
-    } else {
-        null
-    },
-    submission.stdout,
-    complexity,
-    this,
-    submission.threw?.getStackTraceForSource(
-        source,
-        boundaries = listOf(
-            "at edu.illinois.cs.cs125.jenisol.core.TestRunner",
-            "at jdk.internal.reflect.",
-            "at java.base"
-        )
-    )
-)
-
-class InvertingClassLoader(private val inversions: Set<String>) : ClassLoader() {
-    // Invert the usual delegation strategy for classes in this package to avoid using the system ClassLoader
-    override fun loadClass(name: String): Class<*> {
-        return if (name in inversions) {
-            throw ClassNotFoundException()
-        } else {
-            super.loadClass(name)
-        }
-    }
-
-    override fun loadClass(name: String, resolve: Boolean): Class<*> {
-        return if (name in inversions) {
-            throw ClassNotFoundException()
-        } else {
-            super.loadClass(name, resolve)
-        }
-    }
-}
-
-fun captureJeedOutput(run: () -> Any?): CapturedResult = Sandbox.redirectOutput(run).let {
-    CapturedResult(it.returned, it.threw, it.stdout, it.stderr)
-}
-
-private fun String.kotlinDeTemplate(template: String?): String {
+fun String.deTemplate(template: String?): String {
     return when (template) {
         null -> this
         else -> {

@@ -10,6 +10,7 @@ import com.squareup.moshi.JsonClass
 import com.squareup.moshi.Moshi
 import edu.illinois.cs.cs125.questioner.lib.Question
 import edu.illinois.cs.cs125.questioner.lib.TestResults
+import edu.illinois.cs.cs125.questioner.lib.validate
 import edu.illinois.cs.cs125.questioner.lib.moshi.Adapters
 import io.ktor.application.Application
 import io.ktor.application.call
@@ -74,7 +75,7 @@ object Questions {
         if (!question.validated) {
             val start = Instant.now().toEpochMilli()
             logger.info("Validating ${question.name}")
-            question.initialize(seed = SEED)
+            question.validate(seed = SEED)
             logger.info("Validated ${question.name} in ${Instant.now().toEpochMilli() - start}")
         }
         val start = Instant.now().toEpochMilli()

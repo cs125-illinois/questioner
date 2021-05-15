@@ -1,9 +1,6 @@
 package edu.illinois.cs.cs125.questioner.lib
 
-import com.squareup.moshi.Moshi
 import java.io.File
-
-private val moshi = Moshi.Builder().build()
 
 @Suppress("unused")
 class Validator(questionsFile: File, private val sourceDir: String, private val seed: Int) {
@@ -26,8 +23,8 @@ class Validator(questionsFile: File, private val sourceDir: String, private val 
             }
             return
         }
-        question.initialize(seed = seed).also { report ->
-            println("$name: $report")
+        question.validate(seed = seed).also { report ->
+            println("$name: ${report.summary}")
             question.validationFile(sourceDir)
                 .writeText(moshi.adapter(Question::class.java).indent("  ").toJson(questions[name]))
         }
