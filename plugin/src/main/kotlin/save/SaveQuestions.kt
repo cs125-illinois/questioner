@@ -307,7 +307,11 @@ fun List<ParsedJavaFile>.findQuestions(
             val javaStarterFile = if (solution.autoStarter) {
                 solution.extractStarter() ?: error("autoStarter enabled but starter generation failed")
             } else {
-                javaStarter?.toStarterFile(javaCleanSpec)
+                javaStarter?.toStarterFile(javaCleanSpec)?.also {
+                    if (it.path in usedFiles) {
+                        check(usedFiles[it.path] == "Incorrect")
+                    }
+                }
             }
 
             var kotlinStarterFile = kotlinFiles.filter { it.starter != null }.also {
@@ -355,6 +359,9 @@ fun List<ParsedJavaFile>.findQuestions(
                 }
             }
 
+            kotlinStarterFile?.also { incorrectExamples.add(0, it) }
+            javaStarterFile?.also { incorrectExamples.add(0, it) }
+
             Question(
                 solution.correct.name,
                 solution.className,
@@ -364,17 +371,13 @@ fun List<ParsedJavaFile>.findQuestions(
                     solution.correct.version,
                     solution.correct.author,
                     solution.correct.description,
-                    solution.correct.checkstyle,
-                    solution.correct.solutionThrows,
-                    solution.correct.maxTestCount,
-                    solution.correct.minTestCount,
                     kotlinSolution?.description,
+                    solution.correct.checkstyle,
                     solution.citation,
                     myUsedFiles,
-                    solution.correct.focused,
-                    solution.correct.maxTimeout,
-                    solution.correct.timeoutMultiplier
+                    solution.correct.focused
                 ),
+                Question.TestingControl(solution.correct),
                 Question.FlatFile(
                     solution.className,
                     solution.removeImports(importNames).stripPackage(),
@@ -385,8 +388,6 @@ fun List<ParsedJavaFile>.findQuestions(
                 alternateSolutions,
                 incorrectExamples,
                 common,
-                javaStarterFile,
-                kotlinStarterFile,
                 javaTemplate,
                 kotlinTemplate,
                 solution.whitelist.toSet(),
@@ -472,3 +473,14 @@ internal fun String.stripPackage(): String {
 }
 
 val markdownParser = MarkdownParser(CommonMarkFlavourDescriptor())
+
+fun String.toReason() = when (toUpperCase()) {
+    "DESIGN" -> Question.IncorrectFile.Reason.DESIGN
+    "TEST" -> Question.IncorrectFile.Reason.TEST
+    "COMPILE" -> Question.IncorrectFile.Reason.COMPILE
+    "CHECKSTYLE" -> Question.IncorrectFile.Reason.CHECKSTYLE
+    "TIMEOUT" -> Question.IncorrectFile.Reason.TIMEOUT
+    else -> error("Invalid incorrect reason: $this")
+}
+
+

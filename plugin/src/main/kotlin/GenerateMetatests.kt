@@ -114,7 +114,7 @@ fun List<Question>.generateTest(
         .filter {
             when {
                 onlyNotValidated -> !it.validated
-                onlyFocused -> it.metadata.focused
+                onlyFocused -> it.metadata.focused == true
                 else -> true
             }
         }

@@ -26,7 +26,7 @@ class Validator(questionsFile: File, private val sourceDir: String, private val 
         question.validate(seed = seed).also { report ->
             println("$name: ${report.summary}")
             question.validationFile(sourceDir)
-                .writeText(moshi.adapter(Question::class.java).indent("  ").toJson(questions[name]))
+                .writeText(moshi.adapter(Question::class.java).indent("  ").toJson(question))
         }
     }
 }

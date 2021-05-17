@@ -24,4 +24,7 @@ publishing {
         }
     }
 }
+kapt {
+    includeCompileClasspath = false
+}
 

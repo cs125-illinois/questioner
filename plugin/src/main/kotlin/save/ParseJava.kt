@@ -93,19 +93,24 @@ data class ParsedJavaFile(val path: String, val contents: String) {
                 val version = parameters["version"] ?: error("version field not set on @Correct")
                 val author = parameters["author"] ?: error("author field not set on @Correct")
                 assert(author.isEmail()) { "author field is not an email address" }
-                val checkstyle = parameters["checkstyle"]?.toBoolean() ?: Correct.DEFAULT_CHECKSTYLE
-                val solutionThrows = parameters["solutionThrows"]?.toBoolean() ?: Correct.DEFAULT_THROWS
-                val maxTestCount = parameters["maxTestCount"]?.toInt() ?: Correct.DEFAULT_MAX_TEST_COUNT
-                val minTestCount = parameters["minTestCount"]?.toInt() ?: Correct.DEFAULT_MIN_TEST_COUNT
-                val focused = parameters["focused"]?.toBoolean() ?: Correct.DEFAULT_FOCUSED
-                val maxTimeout = parameters["maxTimeout"]?.toInt() ?: Correct.DEFAULT_MAX_TIMEOUT
-                val timeoutMultiplier = parameters["timeoutMultiplier"]?.toInt() ?: Correct.DEFAULT_TIMEOUT_MULTIPLIER
                 val description = annotation.comment().let { comment ->
                     markdownParser.buildMarkdownTreeFromString(comment).let { astNode ->
                         HtmlGenerator(comment, astNode, CommonMarkFlavourDescriptor()).generateHtml()
                             .removeSurrounding("<body>", "</body>")
                     }
                 }
+                val checkstyle = parameters["checkstyle"]?.toBoolean() ?: Correct.DEFAULT_CHECKSTYLE
+                val solutionThrows = parameters["solutionThrows"]?.toBoolean() ?: Correct.DEFAULT_SOLUTION_THROWS
+                val focused = parameters["focused"]?.toBoolean() ?: Correct.DEFAULT_FOCUSED
+                val minTestCount = parameters["minTestCount"]?.toInt() ?: Correct.DEFAULT_MIN_TEST_COUNT
+                val maxTestCount = parameters["maxTestCount"]?.toInt() ?: Correct.DEFAULT_MAX_TEST_COUNT
+                val minTimeout = parameters["minTimeout"]?.toInt() ?: Correct.DEFAULT_MIN_TIMEOUT
+                val maxTimeout = parameters["maxTimeout"]?.toInt() ?: Correct.DEFAULT_MAX_TIMEOUT
+                val timeoutMultiplier = parameters["timeoutMultiplier"]?.toInt() ?: Correct.DEFAULT_TIMEOUT_MULTIPLIER
+                val minMutationCount = parameters["minMutationCount"]?.toInt() ?: Correct.DEFAULT_MIN_MUTATION_COUNT
+                val maxMutationCount = parameters["maxMutationCount"]?.toInt() ?: Correct.DEFAULT_MAX_MUTATION_COUNT
+                val outputMultiplier = parameters["outputMultiplier"]?.toInt() ?: Correct.DEFAULT_OUTPUT_MULTIPLIER
+
                 CorrectData(
                     name,
                     version,
@@ -113,11 +118,15 @@ data class ParsedJavaFile(val path: String, val contents: String) {
                     description,
                     checkstyle,
                     solutionThrows,
-                    maxTestCount,
-                    minTestCount,
                     focused,
+                    minTestCount,
+                    maxTestCount,
+                    minTimeout,
                     maxTimeout,
-                    timeoutMultiplier
+                    timeoutMultiplier,
+                    minMutationCount,
+                    maxMutationCount,
+                    outputMultiplier
                 )
             }
         } catch (e: Exception) {
@@ -212,7 +221,7 @@ data class ParsedJavaFile(val path: String, val contents: String) {
         return "$start{{{ contents }}}$end"
     }
 
-    fun extractStarter(): Question.FlatFile? {
+    fun extractStarter(): Question.IncorrectFile? {
         val correctSolution = toCleanSolution(CleanSpec(false, null)).contents
         val parsed = correctSolution.parseJava()
         val methodDeclaration = parsed.tree
@@ -253,24 +262,23 @@ data class ParsedJavaFile(val path: String, val contents: String) {
                 correctSolution.substring(postfix until correctSolution.length)
             )
             .javaDeTemplate(false, wrapWith).let {
-                Question.FlatFile(className, it, Question.Language.java, null)
+                Question.IncorrectFile(
+                    className,
+                    it,
+                    Question.IncorrectFile.Reason.TEST,
+                    Question.Language.java,
+                    null,
+                    true
+                )
             }
     }
 
     fun toIncorrectFile(cleanSpec: CleanSpec): Question.IncorrectFile {
         check(incorrect != null) { "Not an incorrect file" }
-        val reason = when (incorrect.toUpperCase()) {
-            "DESIGN" -> Question.IncorrectFile.Reason.DESIGN
-            "TEST" -> Question.IncorrectFile.Reason.TEST
-            "COMPILE" -> Question.IncorrectFile.Reason.COMPILE
-            "CHECKSTYLE" -> Question.IncorrectFile.Reason.CHECKSTYLE
-            "TIMEOUT" -> Question.IncorrectFile.Reason.TIMEOUT
-            else -> error("Invalid incorrect reason: $incorrect: $path")
-        }
         return Question.IncorrectFile(
             className,
             clean(cleanSpec),
-            reason,
+            incorrect.toReason(),
             Question.Language.java,
             path,
             starter != null
@@ -282,9 +290,16 @@ data class ParsedJavaFile(val path: String, val contents: String) {
         return Question.FlatFile(className, clean(cleanSpec), Question.Language.java, path)
     }
 
-    fun toStarterFile(cleanSpec: CleanSpec): Question.FlatFile {
+    fun toStarterFile(cleanSpec: CleanSpec): Question.IncorrectFile {
         check(starter != null) { "Not an starter code file" }
-        return Question.FlatFile(className, clean(cleanSpec), Question.Language.java, path)
+        return Question.IncorrectFile(
+            className,
+            clean(cleanSpec),
+            incorrect?.toReason() ?: "test".toReason(),
+            Question.Language.java,
+            path,
+            true
+        )
     }
 
     private val chars = contents.toCharArray()

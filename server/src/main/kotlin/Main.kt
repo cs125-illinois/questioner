@@ -11,7 +11,6 @@ import com.squareup.moshi.Moshi
 import edu.illinois.cs.cs125.questioner.lib.Question
 import edu.illinois.cs.cs125.questioner.lib.TestResults
 import edu.illinois.cs.cs125.questioner.lib.moshi.Adapters
-import edu.illinois.cs.cs125.questioner.lib.validate
 import io.ktor.application.Application
 import io.ktor.application.call
 import io.ktor.application.install
@@ -44,7 +43,6 @@ import edu.illinois.cs.cs125.jeed.core.moshi.Adapters as JeedAdapters
 
 private val moshi = Moshi.Builder().build()
 private val logger = KotlinLogging.logger {}
-private const val SEED = 124
 
 private val collection: MongoCollection<BsonDocument> = run {
     require(System.getenv("MONGODB") != null) { "MONGODB environment variable not set" }
@@ -71,20 +69,12 @@ object Questions {
 
     suspend fun test(submission: Submission): TestResults {
         val question = load(submission.path) ?: error("No question ${submission.path}")
-
-        if (!question.validated) {
-            val start = Instant.now().toEpochMilli()
-            logger.info("Validating ${question.name}")
-            question.validate(seed = SEED)
-            logger.info("Validated ${question.name} in ${Instant.now().toEpochMilli() - start}")
-        }
+        check(question.validated) { "Question ${submission.path} is not validated" }
         val start = Instant.now().toEpochMilli()
         logger.trace("Testing ${question.name}")
         return question.test(
             submission.contents,
-            seed = SEED,
-            language = submission.language,
-            timeoutAdjustment = System.getenv("TIMEOUT_ADJUSTMENT")?.toDouble() ?: 1.0
+            language = submission.language
         ).also {
             logger.trace("Tested ${question.name} in ${Instant.now().toEpochMilli() - start}")
         }

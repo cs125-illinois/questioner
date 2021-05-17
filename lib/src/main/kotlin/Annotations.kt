@@ -12,11 +12,15 @@ data class CorrectData(
     val description: String,
     val checkstyle: Boolean,
     val solutionThrows: Boolean,
-    val maxTestCount: Int,
-    val minTestCount: Int,
     val focused: Boolean,
+    val minTestCount: Int,
+    val maxTestCount: Int,
+    val minTimeout: Int,
     val maxTimeout: Int,
-    val timeoutMultiplier: Int
+    val timeoutMultiplier: Int,
+    val minMutationCount: Int,
+    val maxMutationCount: Int,
+    val outputMultiplier: Int
 )
 
 @Suppress("LongParameterList")
@@ -26,27 +30,29 @@ annotation class Correct(
     val version: String,
     val author: String,
     val checkstyle: Boolean = DEFAULT_CHECKSTYLE,
-    val solutionThrows: Boolean = DEFAULT_THROWS,
+    val solutionThrows: Boolean = DEFAULT_SOLUTION_THROWS,
+    val focused: Boolean = DEFAULT_FOCUSED,
     val minTestCount: Int = DEFAULT_MIN_TEST_COUNT,
     val maxTestCount: Int = DEFAULT_MAX_TEST_COUNT,
+    val minTimeout: Int = DEFAULT_MIN_TIMEOUT,
+    val maxTimeout: Int = DEFAULT_MAX_TIMEOUT,
+    val timeoutMultiplier: Int = DEFAULT_TIMEOUT_MULTIPLIER,
     val minMutationCount: Int = DEFAULT_MIN_MUTATION_COUNT,
     val maxMutationCount: Int = DEFAULT_MAX_MUTATION_COUNT,
-    val minIncorrectCount: Int = DEFAULT_MIN_INCORRECT_COUNT,
-    val focused: Boolean = DEFAULT_FOCUSED,
-    val maxTimeout: Int = DEFAULT_MAX_TIMEOUT,
-    val timeoutMultiplier: Int = DEFAULT_TIMEOUT_MULTIPLIER
+    val outputMultiplier: Int = DEFAULT_OUTPUT_MULTIPLIER,
 ) {
     companion object {
         const val DEFAULT_CHECKSTYLE = true
-        const val DEFAULT_THROWS = false
+        const val DEFAULT_SOLUTION_THROWS = false
+        const val DEFAULT_FOCUSED = false
         const val DEFAULT_MIN_TEST_COUNT = 128
         const val DEFAULT_MAX_TEST_COUNT = 1024
-        const val DEFAULT_MIN_MUTATION_COUNT = 0
-        const val DEFAULT_MAX_MUTATION_COUNT = 32
-        const val DEFAULT_MIN_INCORRECT_COUNT = 4
-        const val DEFAULT_FOCUSED = false
+        const val DEFAULT_MIN_TIMEOUT = 128
         const val DEFAULT_MAX_TIMEOUT = 2048
         const val DEFAULT_TIMEOUT_MULTIPLIER = 4
+        const val DEFAULT_MIN_MUTATION_COUNT = 0
+        const val DEFAULT_MAX_MUTATION_COUNT = 32
+        const val DEFAULT_OUTPUT_MULTIPLIER = 8
     }
 }
 

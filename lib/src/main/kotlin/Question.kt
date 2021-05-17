@@ -19,8 +19,6 @@ import edu.illinois.cs.cs125.questioner.lib.moshi.Adapters
 import java.io.File
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.ReflectPermission
-import kotlin.math.max
-import kotlin.random.Random
 import edu.illinois.cs.cs125.jeed.core.moshi.Adapters as JeedAdapters
 import edu.illinois.cs.cs125.jenisol.core.solution as jenisol
 
@@ -44,13 +42,12 @@ data class Question(
     val name: String,
     val klass: String,
     val metadata: Metadata,
+    val control: TestingControl,
     val question: FlatFile,
     val correct: FlatFile,
     val alternativeSolutions: List<FlatFile>,
     val incorrect: List<IncorrectFile>,
     val common: List<String>?,
-    val javaStarter: FlatFile?,
-    val kotlinStarter: FlatFile?,
     var javaTemplate: String?,
     var kotlinTemplate: String?,
     val importWhitelist: Set<String>,
@@ -67,16 +64,60 @@ data class Question(
         val version: String,
         val author: String,
         val javaDescription: String,
-        val checkstyle: Boolean,
-        val solutionThrows: Boolean,
-        val maxTestCount: Int,
-        val minTestCount: Int,
         val kotlinDescription: String?,
+        val checkstyle: Boolean,
         val citation: Citation?,
         val usedFiles: List<String> = listOf(),
-        val focused: Boolean,
+        val focused: Boolean? = null
+    )
+
+    @JsonClass(generateAdapter = true)
+    data class TestingControl(
+        val solutionThrows: Boolean,
+        val minTestCount: Int,
+        val maxTestCount: Int,
+        val minTimeout: Int,
         val maxTimeout: Int,
-        val timeoutMultiplier: Int
+        val timeoutMultiplier: Int,
+        val minMutationCount: Int,
+        val maxMutationCount: Int,
+        val outputMultiplier: Int
+    ) {
+        constructor(correct: CorrectData) : this(
+            correct.solutionThrows,
+            correct.minTestCount,
+            correct.maxTestCount,
+            correct.minTimeout,
+            correct.maxTimeout,
+            correct.timeoutMultiplier,
+            correct.minMutationCount,
+            correct.maxMutationCount,
+            correct.outputMultiplier
+        )
+    }
+
+    @JsonClass(generateAdapter = true)
+    data class TestingSettings(
+        val seed: Int,
+        val testCount: Int,
+        val timeout: Int,
+        val outputLimit: Int,
+        val javaWhitelist: Set<String>?,
+        val kotlinWhitelist: Set<String>?,
+        val useCheckstyle: Boolean,
+        val shrink: Boolean
+    )
+
+    @JsonClass(generateAdapter = true)
+    data class ValidationResults(
+        val seed: Int,
+        val requiredTestCount: Int,
+        val mutationCount: Int,
+        val solutionMaxRuntime: Int,
+        val bootstrapLength: Long,
+        val mutationLength: Long,
+        val incorrectLength: Long,
+        val calibrationLength: Long
     )
 
     @JsonClass(generateAdapter = true)
@@ -164,80 +205,57 @@ data class Question(
         Language.kotlin -> "kt"
     }
 
-    val detemplatedJavaStarter = javaStarter?.contents
-    val detemplatedKotlinStarter = kotlinStarter?.contents
+    val detemplatedJavaStarter = incorrect.find { it.language == Language.java && it.starter }?.contents
+    val detemplatedKotlinStarter = incorrect.find { it.language == Language.kotlin && it.starter }?.contents
 
     val hasKotlin =
         metadata.kotlinDescription != null && alternativeSolutions.find { it.language == Language.kotlin } != null &&
-            ((javaStarter != null) == (kotlinStarter != null))
-
-    // Set during validation
-    var validated = false
-    var validationSeed: Int? = null
-    var requiredTestCount = -1
-    var submissionTimeout = -1L
-    var solutionPrinted = 0
-    var executionDefinedClasses: List<String>? = null
+            ((detemplatedJavaStarter != null) == (detemplatedKotlinStarter != null))
 
     @Transient
     val defaultJavaClassWhitelist = importWhitelist.toMutableSet().also {
         it.addAll(sharedClassWhitelist)
     }.toSet()
-    var javaClassWhitelist = defaultJavaClassWhitelist.toMutableSet()
 
     @Transient
     val defaultKotlinClassWhitelist = importWhitelist.toMutableSet().also {
         it.addAll(sharedClassWhitelist)
         it.addAll(setOf("java.util.", "kotlin."))
     }.toSet()
-    var kotlinClassWhitelist = defaultKotlinClassWhitelist.toMutableSet()
 
-    fun clearValidation() {
-        validated = false
-        validationSeed = null
-        requiredTestCount = -1
-        submissionTimeout = -1L
-        solutionPrinted = 0
-        executionDefinedClasses = null
-        javaClassWhitelist = defaultJavaClassWhitelist.toMutableSet()
-        kotlinClassWhitelist = defaultKotlinClassWhitelist.toMutableSet()
-    }
+    var testingSettings: TestingSettings? = null
+    var validationResults: ValidationResults? = null
+
+    val validated: Boolean
+        get() = testingSettings != null
 
     @Suppress("ReturnCount", "LongMethod", "ComplexMethod", "LongParameterList")
     suspend fun test(
         contents: String,
-        passedSettings: Settings = Settings(),
-        seed: Int = Random.nextInt(),
-        correct: Boolean? = null,
-        language: Language = Language.java
+        language: Language,
+        settings: TestingSettings? = testingSettings
     ): TestResults {
-
-        require(validated || correct != null) { "Jenisol not validated for this question" }
+        check(settings != null) { "No test settings provided" }
 
         val results = TestResults(TestResults.Type.jenisol)
 
-        val failOnCheckstyle = if (correct == false) {
-            false
-        } else {
-            metadata.checkstyle
-        }
-
         @Suppress("SwallowedException")
         val compiledSubmission = try {
-            if (language == Language.java) {
-                compileSubmission(
-                    contents,
-                    InvertingClassLoader(setOf(klass)),
-                    results,
-                    failOnCheckstyle
-                )
-            } else {
-                kompileSubmission(
-                    contents,
-                    InvertingClassLoader(setOf(klass, "${klass}Kt")),
-                    results,
-                    failOnCheckstyle
-                )
+            when (language) {
+                Language.java ->
+                    compileSubmission(
+                        contents,
+                        InvertingClassLoader(setOf(klass)),
+                        results,
+                        settings.useCheckstyle
+                    )
+                Language.kotlin ->
+                    kompileSubmission(
+                        contents,
+                        InvertingClassLoader(setOf(klass, "${klass}Kt")),
+                        results,
+                        settings.useCheckstyle
+                    )
             }
         } catch (e: TemplatingFailed) {
             return results
@@ -251,158 +269,79 @@ data class Question(
 
         val klassName = checkCompiledSubmission(compiledSubmission, results) ?: return results
 
-        val classWhiteList = if (language == Language.java) {
-            javaClassWhitelist
-        } else {
-            kotlinClassWhitelist
-        }
-        val classLoaderConfiguration = if (correct == true) {
-            Sandbox.ClassLoaderConfiguration()
-        } else {
-            Sandbox.ClassLoaderConfiguration(isWhiteList = true, whitelistedClasses = classWhiteList)
-        }
+        val classLoaderConfiguration = when (language) {
+            Language.java -> settings.javaWhitelist
+            Language.kotlin -> settings.kotlinWhitelist
+        }?.let {
+            Sandbox.ClassLoaderConfiguration(isWhiteList = true, whitelistedClasses = it)
+        } ?: Sandbox.ClassLoaderConfiguration()
 
-        require(correct != null || submissionTimeout > 0) { "submissionTimeout not set" }
-
-        val (settings, testingTimeout) = when (correct) {
-            true -> Pair(passedSettings.copy(seed = seed), DEFAULT_SOLUTION_TIMEOUT)
-            false -> Pair(
-                passedSettings.copy(
-                    seed = seed,
-                    overrideTotalCount = MAX_TEST_COUNT,
-                    startMultipleCount = MAX_START_MULTIPLE_COUNT
-                ), DEFAULT_KNOWN_INCORRECT_TIMEOUT
+        val jenisolSettings = Settings(
+            shrink = settings.shrink,
+            overrideTotalCount = settings.testCount,
+            startMultipleCount = (settings.testCount / 2).coerceAtMost(
+                MAX_START_MULTIPLE_COUNT
             )
-            else -> {
-                require(requiredTestCount > 0) { "requiredTestCount not set" }
-                val testCount = (requiredTestCount * SUBMISSION_TEST_MULTIPLIER).coerceAtLeast(metadata.minTestCount)
-                Pair(
-                    passedSettings.copy(
-                        seed = seed,
-                        overrideTotalCount = testCount,
-                        startMultipleCount = (testCount / 2).coerceAtMost(MAX_START_MULTIPLE_COUNT)
-                    ), submissionTimeout
-                )
-            }
-        }
-
-        val maxOutputLines =
-            if (correct == true) {
-                SOLUTION_TEST_OUTPUT_LINES
-            } else {
-                solutionPrinted * OUTPUT_LINE_MULTIPLIER
-            }.coerceAtLeast(MIN_OUTPUT_LINES)
+        )
 
         val testingResults = Sandbox.execute(
             compiledSubmission.classLoader,
             Sandbox.ExecutionArguments(
-                timeout = testingTimeout,
+                timeout = settings.timeout.toLong(),
                 classLoaderConfiguration = classLoaderConfiguration,
-                maxOutputLines = maxOutputLines,
+                maxOutputLines = settings.outputLimit,
                 permissions = SAFE_PERMISSIONS,
                 returnTimeout = DEFAULT_RETURN_TIMEOUT
             )
         ) { (classLoader, _) ->
-            solution.submission(classLoader.loadClass(klassName), contents).test(settings, ::captureJeedOutput)
+            solution.submission(classLoader.loadClass(klassName), contents).test(jenisolSettings, ::captureJeedOutput)
         }.also {
             results.taskResults = it
+            results.timeout = it.timeout
         }
 
         if (!testingResults.timeout && testingResults.threw != null) {
+            results.failedSteps.add(TestResults.Step.checkSubmission)
             when (testingResults.threw) {
-                is ClassNotFoundException -> {
-                    results.failedSteps.add(TestResults.Step.checkSubmission)
-                    results.failed.checkSubmission = "Class design error: could not find class $klass"
-                }
-                is SubmissionDesignError -> {
-                    results.failedSteps.add(TestResults.Step.checkSubmission)
-                    results.failed.checkSubmission = "Class design error: ${testingResults.threw?.message}"
-                }
-                is NoClassDefFoundError -> {
-                    results.failedSteps.add(TestResults.Step.checkSubmission)
-                    results.failed.checkSubmission =
-                        "Class design error: attempted to use unavailable class ${testingResults.threw?.message}"
-                }
+                is ClassNotFoundException -> results.failed.checkSubmission =
+                    "Class design error: could not find class $klass"
+                is SubmissionDesignError -> results.failed.checkSubmission =
+                    "Class design error: ${testingResults.threw?.message}"
+                is NoClassDefFoundError -> results.failed.checkSubmission =
+                    "Class design error: attempted to use unavailable class ${testingResults.threw?.message}"
                 else -> {
                     val actualException = if (testingResults.threw is InvocationTargetException) {
                         (testingResults.threw as InvocationTargetException).targetException ?: testingResults.threw
                     } else {
                         testingResults.threw
                     }
-                    results.failedSteps.add(TestResults.Step.checkSubmission)
                     results.failed.checkSubmission = "Testing generated an unexpected error: $actualException"
                 }
             }
             return results
         }
 
-        results.timeout = testingResults.timeout
+        if (!checkExecutedSubmission(testingResults, results, language)) {
+            return results
+        }
         if (testingResults.returned == null) {
             results.failedSteps.add(TestResults.Step.test)
         } else {
             results.completedSteps.add(TestResults.Step.test)
-        }
-
-        check(correct == null || (testingResults.timeout || testingResults.truncatedLines == 0)) {
-            "Truncated output during validation: ${testingResults.truncatedLines}"
-        }
-
-        if (correct == true) {
-            when (language) {
-                Language.java -> {
-                    javaClassWhitelist.addAll(
-                        testingResults.sandboxedClassLoader!!.loadedClasses.filter { klass ->
-                            !klass.startsWith("edu.illinois.cs.cs125.jeed.core")
-                        }
-                    )
-                }
-                Language.kotlin -> {
-                    kotlinClassWhitelist.addAll(
-                        testingResults.sandboxedClassLoader!!.loadedClasses.filter { klass ->
-                            !klass.startsWith("edu.illinois.cs.cs125.jeed.core")
-                        }
-                    )
-                }
-            }
-
-            require(testingResults.truncatedLines == 0) { "Truncated output while testing solution" }
-            solutionPrinted = max(solutionPrinted, testingResults.outputLines.size)
-            executionDefinedClasses =
-                executionDefinedClasses ?: testingResults.sandboxedClassLoader!!.definedClasses.topLevelClasses()
-        }
-
-        if (!checkExecutedSubmission(testingResults, results, language)) {
-            return results
-        }
-
-        if (correct == false && !testingResults.timeout) {
-            submissionTimeout = max(submissionTimeout, testingResults.executionInterval.length)
-        }
-
-        testingResults.returned?.let { it ->
-            if (correct == false) {
-                requiredTestCount = requiredTestCount.coerceAtLeast(it.size)
-            }
-            results.complete.testing =
-                TestResults.TestingResult(it.map { it.asTestResult(compiledSubmission.source) }, it.size)
+            results.complete.testing = TestResults.TestingResult(
+                testingResults.returned!!.map { it.asTestResult(compiledSubmission.source) },
+                testingResults.returned!!.size
+            )
         }
 
         return results
     }
 
     companion object {
-        const val DEFAULT_RETURN_TIMEOUT = 1024
-        const val DEFAULT_SOLUTION_TIMEOUT = 4096L
-        const val DEFAULT_KNOWN_INCORRECT_TIMEOUT = 1096L
+        const val DEFAULT_RETURN_TIMEOUT = 128
         const val MAX_START_MULTIPLE_COUNT = 128
-        const val MAX_TEST_COUNT = 1024 * 1024
-        const val SUBMISSION_TEST_MULTIPLIER = 2
-        const val SOLUTION_TEST_OUTPUT_LINES = 102400
-        const val MIN_OUTPUT_LINES = 1024
-        const val OUTPUT_LINE_MULTIPLIER = 8
+        const val UNLIMITED_OUTPUT_LINES = 102400
         const val DEFAULT_MAX_OUTPUT_SIZE = 8 * 1024 * 1024
-        const val DEFAULT_MIN_TIMEOUT = 128L
-        const val DEFAULT_TIMEOUT_MULTIPLIER = 4.0
 
         @Transient
         val SAFE_PERMISSIONS =

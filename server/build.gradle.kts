@@ -54,3 +54,6 @@ docker {
     tag(version.toString(), "cs125/questioner:$version")
     files(tasks["shadowJar"].outputs)
 }
+kapt {
+    includeCompileClasspath = false
+}

@@ -254,29 +254,5 @@ fun captureJeedOutput(run: () -> Any?): CapturedResult = Sandbox.redirectOutput(
     CapturedResult(it.returned, it.threw, it.stdout, it.stderr)
 }
 
-fun Question.incorrectWithStarter() = incorrect.toMutableList().also {
-    if (javaStarter != null) {
-        it.add(
-            Question.IncorrectFile(
-                javaStarter.klass, javaStarter.contents, Question.IncorrectFile.Reason.TEST, javaStarter.language,
-                null, true
-            )
-        )
-    }
-    if (kotlinStarter != null) {
-        it.add(
-            Question.IncorrectFile(
-                kotlinStarter.klass,
-                kotlinStarter.contents,
-                Question.IncorrectFile.Reason.TEST,
-                kotlinStarter.language,
-                null,
-                true
-            )
-        )
-    }
-}
-
-
 
 

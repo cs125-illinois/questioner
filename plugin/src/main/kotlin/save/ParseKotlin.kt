@@ -67,18 +67,10 @@ data class ParsedKotlinFile(val path: String, val contents: String) {
 
     fun toIncorrectFile(cleanSpec: CleanSpec): Question.IncorrectFile {
         check(incorrect != null) { "Not an incorrect file" }
-        val reason = when (incorrect.toUpperCase()) {
-            "DESIGN" -> Question.IncorrectFile.Reason.DESIGN
-            "TEST" -> Question.IncorrectFile.Reason.TEST
-            "COMPILE" -> Question.IncorrectFile.Reason.COMPILE
-            "CHECKSTYLE" -> Question.IncorrectFile.Reason.CHECKSTYLE
-            "TIMEOUT" -> Question.IncorrectFile.Reason.TIMEOUT
-            else -> error("Invalid incorrect reason: $incorrect: $path")
-        }
         return Question.IncorrectFile(
             className,
             clean(cleanSpec),
-            reason,
+            incorrect.toReason(),
             Question.Language.kotlin,
             path,
             starter != null
@@ -96,9 +88,16 @@ data class ParsedKotlinFile(val path: String, val contents: String) {
         return Question.FlatFile(className, clean(cleanSpec), Question.Language.kotlin, path)
     }
 
-    fun toStarterFile(cleanSpec: CleanSpec): Question.FlatFile {
+    fun toStarterFile(cleanSpec: CleanSpec): Question.IncorrectFile {
         check(starter != null) { "Not an starter code file" }
-        return Question.FlatFile(className, clean(cleanSpec), Question.Language.kotlin, path)
+        return Question.IncorrectFile(
+            className,
+            clean(cleanSpec),
+            incorrect?.toReason() ?: "test".toReason(),
+            Question.Language.kotlin,
+            path,
+            true
+        )
     }
 
     @Suppress("unused")
@@ -224,7 +223,7 @@ data class ParsedKotlinFile(val path: String, val contents: String) {
         return "$start{{{ contents }}}$end"
     }
 
-    fun extractStarter(wrappedClass: String?): Question.FlatFile? {
+    fun extractStarter(wrappedClass: String?): Question.IncorrectFile? {
         val correctSolution = clean(CleanSpec(false, null))
         val parsed = correctSolution.parseKotlin()
         val methodDeclaration = if (topLevelFile) {
@@ -274,7 +273,14 @@ data class ParsedKotlinFile(val path: String, val contents: String) {
                 correctSolution.substring(postfix until correctSolution.length)
             )
             .kotlinDeTemplate(false, wrappedClass).let {
-                Question.FlatFile(className, it, Question.Language.kotlin, null)
+                Question.IncorrectFile(
+                    className,
+                    it,
+                    Question.IncorrectFile.Reason.TEST,
+                    Question.Language.kotlin,
+                    null,
+                    true
+                )
             }
     }
 
