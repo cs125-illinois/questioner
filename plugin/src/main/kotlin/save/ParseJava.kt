@@ -98,6 +98,8 @@ data class ParsedJavaFile(val path: String, val contents: String) {
                 val maxTestCount = parameters["maxTestCount"]?.toInt() ?: Correct.DEFAULT_MAX_TEST_COUNT
                 val minTestCount = parameters["minTestCount"]?.toInt() ?: Correct.DEFAULT_MIN_TEST_COUNT
                 val focused = parameters["focused"]?.toBoolean() ?: Correct.DEFAULT_FOCUSED
+                val maxTimeout = parameters["maxTimeout"]?.toInt() ?: Correct.DEFAULT_MAX_TIMEOUT
+                val timeoutMultiplier = parameters["timeoutMultiplier"]?.toInt() ?: Correct.DEFAULT_TIMEOUT_MULTIPLIER
                 val description = annotation.comment().let { comment ->
                     markdownParser.buildMarkdownTreeFromString(comment).let { astNode ->
                         HtmlGenerator(comment, astNode, CommonMarkFlavourDescriptor()).generateHtml()
@@ -113,7 +115,9 @@ data class ParsedJavaFile(val path: String, val contents: String) {
                     solutionThrows,
                     maxTestCount,
                     minTestCount,
-                    focused
+                    focused,
+                    maxTimeout,
+                    timeoutMultiplier
                 )
             }
         } catch (e: Exception) {
@@ -243,9 +247,11 @@ data class ParsedJavaFile(val path: String, val contents: String) {
             check(it != null) { "Couldn't find method contents" }
             it + 1
         }
-        return (correctSolution.substring(0..prefix)
-            + "return$starterReturn;"
-            + correctSolution.substring(postfix until correctSolution.length))
+        return (
+            correctSolution.substring(0..prefix) +
+                "return$starterReturn;" +
+                correctSolution.substring(postfix until correctSolution.length)
+            )
             .javaDeTemplate(false, wrapWith).let {
                 Question.FlatFile(className, it, Question.Language.java, null)
             }

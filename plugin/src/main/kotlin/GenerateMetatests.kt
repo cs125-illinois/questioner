@@ -27,7 +27,7 @@ abstract class GenerateMetatests : DefaultTask() {
 
     @OutputFiles
     val outputs = listOf("TestAllQuestions", "TestUnvalidatedQuestions", "TestFocusedQuestions").map {
-        project.file("src/test/kotlin/${it}.kt")
+        project.file("src/test/kotlin/$it.kt")
     }
 
     @TaskAction
@@ -122,11 +122,11 @@ fun List<Question>.generateTest(
         .joinToString(separator = "\n") {
             """  "${it.name} (${it.metadata.packageName}) should validate" {
     validator.validate("${it.name}", verbose = false, force = ${
-                if (onlyFocused) {
-                    "true"
-                } else {
-                    "false"
-                }
+            if (onlyFocused) {
+                "true"
+            } else {
+                "false"
+            }
             })
   }"""
         }.let {

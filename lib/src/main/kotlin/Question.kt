@@ -8,11 +8,11 @@ import edu.illinois.cs.cs125.jeed.core.CheckstyleFailed
 import edu.illinois.cs.cs125.jeed.core.CompilationArguments
 import edu.illinois.cs.cs125.jeed.core.CompilationFailed
 import edu.illinois.cs.cs125.jeed.core.KtLintFailed
+import edu.illinois.cs.cs125.jeed.core.MutatedSource
 import edu.illinois.cs.cs125.jeed.core.Sandbox
 import edu.illinois.cs.cs125.jeed.core.Source
 import edu.illinois.cs.cs125.jeed.core.TemplatingFailed
 import edu.illinois.cs.cs125.jeed.core.compile
-import edu.illinois.cs.cs125.jenisol.core.ParameterGroup
 import edu.illinois.cs.cs125.jenisol.core.Settings
 import edu.illinois.cs.cs125.jenisol.core.SubmissionDesignError
 import edu.illinois.cs.cs125.questioner.lib.moshi.Adapters
@@ -74,7 +74,9 @@ data class Question(
         val kotlinDescription: String?,
         val citation: Citation?,
         val usedFiles: List<String> = listOf(),
-        val focused: Boolean
+        val focused: Boolean,
+        val maxTimeout: Int,
+        val timeoutMultiplier: Int
     )
 
     @JsonClass(generateAdapter = true)
@@ -97,7 +99,9 @@ data class Question(
         val language: Language,
         val path: String?,
         val starter: Boolean,
-        var needed: Boolean = true
+        var needed: Boolean = true,
+        @Transient
+        val mutation: MutatedSource? = null
     ) {
         enum class Reason { DESIGN, COMPILE, TEST, CHECKSTYLE, TIMEOUT }
     }
@@ -160,15 +164,6 @@ data class Question(
         Language.kotlin -> "kt"
     }
 
-    @Transient
-    var slowestFailingContent = ""
-
-    @Transient
-    var slowestFailingFailed = false
-
-    @Transient
-    var slowestFailingInputs: ParameterGroup? = null
-
     val detemplatedJavaStarter = javaStarter?.contents
     val detemplatedKotlinStarter = kotlinStarter?.contents
 
@@ -214,8 +209,7 @@ data class Question(
         passedSettings: Settings = Settings(),
         seed: Int = Random.nextInt(),
         correct: Boolean? = null,
-        language: Language = Language.java,
-        timeoutAdjustment: Double = 1.0
+        language: Language = Language.java
     ): TestResults {
 
         require(validated || correct != null) { "Jenisol not validated for this question" }
@@ -287,7 +281,7 @@ data class Question(
                         seed = seed,
                         overrideTotalCount = testCount,
                         startMultipleCount = (testCount / 2).coerceAtMost(MAX_START_MULTIPLE_COUNT)
-                    ), (submissionTimeout.toDouble() * timeoutAdjustment).toLong()
+                    ), submissionTimeout
                 )
             }
         }

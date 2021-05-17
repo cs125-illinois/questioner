@@ -371,7 +371,9 @@ fun List<ParsedJavaFile>.findQuestions(
                     kotlinSolution?.description,
                     solution.citation,
                     myUsedFiles,
-                    solution.correct.focused
+                    solution.correct.focused,
+                    solution.correct.maxTimeout,
+                    solution.correct.timeoutMultiplier
                 ),
                 Question.FlatFile(
                     solution.className,

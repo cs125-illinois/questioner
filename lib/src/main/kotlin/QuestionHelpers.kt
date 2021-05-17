@@ -208,23 +208,26 @@ fun Question.mutations(seed: Int, count: Int) = templateSubmission(
 ).mutationStream(random = Random(seed)).take(64).toList()
     .map {
         // Mutations will sometimes break the entire template
-        try {
-            it.contents.deTemplate(getTemplate(Question.Language.java))
-        } catch (e: Exception) {
-            correct.contents
-        }
+        Pair(
+            try {
+                it.contents.deTemplate(getTemplate(Question.Language.java))
+            } catch (e: Exception) {
+                correct.contents
+            }, it
+        )
     }
     // Templated questions sometimes will mutate the template
-    .filter { it != correct.contents }
+    .filter { (contents, _) -> contents != correct.contents }
     .take(count)
-    .map {
+    .map { (contents, source) ->
         Question.IncorrectFile(
             klass,
-            it,
+            contents,
             Question.IncorrectFile.Reason.TEST,
             Question.Language.java,
             null,
-            false
+            false,
+            mutation = source
         )
     }
 
@@ -249,6 +252,29 @@ class InvertingClassLoader(private val inversions: Set<String>) : ClassLoader() 
 
 fun captureJeedOutput(run: () -> Any?): CapturedResult = Sandbox.redirectOutput(run).let {
     CapturedResult(it.returned, it.threw, it.stdout, it.stderr)
+}
+
+fun Question.incorrectWithStarter() = incorrect.toMutableList().also {
+    if (javaStarter != null) {
+        it.add(
+            Question.IncorrectFile(
+                javaStarter.klass, javaStarter.contents, Question.IncorrectFile.Reason.TEST, javaStarter.language,
+                null, true
+            )
+        )
+    }
+    if (kotlinStarter != null) {
+        it.add(
+            Question.IncorrectFile(
+                kotlinStarter.klass,
+                kotlinStarter.contents,
+                Question.IncorrectFile.Reason.TEST,
+                kotlinStarter.language,
+                null,
+                true
+            )
+        )
+    }
 }
 
 

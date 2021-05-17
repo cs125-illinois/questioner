@@ -26,8 +26,7 @@ data class TestResults(
     @Transient
     var taskResults: Sandbox.TaskResults<*>? = null
 ) {
-    @Transient
-    val tests = complete.testing?.tests
+    fun tests() = complete.testing?.tests
 
     @Suppress("EnumNaming", "EnumEntryName")
     enum class Type { jenisol }
@@ -105,33 +104,32 @@ data class TestResults(
         } else if (timeout) {
             "Testing timed out"
         } else if (!succeeded) {
-            "Testing failed: ${complete.testing!!.tests.find { !it.passed }}"
+            "Testing failed: ${complete.testing!!.tests.find { !it.passed }!!.explanation}"
         } else {
             "Passed"
         }
 
-    fun validate(reason: Question.IncorrectFile.Reason, contents: String, isMutated: Boolean) {
+    fun validate(reason: Question.IncorrectFile.Reason, isMutated: Boolean) {
         when (reason) {
             Question.IncorrectFile.Reason.COMPILE -> require(failed.compileSubmission != null) {
-                "Expected submission not to compile: ${summary}\n$contents"
+                "Expected submission not to compile"
             }
             Question.IncorrectFile.Reason.CHECKSTYLE -> require(failed.checkstyle != null) {
-                "Expected submission to fail checkstyle: ${summary}\n$contents"
+                "Expected submission to fail checkstyle"
             }
             Question.IncorrectFile.Reason.DESIGN -> require(failed.checkSubmission != null) {
-                "Expected submission to fail design: ${summary}\n$contents"
+                "Expected submission to fail design"
             }
             Question.IncorrectFile.Reason.TIMEOUT -> require(timeout || !succeeded) {
-                "Expected submission to timeout: ${summary}\n$contents"
+                "Expected submission to timeout"
             }
             else -> require(isMutated || (!timeout && complete.testing?.passed == false)) {
-                "Expected submission to fail tests: ${summary}\n$contents"
+                "Expected submission to fail tests"
             }
         }
     }
 
     fun toJson(): String = moshi.adapter(TestResults::class.java).toJson(this)
-    fun isTooLarge(maxSize: Int = Question.DEFAULT_MAX_OUTPUT_SIZE) = toJson().length > maxSize
 }
 
 fun TestResult<*, *>.asTestResult(source: Source) = TestResults.TestingResult.TestResult(

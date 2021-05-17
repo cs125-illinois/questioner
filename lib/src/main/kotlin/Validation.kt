@@ -1,5 +1,7 @@
 package edu.illinois.cs.cs125.questioner.lib
 
+import edu.illinois.cs.cs125.jeed.core.suppressionComment
+import edu.illinois.cs.cs125.jenisol.core.ParameterGroup
 import edu.illinois.cs.cs125.jenisol.core.Settings
 import kotlin.random.Random
 
@@ -19,20 +21,147 @@ data class ValidationReport(
     val summary = Summary(incorrect.size, requiredTestCount, requiredTime, hasKotlin)
 }
 
-sealed class ValidationFailed: Exception()
+sealed class ValidationFailed : Exception() {
+    fun printContents(contents: String, path: String?) = """
+        |${path?.let { "$path\n" } ?: ""}---
+        |${contents}
+        |---
+    """.trimMargin()
+}
 
-class SolutionFailed(val solution: Question.FlatFile) : ValidationFailed()
-class SolutionThrew(val solution: Question.FlatFile, val threw: Throwable): ValidationFailed()
-class NoIncorrect: ValidationFailed()
-class IncorrectPassed(val incorrect: Question.IncorrectFile): ValidationFailed()
-class IncorrectWrongReason(val incorrect: Question.IncorrectFile, val explanation: String): ValidationFailed()
+class SolutionFailed(val solution: Question.FlatFile, val explanation: String) : ValidationFailed() {
+    override val message = """
+        |Solution failed the test suites:
+        |${printContents(solution.contents, solution.path)}
+        |${explanation}
+    """.trimMargin()
+}
+
+class SolutionThrew(val solution: Question.FlatFile, val threw: Throwable, val parameters: ParameterGroup) :
+    ValidationFailed() {
+    override val message = """
+        |Solution was not expected to throw, but threw $threw on parameters $parameters
+        |${printContents(solution.contents, solution.path)}
+        |If it should throw, allow it using @Correct(solutionThrows = true)
+        |Otherwise filter the inputs using @FixedParameters, @RandomParameters, or @FilterParameters
+    """.trimMargin()
+}
+
+class NoIncorrect : ValidationFailed() {
+    override val message = """No incorrect examples found or generated through mutation
+    |Please add some using the @Incorrect annotation
+    """.trimMargin()
+}
+
+class TooMuchOutput(val contents: String, val path: String?, val size: Int, val maxSize: Int) : ValidationFailed() {
+    override val message = """
+        |Submission generated too much output ($size > $maxSize):
+        |${printContents(contents, path)}
+        |Maybe reduce the number of tests using @Correct(minTestCount = NUM)
+    """.trimMargin()
+}
+
+class IncorrectPassed(
+    val incorrect: Question.IncorrectFile, val explanation: String, val correct: Question.FlatFile
+) : ValidationFailed() {
+    override val message: String
+        get() {
+            val contents = incorrect.mutation?.marked()?.contents ?: incorrect.contents
+            return """
+        |Incorrect code passed the test suites:
+        |${printContents(contents, incorrect.path ?: correct.path)}
+        |If the code is incorrect, add an input to @FixedParameters to handle this case
+        |${
+                if (incorrect.mutation != null) {
+                    "If the code is correct, you may need to disable this mutation using " +
+                        "// ${incorrect.mutation.mutations.first().mutation.type.suppressionComment()}"
+                } else {
+                    ""
+                }
+            }""".trimMargin()
+        }
+}
+
+class IncorrectTooManyTests(
+    val incorrect: Question.IncorrectFile, val explanation: String, val correct: Question.FlatFile,
+    val testsRequired: Int, val testsLimit: Int, val failingInput: String?
+) : ValidationFailed() {
+    override val message: String
+        get() {
+            val contents = incorrect.mutation?.marked()?.contents ?: incorrect.contents
+            return """
+        |Incorrect code eventually failed but required too many tests ($testsRequired > $testsLimit)
+        |${failingInput?.let { "We found failing inputs $failingInput" } ?: "We were unable to find a failing input"}
+        |${printContents(contents, incorrect.path ?: correct.path)}
+        |If the code is incorrect, add an input to @FixedParameters to handle this case
+        |${
+                if (incorrect.mutation != null) {
+                    "If the code is correct, you may need to disable this mutation using " +
+                        "// ${incorrect.mutation.mutations.first().mutation.type.suppressionComment()}\n"
+                } else {
+                    ""
+                }
+            }You may also need to increase the test count using @Correct(maxTestCount = NUM)""".trimMargin()
+        }
+}
+
+class IncorrectWrongReason(val incorrect: Question.IncorrectFile, val expected: String, val explanation: String) :
+    ValidationFailed() {
+    override val message: String
+        get() {
+            check(incorrect.mutation == null) { "Mutated sources failed for the wrong reason" }
+            return """
+        |Incorrect code failed but not for the reason we expected:
+        |Expected: $expected
+        |But Found: $explanation
+        |${printContents(incorrect.contents, incorrect.path)}
+        |Maybe check the argument to @Incorrect(reason = "reason")
+    """.trimMargin()
+        }
+}
 
 @Suppress("LongMethod", "ComplexMethod")
 suspend fun Question.validate(seed: Int = Random.nextInt()): ValidationReport {
     clearValidation()
 
     val jenisolSettings = Settings(shrink = false)
-    var tooLarge = false
+
+    fun TestResults.checkCorrect(file: Question.FlatFile) {
+        if (!succeeded) {
+            throw SolutionFailed(file, summary)
+        }
+        val solutionThrew = tests()?.firstOrNull { it.jenisol?.solution?.threw != null }
+        if (!metadata.solutionThrows && solutionThrew != null) {
+            throw SolutionThrew(file, solutionThrew.jenisol!!.solution.threw!!, solutionThrew.jenisol.parameters)
+        }
+        val size = toJson().length
+        if (toJson().length > Question.DEFAULT_MAX_OUTPUT_SIZE) {
+            throw TooMuchOutput(file.contents, file.path, size, Question.DEFAULT_MAX_OUTPUT_SIZE)
+        }
+    }
+
+    fun TestResults.checkIncorrect(file: Question.IncorrectFile, mutated: Boolean) {
+        if (succeeded) {
+            throw IncorrectPassed(file, summary, correct)
+        }
+        if (tests()?.size?.let { it > metadata.maxTestCount } == true) {
+            val failingInput = tests()!!.find { !it.passed }?.arguments
+            throw IncorrectTooManyTests(file, summary, correct, tests()!!.size, metadata.maxTestCount, failingInput)
+        }
+        try {
+            validate(file.reason, mutated)
+        } catch (e: Exception) {
+            throw IncorrectWrongReason(file, e.message!!, summary)
+        }
+        val solutionThrew = tests()?.firstOrNull { it.jenisol?.solution?.threw != null }
+        if (!metadata.solutionThrows && solutionThrew != null) {
+            throw SolutionThrew(correct, solutionThrew.jenisol!!.solution.threw!!, solutionThrew.jenisol.parameters)
+        }
+        val size = toJson().length
+        if (toJson().length > Question.DEFAULT_MAX_OUTPUT_SIZE) {
+            throw TooMuchOutput(file.contents, file.path, size, Question.DEFAULT_MAX_OUTPUT_SIZE)
+        }
+    }
 
     (setOf(correct) + alternativeSolutions).forEach { right ->
         test(
@@ -41,41 +170,12 @@ suspend fun Question.validate(seed: Int = Random.nextInt()): ValidationReport {
             language = right.language,
             correct = true,
             seed = seed
-        ).also { results ->
-            if (!results.succeeded) {
-                throw SolutionFailed(right)
-            }
-            val solutionThrew = results.tests?.mapNotNull { it.jenisol?.solution?.threw }?.firstOrNull()
-            if (!metadata.solutionThrows && solutionThrew != null) {
-                throw SolutionThrew(right, solutionThrew)
-            }
-        }
+        ).also { it.checkCorrect(right) }
     }
 
     val mutations = mutations(seed, 64)
 
-    val allIncorrect = (incorrect + mutations).toMutableList().also {
-        if (javaStarter != null) {
-            it.add(
-                Question.IncorrectFile(
-                    javaStarter.klass, javaStarter.contents, Question.IncorrectFile.Reason.TEST, javaStarter.language,
-                    null, true
-                )
-            )
-        }
-        if (kotlinStarter != null) {
-            it.add(
-                Question.IncorrectFile(
-                    kotlinStarter.klass,
-                    kotlinStarter.contents,
-                    Question.IncorrectFile.Reason.TEST,
-                    kotlinStarter.language,
-                    null,
-                    true
-                )
-            )
-        }
-    }.also { allIncorrect ->
+    val allIncorrect = (incorrectWithStarter() + mutations).also { allIncorrect ->
         check(allIncorrect.all { it.contents != correct.contents }) {
             "Incorrect solution identical to correct solution"
         }
@@ -91,16 +191,7 @@ suspend fun Question.validate(seed: Int = Random.nextInt()): ValidationReport {
             correct = false,
             language = wrong.language,
             seed = seed
-        ).also {
-            if (it.succeeded) {
-                throw IncorrectPassed(wrong)
-            }
-            try {
-                it.validate(wrong.reason, wrong.contents, true)
-            } catch (e: Exception) {
-                throw IncorrectWrongReason(wrong, e.message!!)
-            }
-        }
+        ).also { it.checkIncorrect(wrong, true) }
     }
 
     incorrect.forEach { wrong ->
@@ -110,46 +201,11 @@ suspend fun Question.validate(seed: Int = Random.nextInt()): ValidationReport {
             correct = false,
             language = wrong.language,
             seed = seed
-        ).also {
-            if (it.succeeded) {
-                throw IncorrectPassed(wrong)
-            }
-            try {
-                it.validate(wrong.reason, wrong.contents, true)
-            } catch (e: Exception) {
-                throw IncorrectWrongReason(wrong, e.message!!)
-            }
-        }
+        ).also { it.checkIncorrect(wrong, false) }
     }
 
     check(requiredTestCount > 0)
-    check(submissionTimeout >= 0)
-    submissionTimeout = submissionTimeout.coerceAtLeast(1)
-
-    if (requiredTestCount > metadata.maxTestCount) {
-        if (slowestFailingFailed) {
-            error(
-                """Found incorrect input $slowestFailingInputs for the following incorrect code,
-                        |but it took too many tests (${requiredTestCount} > ${metadata.maxTestCount}):
-                        |---
-                        |$slowestFailingContent
-                        |---
-                        |Perhaps add this input to @FixedParameters?
-                        |${correct.path}
-                        """.trimMargin()
-            )
-        } else {
-            error(
-                """Unable to find a failing input for the following incorrect code:
-                        |---
-                        |$slowestFailingContent
-                        |---
-                        |Perhaps add an input to @FixedParameters, or disable this mutation using // mutate-disable?
-                        |${correct.path}
-                        """.trimMargin()
-            )
-        }
-    }
+    check(requiredTestCount <= metadata.maxTestCount)
 
     val report = ValidationReport(
         allIncorrect,
@@ -160,29 +216,23 @@ suspend fun Question.validate(seed: Int = Random.nextInt()): ValidationReport {
 
     validated = true
     validationSeed = seed
+    submissionTimeout = (metadata.maxTimeout.toDouble() / metadata.timeoutMultiplier.toDouble()).toLong()
 
     test(
         correct.contents,
         jenisolSettings,
         seed = seed,
-        timeoutAdjustment = 1024.0
     ).also { results ->
         require(results.succeeded) {
             "Untimed solution did not pass the test suite after validation: ${results.summary} ${correct.contents}"
         }
         submissionTimeout =
-            (results.taskResults!!.interval.length.toDouble() * Question.DEFAULT_TIMEOUT_MULTIPLIER).toLong()
+            (results.taskResults!!.interval.length.toDouble() * metadata.timeoutMultiplier.toDouble()).toLong()
                 .coerceAtLeast(Question.DEFAULT_MIN_TIMEOUT)
         solutionPrinted = results.taskResults!!.outputLines.size
-        results.isTooLarge().also {
-            if (it) {
-                println("WARN: submission produced too much output\n---\n${correct.contents}---")
-            }
-            tooLarge = it
-        }
     }
 
-    check(submissionTimeout > 0)
+    check(submissionTimeout < metadata.maxTimeout) { "Submission timeout is too long: $submissionTimeout > ${metadata.maxTimeout}" }
 
     (setOf(correct) + alternativeSolutions).forEach { right ->
         test(
@@ -192,12 +242,6 @@ suspend fun Question.validate(seed: Int = Random.nextInt()): ValidationReport {
         ).also { results ->
             require(results.succeeded) {
                 "Solution did not pass the test suite after validation: ${results.summary}\n${right.contents}"
-            }
-            results.isTooLarge().also {
-                if (it) {
-                    println("WARN: submission produced too much output\n---\n${right.contents}---")
-                }
-                tooLarge = it
             }
         }
     }
@@ -211,16 +255,9 @@ suspend fun Question.validate(seed: Int = Random.nextInt()): ValidationReport {
             seed = seed
         ).also { results ->
             require(!results.succeeded) { "Incorrect submission was not rejected:\n${wrong.contents}" }
-            results.validate(wrong.reason, wrong.contents, isMutated)
-            results.isTooLarge().also {
-                if (it) {
-                    println("WARN: submission produced too much output\n---\n${wrong.contents}---")
-                }
-                tooLarge = it
-            }
+            results.validate(wrong.reason, isMutated)
         }
     }
 
-    check(!tooLarge) { "Testing produced too much output." }
     return report
 }

@@ -10,11 +10,13 @@ data class CorrectData(
     val version: String,
     val author: String,
     val description: String,
-    val checkstyle: Boolean = Correct.DEFAULT_CHECKSTYLE,
-    val solutionThrows: Boolean = Correct.DEFAULT_THROWS,
-    val maxTestCount: Int = Correct.DEFAULT_MAX_TEST_COUNT,
-    val minTestCount: Int = Correct.DEFAULT_MIN_TEST_COUNT,
-    val focused: Boolean = Correct.DEFAULT_FOCUSED
+    val checkstyle: Boolean,
+    val solutionThrows: Boolean,
+    val maxTestCount: Int,
+    val minTestCount: Int,
+    val focused: Boolean,
+    val maxTimeout: Int,
+    val timeoutMultiplier: Int
 )
 
 @Suppress("LongParameterList")
@@ -30,7 +32,9 @@ annotation class Correct(
     val minMutationCount: Int = DEFAULT_MIN_MUTATION_COUNT,
     val maxMutationCount: Int = DEFAULT_MAX_MUTATION_COUNT,
     val minIncorrectCount: Int = DEFAULT_MIN_INCORRECT_COUNT,
-    val focused: Boolean = DEFAULT_FOCUSED
+    val focused: Boolean = DEFAULT_FOCUSED,
+    val maxTimeout: Int = DEFAULT_MAX_TIMEOUT,
+    val timeoutMultiplier: Int = DEFAULT_TIMEOUT_MULTIPLIER
 ) {
     companion object {
         const val DEFAULT_CHECKSTYLE = true
@@ -41,6 +45,8 @@ annotation class Correct(
         const val DEFAULT_MAX_MUTATION_COUNT = 32
         const val DEFAULT_MIN_INCORRECT_COUNT = 4
         const val DEFAULT_FOCUSED = false
+        const val DEFAULT_MAX_TIMEOUT = 2048
+        const val DEFAULT_TIMEOUT_MULTIPLIER = 4
     }
 }
 

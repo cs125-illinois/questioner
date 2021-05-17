@@ -268,9 +268,11 @@ data class ParsedKotlinFile(val path: String, val contents: String) {
             check(it != null) { "Couldn't find method contents" }
             it + 1
         }
-        return (correctSolution.substring(0..prefix)
-            + "return$starterReturn"
-            + correctSolution.substring(postfix until correctSolution.length))
+        return (
+            correctSolution.substring(0..prefix) +
+                "return$starterReturn" +
+                correctSolution.substring(postfix until correctSolution.length)
+            )
             .kotlinDeTemplate(false, wrappedClass).let {
                 Question.FlatFile(className, it, Question.Language.kotlin, null)
             }
