@@ -362,9 +362,6 @@ fun List<ParsedJavaFile>.findQuestions(
             kotlinStarterFile?.also { incorrectExamples.add(0, it) }
             javaStarterFile?.also { incorrectExamples.add(0, it) }
 
-            if (javaStarterFile != null) {
-                println(solution.path)
-            }
             Question(
                 solution.correct.name,
                 solution.className,
