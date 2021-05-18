@@ -87,8 +87,11 @@ suspend fun Question.validate(seed: Int = Random.nextInt()): ValidationReport {
     val bootstrapLength = Instant.now().toEpochMilli() - bootStrapStart.toEpochMilli()
 
     val mutationStart = Instant.now()
-    // Assemble incorrect examples
-    val mutations = mutations(seed, 64)
+    val mutations = mutations(seed, control.maxMutationCount).also {
+        if (it.size < control.minMutationCount) {
+            throw TooFewMutations()
+        }
+    }
     val allIncorrect = (incorrect + mutations).also { allIncorrect ->
         check(allIncorrect.all { it.contents != correct.contents }) {
             "Incorrect solution identical to correct solution"
@@ -224,6 +227,12 @@ class SolutionThrew(val solution: Question.FlatFile, val threw: Throwable, val p
 }
 
 class NoIncorrect : ValidationFailed() {
+    override val message = """No incorrect examples found or generated through mutation
+    |Please add some using the @Incorrect annotation
+    """.trimMargin()
+}
+
+class TooFewMutations : ValidationFailed() {
     override val message = """No incorrect examples found or generated through mutation
     |Please add some using the @Incorrect annotation
     """.trimMargin()
