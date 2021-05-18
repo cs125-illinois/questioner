@@ -373,6 +373,10 @@ fun Question.validationFile(sourceDir: String) = File(
     sourceDir,
     "${metadata.packageName.replace(".", File.separator)}/.validation.json"
 )
+fun Question.reportFile(sourceDir: String) = File(
+    sourceDir,
+    "${metadata.packageName.replace(".", File.separator)}/report.html"
+)
 
 fun loadFromPath(questionsFile: File, sourceDir: String, validated: Boolean = true): Map<String, Question> {
     return moshi.adapter<Map<String, Question>>(

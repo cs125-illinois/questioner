@@ -6,6 +6,9 @@ import edu.illinois.cs.cs125.jeed.core.suppressionComment
 import edu.illinois.cs.cs125.jenisol.core.ParameterGroup
 import java.time.Instant
 
+data class CorrectResults(val incorrect: Question.FlatFile, val results: TestResults)
+data class IncorrectResults(val incorrect: Question.IncorrectFile, val results: TestResults)
+
 @Suppress("LongMethod", "ComplexMethod")
 suspend fun Question.validate(seed: Int): ValidationReport {
 
@@ -105,8 +108,6 @@ suspend fun Question.validate(seed: Int): ValidationReport {
     // Sets requiredTestCount
     val incorrectStart = Instant.now()
 
-    data class IncorrectResults(val incorrect: Question.IncorrectFile, val results: TestResults)
-
     val incorrectSettings = Question.TestingSettings(
         seed = seed,
         testCount = control.maxTestCount,
@@ -151,14 +152,15 @@ suspend fun Question.validate(seed: Int): ValidationReport {
             right.contents,
             right.language,
             calibrationSettings
-        ).also {
+        ).let {
             it.checkCorrect(right)
+            CorrectResults(right, it)
         }
     }
     val calibrationLength = Instant.now().toEpochMilli() - calibrationStart.toEpochMilli()
 
-    val solutionMaxRuntime = calibrationResults.maxOf { it.taskResults!!.interval.length.toInt() }
-    val solutionMaxOutputLines = calibrationResults.maxOf { it.taskResults!!.outputLines.size }
+    val solutionMaxRuntime = calibrationResults.maxOf { it.results.taskResults!!.interval.length.toInt() }
+    val solutionMaxOutputLines = calibrationResults.maxOf { it.results.taskResults!!.outputLines.size }
     testingSettings = Question.TestingSettings(
         seed = seed,
         testCount = testCount,
@@ -180,11 +182,20 @@ suspend fun Question.validate(seed: Int): ValidationReport {
         calibrationLength = calibrationLength
     )
 
-    return ValidationReport(allIncorrect, requiredTestCount, solutionMaxRuntime, hasKotlin)
+    return ValidationReport(
+        this,
+        calibrationResults,
+        incorrectResults,
+        requiredTestCount,
+        solutionMaxRuntime,
+        hasKotlin
+    )
 }
 
 data class ValidationReport(
-    val incorrect: List<Question.IncorrectFile>,
+    val question: Question,
+    val correct: List<CorrectResults>,
+    val incorrect: List<IncorrectResults>,
     val requiredTestCount: Int,
     val requiredTime: Int,
     val hasKotlin: Boolean

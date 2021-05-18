@@ -309,7 +309,7 @@ fun List<ParsedJavaFile>.findQuestions(
             } else {
                 javaStarter?.toStarterFile(javaCleanSpec)?.also {
                     if (it.path in usedFiles) {
-                        check(usedFiles[it.path] == "Incorrect")
+                        check(usedFiles[it.path] == "Incorrect" || usedFiles[it.path] == "Starter")
                     }
                 }
             }
@@ -326,7 +326,7 @@ fun List<ParsedJavaFile>.findQuestions(
             }
 
             if (solution.autoStarter) {
-                val autoStarter = kotlinSolution!!.extractStarter(solution.wrapWith)
+                val autoStarter = kotlinSolution?.extractStarter(solution.wrapWith)
                 if (autoStarter != null && kotlinStarterFile != null) {
                     error("autoStarter succeeded but Kotlin starter file found. Please remove it.\n" + kotlinStarterFile.path)
                 }
@@ -362,6 +362,9 @@ fun List<ParsedJavaFile>.findQuestions(
             kotlinStarterFile?.also { incorrectExamples.add(0, it) }
             javaStarterFile?.also { incorrectExamples.add(0, it) }
 
+            if (javaStarterFile != null) {
+                println(solution.path)
+            }
             Question(
                 solution.correct.name,
                 solution.className,
@@ -394,7 +397,7 @@ fun List<ParsedJavaFile>.findQuestions(
                 solution.blacklist.toSet()
             )
         } catch (e: Exception) {
-            throw Exception("Processing ${solution.path} failed:\n${e.message}")
+            throw Exception("Process ${solution.path} failed", e)
         }
     }
     allPaths.filter { !usedFiles.containsKey(it) && !skippedFiles.contains(it) }.forEach {

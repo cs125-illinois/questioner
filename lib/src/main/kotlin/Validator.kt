@@ -23,10 +23,13 @@ class Validator(questionsFile: File, private val sourceDir: String, private val 
             }
             return
         }
+        question.validationFile(sourceDir).delete()
+        question.reportFile(sourceDir).delete()
         question.validate(seed = seed).also { report ->
             println("$name: ${report.summary}")
             question.validationFile(sourceDir)
                 .writeText(moshi.adapter(Question::class.java).indent("  ").toJson(question))
+            question.reportFile(sourceDir).writeText(report.report())
         }
     }
 }
