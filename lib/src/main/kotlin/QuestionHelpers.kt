@@ -28,7 +28,7 @@ fun Question.templateSubmission(contents: String, language: Question.Language = 
         Source(mapOf(fileName to contents))
     } else {
         Source.fromTemplates(
-            mapOf("$klass.${language.extension()}" to contents),
+            mapOf("$klass.${language.extension()}" to contents.trimEnd()),
             mapOf("$klass.${language.extension()}.hbs" to template)
         )
     }

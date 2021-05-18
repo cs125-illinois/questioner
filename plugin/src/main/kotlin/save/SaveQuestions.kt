@@ -91,9 +91,21 @@ fun List<ParsedJavaFile>.findQuestions(
     val byFullName = associate { it.fullName to it }
 
     val solutions = filter { it.correct != null }
-    solutions.map { it.correct!!.name }.groupingBy { it }.eachCount().filter { it.value > 1 }.also { duplicates ->
-        if (duplicates.isNotEmpty()) {
-            error("Duplicate questions found: ${duplicates.keys}")
+    solutions.also {
+        val namesByPath = mutableMapOf<String, String>()
+        val citationsByPath = mutableMapOf<String, String>()
+        solutions.forEach {
+            val name = it.correct!!.name
+            if (name in namesByPath) {
+                error("Found duplicate name: $name used by both ${it.path} and ${namesByPath[it.correct.name]}")
+            }
+            namesByPath[it.correct.name] = it.path
+            if (it.citation?.link != null) {
+                if (it.citation.link!! in citationsByPath) {
+                    error("Found duplicate citation: ${it.citation.link} used by both ${it.path} and ${citationsByPath[it.citation.link!!]}")
+                }
+                citationsByPath[it.citation.link!!] = it.path
+            }
         }
     }
     solutions.map { it.packageName }.sorted().zipWithNext().forEach { (first, second) ->
@@ -106,6 +118,9 @@ fun List<ParsedJavaFile>.findQuestions(
     val usedFiles = solutions.associate { it.path to "Correct" }.toMutableMap()
     val skippedFiles = mutableListOf<String>()
     val knownFiles = map { it.path }
+
+    val javaDescriptionsByPath = mutableMapOf<String, String>()
+    val kotlinDescriptionsByPath = mutableMapOf<String, String>()
 
     val questions = solutions.map { solution ->
         require(solution.correct != null) { "Solutions should have @Correct metadata" }
@@ -362,6 +377,15 @@ fun List<ParsedJavaFile>.findQuestions(
             kotlinStarterFile?.also { incorrectExamples.add(0, it) }
             javaStarterFile?.also { incorrectExamples.add(0, it) }
 
+            if (solution.correct.description in javaDescriptionsByPath) {
+                error("Duplicate description: ${solution.path} and ${javaDescriptionsByPath[solution.correct.description]}")
+            }
+            if (kotlinSolution?.description != null && kotlinSolution.description in kotlinDescriptionsByPath) {
+                error("Duplicate description: ${solution.path} and ${kotlinDescriptionsByPath[kotlinSolution.description]}")
+            }
+            javaDescriptionsByPath[solution.correct.description] = solution.path
+            kotlinSolution?.description?.let { kotlinDescriptionsByPath[it] = solution.path }
+
             Question(
                 solution.correct.name,
                 solution.className,
@@ -482,5 +506,3 @@ fun String.toReason() = when (toUpperCase()) {
     "TIMEOUT" -> Question.IncorrectFile.Reason.TIMEOUT
     else -> error("Invalid incorrect reason: $this")
 }
-
-
