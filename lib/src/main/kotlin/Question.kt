@@ -277,6 +277,7 @@ data class Question(
         } ?: Sandbox.ClassLoaderConfiguration()
 
         val jenisolSettings = Settings(
+            seed = settings.seed,
             shrink = settings.shrink,
             overrideTotalCount = settings.testCount,
             startMultipleCount = (settings.testCount / 2).coerceAtMost(

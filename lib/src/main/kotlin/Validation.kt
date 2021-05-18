@@ -5,10 +5,9 @@ package edu.illinois.cs.cs125.questioner.lib
 import edu.illinois.cs.cs125.jeed.core.suppressionComment
 import edu.illinois.cs.cs125.jenisol.core.ParameterGroup
 import java.time.Instant
-import kotlin.random.Random
 
 @Suppress("LongMethod", "ComplexMethod")
-suspend fun Question.validate(seed: Int = Random.nextInt()): ValidationReport {
+suspend fun Question.validate(seed: Int): ValidationReport {
 
     val javaClassWhitelist = mutableSetOf<String>().apply { addAll(defaultJavaClassWhitelist) }
     val kotlinClassWhitelist = mutableSetOf<String>().apply { addAll(defaultKotlinClassWhitelist) }
