@@ -122,7 +122,7 @@ suspend fun Question.validate(seed: Int): ValidationReport {
         test(
             wrong.contents,
             wrong.language,
-            incorrectSettings.copy(useCheckstyle = wrong.mutation != null)
+            incorrectSettings.copy(useCheckstyle = wrong.mutation == null)
         ).let {
             it.checkIncorrect(wrong, wrong.mutation != null)
             IncorrectResults(wrong, it)

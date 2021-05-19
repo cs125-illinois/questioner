@@ -11,13 +11,13 @@ import edu.illinois.cs.cs125.jeed.core.KtLintFailed
 import edu.illinois.cs.cs125.jeed.core.Sandbox
 import edu.illinois.cs.cs125.jeed.core.Source
 import edu.illinois.cs.cs125.jeed.core.TemplatingFailed
+import edu.illinois.cs.cs125.jeed.core.allFixedMutations
 import edu.illinois.cs.cs125.jeed.core.checkstyle
 import edu.illinois.cs.cs125.jeed.core.compile
 import edu.illinois.cs.cs125.jeed.core.fromTemplates
 import edu.illinois.cs.cs125.jeed.core.kompile
 import edu.illinois.cs.cs125.jeed.core.ktLint
 import edu.illinois.cs.cs125.jeed.core.moshi.CompiledSourceResult
-import edu.illinois.cs.cs125.jeed.core.mutationStream
 import edu.illinois.cs.cs125.jenisol.core.CapturedResult
 import kotlin.random.Random
 
@@ -205,7 +205,7 @@ fun Question.mutations(seed: Int, count: Int) = templateSubmission(
     } else {
         correct.contents
     }
-).mutationStream(random = Random(seed)).take(64).toList()
+).allFixedMutations(random = Random(seed))
     .map {
         // Mutations will sometimes break the entire template
         Pair(

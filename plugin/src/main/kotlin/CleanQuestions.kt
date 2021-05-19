@@ -14,8 +14,9 @@ abstract class CleanQuestions : DefaultTask() {
     }
 
     @InputFiles
-    val inputFiles: FileCollection = project.convention.getPlugin(JavaPluginConvention::class.java)
-        .sourceSets.getByName("main").allSource.filter { it.name == ".validation.json" }
+    val inputFiles: FileCollection =
+        project.convention.getPlugin(JavaPluginConvention::class.java).sourceSets.getByName("main").allSource
+            .filter { it.name == ".validation.json" || it.name == "report.html" }
 
     @TaskAction
     fun clean() {

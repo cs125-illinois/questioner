@@ -30,7 +30,7 @@ dependencies {
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.12.3")
     implementation("org.mongodb:mongodb-driver:3.12.8")
 
-    testImplementation("io.kotest:kotest-runner-junit5:4.5.0")
+    testImplementation("io.kotest:kotest-runner-junit5:4.6.0")
 }
 tasks.compileKotlin {
     dependsOn(tasks.generateGrammarSource)
