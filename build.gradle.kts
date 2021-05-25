@@ -1,14 +1,14 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    kotlin("jvm") version "1.5.0" apply false
-    kotlin("kapt") version "1.5.0" apply false
+    kotlin("jvm") version "1.5.10" apply false
+    kotlin("kapt") version "1.5.10" apply false
     id("org.jmailen.kotlinter") version "3.4.4" apply false
     id("com.github.ben-manes.versions") version "0.38.0"
 }
 subprojects {
     group = "com.github.cs125-illinois.questioner"
-    version = "2021.5.6"
+    version = "2021.5.5"
     tasks.withType<KotlinCompile> {
         val javaVersion = JavaVersion.VERSION_1_8.toString()
         sourceCompatibility = javaVersion
@@ -19,10 +19,12 @@ subprojects {
     }
     tasks.withType<Test> {
         useJUnitPlatform()
+        jvmArgs("-ea", "-Xmx1G", "-Xss256k", "--illegal-access=permit")
     }
 }
 allprojects {
     repositories {
+        mavenLocal()
         mavenCentral()
         maven("https://jitpack.io")
         maven("https://dl.bintray.com/jetbrains/markdown")

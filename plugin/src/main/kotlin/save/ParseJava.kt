@@ -332,6 +332,7 @@ data class ParsedJavaFile(val path: String, val contents: String) {
     fun clean(cleanSpec: CleanSpec): String {
         val (template, wrapWith, importNames) = cleanSpec
 
+        val toSnip = mutableSetOf<IntRange>()
         val toRemove = mutableSetOf<Int>()
         parseTree.packageDeclaration()?.also {
             toRemove.add(it.start.startIndex.toLine())
@@ -375,9 +376,27 @@ data class ParsedJavaFile(val path: String, val contents: String) {
                         }
                     }
                 }
+            classBodyDeclaration.memberDeclaration()?.methodDeclaration()?.also { methodDeclaration ->
+                methodDeclaration.formalParameters()?.formalParameterList()?.formalParameter()?.forEach { parameters ->
+                    parameters.variableModifier().mapNotNull { it.annotation() }.forEach { annotation ->
+                        if (annotation.qualifiedName()?.asString()!! in annotationsToSnip) {
+                            toSnip.add(annotation.start.startIndex..annotation.stop.stopIndex)
+                        }
+                    }
+                }
+            }
         }
 
         return contents
+            .let { unsnipped ->
+                var snipped = unsnipped
+                var shift = 0
+                for (range in toSnip.sortedBy { it.first }) {
+                    snipped = snipped.substring(0, range.first - shift) + snipped.substring(range.last + 1 - shift, snipped.length)
+                    shift += (range.last - range.first) + 1
+                }
+                snipped
+            }
             .split("\n")
             .filterIndexed { index, _ -> (index + 1) !in toRemove }
             .joinToString("\n")

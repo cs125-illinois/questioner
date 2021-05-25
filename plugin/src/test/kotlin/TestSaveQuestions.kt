@@ -19,6 +19,7 @@ class TestSaveQuestions : StringSpec(
 package examples;
 
 import edu.illinois.cs.cs125.questioner.lib.Correct;
+import edu.illinois.cs.cs125.questioner.lib.NotNull;
 
 /*
  * Here is a _description_.
@@ -31,7 +32,8 @@ import edu.illinois.cs.cs125.questioner.lib.Correct;
 @Import(paths="examples.second, examples.first")
 @Wrap
 public class Second {
-  public void correct() { }
+  public void correct(@NotNull String input) { }
+  public void also(@NotNull String input) { }
 }
 """.trim()
             ).also { parsedFile ->

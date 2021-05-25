@@ -13,6 +13,7 @@ import edu.illinois.cs.cs125.jenisol.core.EdgeType
 import edu.illinois.cs.cs125.jenisol.core.FilterParameters
 import edu.illinois.cs.cs125.jenisol.core.FixedParameters
 import edu.illinois.cs.cs125.jenisol.core.InstanceValidator
+import edu.illinois.cs.cs125.jenisol.core.NotNull
 import edu.illinois.cs.cs125.jenisol.core.RandomParameters
 import edu.illinois.cs.cs125.jenisol.core.RandomType
 import edu.illinois.cs.cs125.jenisol.core.SimpleType
@@ -458,6 +459,7 @@ val annotationsToDestroy =
         Ignore::class.java.simpleName,
         Compare::class.java.simpleName
     )
+val annotationsToSnip = setOf(NotNull::class.java.simpleName)
 
 val importsToRemove = annotationsToRemove.map { "edu.illinois.cs.cs125.questioner.lib.$it" }.toSet() +
     "edu.illinois.cs.cs125.questioner.lib.Ignore"

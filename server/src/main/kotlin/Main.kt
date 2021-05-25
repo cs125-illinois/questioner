@@ -54,7 +54,12 @@ private val collection: MongoCollection<BsonDocument> = run {
 private fun getQuestion(slug: String) = collection.find(
     Filters.and(Filters.eq("slug", slug), Filters.eq("latest", true))
 ).sort(Sorts.descending("updated")).first()?.let {
-    moshi.adapter(Question::class.java).fromJson(it.toJson())
+    try {
+        moshi.adapter(Question::class.java).fromJson(it.toJson())
+    } catch (e: Exception) {
+        logger.warn("Couldn't load question $slug, which might use an old schema")
+        null
+    }
 }
 
 private fun getQuestions() = collection.distinct("slug", String::class.java).map { getQuestion(it) }.filterNotNull()
