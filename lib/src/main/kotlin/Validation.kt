@@ -25,7 +25,7 @@ suspend fun Question.validate(seed: Int): ValidationReport {
         }
         val size = toJson().length
         if (size > Question.DEFAULT_MAX_OUTPUT_SIZE || taskResults!!.truncatedLines > 0) {
-            throw TooMuchOutput(file.contents, file.path, size, Question.DEFAULT_MAX_OUTPUT_SIZE)
+            throw TooMuchOutput(file.contents, file.path, size, Question.DEFAULT_MAX_OUTPUT_SIZE, file.language)
         }
         when (file.language) {
             Question.Language.java -> {
@@ -64,7 +64,7 @@ suspend fun Question.validate(seed: Int): ValidationReport {
         }
         val size = toJson().length
         if (toJson().length > Question.DEFAULT_MAX_OUTPUT_SIZE) {
-            throw TooMuchOutput(file.contents, file.path, size, Question.DEFAULT_MAX_OUTPUT_SIZE)
+            throw TooMuchOutput(file.contents, file.path, size, Question.DEFAULT_MAX_OUTPUT_SIZE, file.language)
         }
     }
 
@@ -91,7 +91,7 @@ suspend fun Question.validate(seed: Int): ValidationReport {
     val mutationStart = Instant.now()
     val mutations = mutations(seed, control.maxMutationCount).also {
         if (it.size < control.minMutationCount) {
-            throw TooFewMutations()
+            throw TooFewMutations(it.size, control.minMutationCount)
         }
     }
     val allIncorrect = (incorrect + mutations).also { allIncorrect ->
@@ -242,13 +242,19 @@ class NoIncorrect : ValidationFailed() {
     """.trimMargin()
 }
 
-class TooFewMutations : ValidationFailed() {
-    override val message = """No incorrect examples found or generated through mutation
-    |Please add some using the @Incorrect annotation
+class TooFewMutations(val found: Int, val needed: Int) : ValidationFailed() {
+    override val message = """Too few incorrect mutations generated: found $found, needed $needed
+    |Please reduce the required number or remove mutation suppressions
     """.trimMargin()
 }
 
-class TooMuchOutput(val contents: String, val path: String?, val size: Int, val maxSize: Int) : ValidationFailed() {
+class TooMuchOutput(
+    val contents: String,
+    val path: String?,
+    val size: Int,
+    val maxSize: Int,
+    val language: Question.Language
+) : ValidationFailed() {
     override val message = """
         |Submission generated too much output ($size > $maxSize):
         |${printContents(contents, path)}

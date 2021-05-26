@@ -260,17 +260,18 @@ data class ParsedJavaFile(val path: String, val contents: String) {
             correctSolution.substring(0..prefix) +
                 "return$starterReturn;" +
                 correctSolution.substring(postfix until correctSolution.length)
+            ).let {
+            Formatter().formatSource(it)
+        }.javaDeTemplate(false, wrapWith).let {
+            Question.IncorrectFile(
+                className,
+                it,
+                Question.IncorrectFile.Reason.TEST,
+                Question.Language.java,
+                null,
+                true
             )
-            .javaDeTemplate(false, wrapWith).let {
-                Question.IncorrectFile(
-                    className,
-                    it,
-                    Question.IncorrectFile.Reason.TEST,
-                    Question.Language.java,
-                    null,
-                    true
-                )
-            }
+        }
     }
 
     fun toIncorrectFile(cleanSpec: CleanSpec): Question.IncorrectFile {
@@ -392,7 +393,10 @@ data class ParsedJavaFile(val path: String, val contents: String) {
                 var snipped = unsnipped
                 var shift = 0
                 for (range in toSnip.sortedBy { it.first }) {
-                    snipped = snipped.substring(0, range.first - shift) + snipped.substring(range.last + 1 - shift, snipped.length)
+                    snipped = snipped.substring(0, range.first - shift) + snipped.substring(
+                        range.last + 1 - shift,
+                        snipped.length
+                    )
                     shift += (range.last - range.first) + 1
                 }
                 snipped

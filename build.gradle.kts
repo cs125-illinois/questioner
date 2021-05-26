@@ -24,11 +24,9 @@ subprojects {
 }
 allprojects {
     repositories {
-        mavenLocal()
         mavenCentral()
         maven("https://jitpack.io")
         maven("https://dl.bintray.com/jetbrains/markdown")
-        mavenLocal()
     }
     tasks.withType<Test> {
         enableAssertions = true
