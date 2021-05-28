@@ -1,5 +1,9 @@
 package edu.illinois.cs.cs125.questioner.plugin.save
 
+import edu.illinois.cs.cs125.jeed.core.SnippetArguments
+import edu.illinois.cs.cs125.jeed.core.Source
+import edu.illinois.cs.cs125.jeed.core.complexity
+import edu.illinois.cs.cs125.jeed.core.fromSnippet
 import edu.illinois.cs.cs125.questioner.antlr.KotlinLexer
 import edu.illinois.cs.cs125.questioner.antlr.KotlinParser
 import edu.illinois.cs.cs125.questioner.lib.AlsoCorrect
@@ -85,7 +89,22 @@ data class ParsedKotlinFile(val path: String, val contents: String) {
 
     fun toAlternateFile(cleanSpec: CleanSpec): Question.FlatFile {
         check(alternateSolution != null) { "Not an alternate solution file" }
-        return Question.FlatFile(className, clean(cleanSpec), Question.Language.kotlin, path)
+        val solutionContent = clean(cleanSpec)
+        val complexity = if (cleanSpec.notClass) {
+            Source.fromSnippet(solutionContent, SnippetArguments(fileType = Source.FileType.KOTLIN))
+        } else {
+            Source(mapOf("$className.kt" to solutionContent))
+        }.complexity().let {
+            if (cleanSpec.notClass) {
+                // Snippet transform adds one unit of complexity
+                it.lookup("").complexity - 1
+            } else {
+                it.lookupFile("$className.kt")
+            }
+        }.also {
+            check(it >= 0) { "Invalid negative complexity value" }
+        }
+        return Question.FlatFile(className, solutionContent, Question.Language.kotlin, path, complexity)
     }
 
     fun toStarterFile(cleanSpec: CleanSpec): Question.IncorrectFile {

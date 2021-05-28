@@ -229,6 +229,8 @@ data class Question(
     val validated: Boolean
         get() = testingSettings != null
 
+    var fauxStatic: Boolean = false
+
     @Suppress("ReturnCount", "LongMethod", "ComplexMethod", "LongParameterList")
     suspend fun test(
         contents: String,

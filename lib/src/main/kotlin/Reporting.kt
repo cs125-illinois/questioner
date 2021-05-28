@@ -3,6 +3,7 @@
 package edu.illinois.cs.cs125.questioner.lib
 
 import edu.illinois.cs.cs125.jeed.core.suppressionComment
+import edu.illinois.cs.cs125.jenisol.core.TestResult
 import org.apache.commons.text.StringEscapeUtils
 
 private fun wrapDocument(question: Question, body: String) = """
@@ -125,6 +126,11 @@ fun IncorrectResults.html(index: Int, question: Question): String {
         }
     }</p>${
         if (results.tests() != null) {
+            val actualCount = if (question.fauxStatic) {
+                results.tests()!!.filter { it.jenisol!!.type != TestResult.Type.CONSTRUCTOR }.size
+            } else {
+                results.tests()!!.size
+            }
             val alert = if (results.tests()!!.size > question.control.minTestCount) {
                 """<div class="alert alert-warning" role="alert">Slowly found a failing test. Consider adding this input to @FixedParameters.</div>"""
             } else {
@@ -141,7 +147,7 @@ fun IncorrectResults.html(index: Int, question: Question): String {
       </thead>
       <tbody>
         <tr>
-          <td>${results.tests()!!.size}</td>
+          <td>$actualCount</td>
           <td>${results.taskResults!!.interval.length}</td>
         </tr>
       </tbody>
@@ -207,6 +213,20 @@ fun ValidationFailed.report(question: Question): String {
     |<li>If it should throw, allow it using <code>@Correct(solutionThrows = true)</code></li>
     |<li>Otherwise filter the inputs using <code>@FixedParameters</code>, <code>@RandomParameters</code>, or <code>@FilterParameters</code>
     |</ul>
+""".trimMargin()
+        }
+        is SolutionLacksEntropy -> {
+            """
+    |<h2>Solution Results Lack Entropy</h2>
+    |<p>Random inputs to the solution only generated $amount distinct return values.</p>
+    |<pre><code class="${
+                if (solution.language == Question.Language.java) {
+                    "java"
+                } else {
+                    "kotlin"
+                }
+            }"> ${StringEscapeUtils.escapeHtml4(solution.contents)}</code></pre>
+    |<p>You may need to add or adjust your @RandomParameters method.</p>
 """.trimMargin()
         }
         is NoIncorrect -> {

@@ -4,7 +4,7 @@ plugins {
     kotlin("jvm") version "1.5.10" apply false
     kotlin("kapt") version "1.5.10" apply false
     id("org.jmailen.kotlinter") version "3.4.4" apply false
-    id("com.github.ben-manes.versions") version "0.38.0"
+    id("com.github.ben-manes.versions") version "0.39.0"
 }
 subprojects {
     group = "com.github.cs125-illinois.questioner"
@@ -24,6 +24,7 @@ subprojects {
 }
 allprojects {
     repositories {
+        mavenLocal()
         mavenCentral()
         maven("https://jitpack.io")
         maven("https://dl.bintray.com/jetbrains/markdown")

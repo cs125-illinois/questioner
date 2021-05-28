@@ -204,11 +204,14 @@ data class ParsedJavaFile(val path: String, val contents: String) {
             Source(mapOf("$className.java" to solutionContent))
         }.complexity().let {
             if (cleanSpec.notClass) {
-                it.lookup("")
+                // Snippet transform adds one unit of complexity
+                it.lookup("").complexity - 1
             } else {
-                it.lookup(className, "$className.java")
+                it.lookupFile("$className.java")
             }
-        }.complexity
+        }.also {
+            check(it >= 0) { "Invalid negative complexity value" }
+        }
         return Question.FlatFile(className, solutionContent, Question.Language.java, path, complexity)
     }
 

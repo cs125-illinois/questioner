@@ -16,8 +16,8 @@ dependencies {
     implementation(kotlin("reflect"))
     implementation(gradleApi())
     implementation(project(":lib"))
-    implementation("com.github.cs125-illinois.jeed:core:2021.5.5")
-    implementation("com.github.cs125-illinois:jenisol:2021.5.5")
+    implementation("com.github.cs125-illinois.jeed:core:2021.5.8")
+    implementation("com.github.cs125-illinois:jenisol:2021.5.8")
     implementation("com.squareup.moshi:moshi:1.12.0")
     implementation("org.jetbrains:markdown:0.2.3") {
         exclude(module = "kotlin-runtime")

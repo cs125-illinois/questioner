@@ -4,6 +4,9 @@ package edu.illinois.cs.cs125.questioner.lib
 
 import edu.illinois.cs.cs125.jeed.core.suppressionComment
 import edu.illinois.cs.cs125.jenisol.core.ParameterGroup
+import edu.illinois.cs.cs125.jenisol.core.fullName
+import edu.illinois.cs.cs125.jenisol.core.generators.Parameters
+import java.lang.reflect.Executable
 import java.time.Instant
 
 data class CorrectResults(val incorrect: Question.FlatFile, val results: TestResults)
@@ -12,6 +15,8 @@ data class IncorrectResults(val incorrect: Question.IncorrectFile, val results: 
 @Suppress("LongMethod", "ComplexMethod")
 suspend fun Question.validate(seed: Int): ValidationReport {
 
+    fauxStatic = solution.fauxStatic
+
     val javaClassWhitelist = mutableSetOf<String>().apply { addAll(defaultJavaClassWhitelist) }
     val kotlinClassWhitelist = mutableSetOf<String>().apply { addAll(defaultKotlinClassWhitelist) }
 
@@ -19,10 +24,36 @@ suspend fun Question.validate(seed: Int): ValidationReport {
         if (!succeeded) {
             throw SolutionFailed(file, summary)
         }
-        val solutionThrew = tests()?.firstOrNull { it.jenisol?.solution?.threw != null }
+        val solutionThrew = tests()?.firstOrNull { it.jenisol!!.solution.threw != null }
         if (!control.solutionThrows && solutionThrew != null) {
             throw SolutionThrew(file, solutionThrew.jenisol!!.solution.threw!!, solutionThrew.jenisol.parameters)
         }
+        tests()
+            ?.filter {
+                it.jenisol!!.solution.threw == null
+                    && (it.jenisol.parameterType == Parameters.Type.RANDOM
+                    || it.jenisol.parameterType == Parameters.Type.RANDOM_METHOD
+                    )
+            }
+            ?.let { results ->
+                val executableReturns = mutableMapOf<Executable, MutableList<Any>>()
+                for (result in results) {
+                    result.jenisol!!.solution.returned?.let {
+                        executableReturns[result.jenisol.solutionExecutable] =
+                            executableReturns[result.jenisol.solutionExecutable] ?: mutableListOf()
+                        executableReturns[result.jenisol.solutionExecutable]!!.add(result.jenisol.solution.returned!!)
+                    }
+                }
+                executableReturns.forEach { (executable, values) ->
+                    if (executable.fullName() == "public boolean equals(java.lang.Object)") {
+                        return@forEach
+                    }
+                    if (values.distinct().size == 1) {
+                        throw SolutionLacksEntropy(file, values.size, values.distinct().size, executable, solution.fauxStatic, values.first())
+                    }
+                }
+            }
+
         val size = toJson().length
         if (size > Question.DEFAULT_MAX_OUTPUT_SIZE || taskResults!!.truncatedLines > 0) {
             throw TooMuchOutput(file.contents, file.path, size, Question.DEFAULT_MAX_OUTPUT_SIZE, file.language)
@@ -236,16 +267,39 @@ class SolutionThrew(val solution: Question.FlatFile, val threw: Throwable, val p
     """.trimMargin()
 }
 
+class SolutionLacksEntropy(
+    val solution: Question.FlatFile,
+    val count: Int,
+    val amount: Int,
+    val executable: Executable,
+    val fauxStatic: Boolean,
+    val result: Any?
+) :
+    ValidationFailed() {
+    override val message = """
+        |$count random inputs to the solution method ${executable.fullName()} only generated $amount distinct results: $result
+        |${
+        if (fauxStatic) {
+            "Note that the solution is being tested as a faux static method, which may cause problems"
+        } else {
+            ""
+        }
+    }
+        |${printContents(solution.contents, solution.path)}
+        |You may need to add or adjust the @RandomParameters method
+        """.trimMargin()
+}
+
 class NoIncorrect : ValidationFailed() {
-    override val message = """No incorrect examples found or generated through mutation
-    |Please add some using the @Incorrect annotation
-    """.trimMargin()
+    override val message = """ No incorrect examples found or generated through mutation
+        |Please add some using the @Incorrect annotation
+        """.trimMargin()
 }
 
 class TooFewMutations(val found: Int, val needed: Int) : ValidationFailed() {
-    override val message = """Too few incorrect mutations generated: found $found, needed $needed
-    |Please reduce the required number or remove mutation suppressions
-    """.trimMargin()
+    override val message = """ Too few incorrect mutations generated : found $found, needed $needed
+        |Please reduce the required number or remove mutation suppressions
+        """.trimMargin()
 }
 
 class TooMuchOutput(
@@ -256,10 +310,10 @@ class TooMuchOutput(
     val language: Question.Language
 ) : ValidationFailed() {
     override val message = """
-        |Submission generated too much output ($size > $maxSize):
+        |Submission generated too much output($size > $maxSize):
         |${printContents(contents, path)}
         |Maybe reduce the number of tests using @Correct(minTestCount = NUM)
-    """.trimMargin()
+        """.trimMargin()
 }
 
 class IncorrectPassed(
@@ -269,7 +323,7 @@ class IncorrectPassed(
         get() {
             val contents = incorrect.mutation?.marked()?.contents ?: incorrect.contents
             return """
-        |Incorrect code passed the test suites:
+        |Incorrect code passed the test suites :
         |${printContents(contents, incorrect.path ?: correct.path)}
         |If the code is incorrect, add an input to @FixedParameters to handle this case
         |${
@@ -291,7 +345,7 @@ class IncorrectTooManyTests(
         get() {
             val contents = incorrect.mutation?.marked()?.contents ?: incorrect.contents
             return """
-        |Incorrect code eventually failed but required too many tests ($testsRequired > $testsLimit)
+        |Incorrect code eventually failed but required too many tests($testsRequired > $testsLimit)
         |${failingInput?.let { "We found failing inputs $failingInput" } ?: "We were unable to find a failing input"}
         |${printContents(contents, incorrect.path ?: correct.path)}
         |If the code is incorrect, add an input to @FixedParameters to handle this case
@@ -302,7 +356,7 @@ class IncorrectTooManyTests(
                 } else {
                     ""
                 }
-            }You may also need to increase the test count using @Correct(maxTestCount = NUM)""".trimMargin()
+            } You may also need to increase the test count using @Correct(maxTestCount = NUM) """.trimMargin()
         }
 }
 
@@ -312,11 +366,11 @@ class IncorrectWrongReason(val incorrect: Question.IncorrectFile, val expected: 
         get() {
             check(incorrect.mutation == null) { "Mutated sources failed for the wrong reason" }
             return """
-        |Incorrect code failed but not for the reason we expected:
+        |Incorrect code failed but not for the reason we expected :
         |Expected: $expected
-        |But Found: $explanation
+        |But Found : $explanation
         |${printContents(incorrect.contents, incorrect.path)}
         |Maybe check the argument to @Incorrect(reason = "reason")
-    """.trimMargin()
+        """.trimMargin()
         }
 }
