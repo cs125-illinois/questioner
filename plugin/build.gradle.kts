@@ -19,7 +19,7 @@ dependencies {
     implementation("com.github.cs125-illinois.jeed:core:2021.5.8")
     implementation("com.github.cs125-illinois:jenisol:2021.5.8")
     implementation("com.squareup.moshi:moshi:1.12.0")
-    implementation("org.jetbrains:markdown:0.2.3") {
+    implementation("org.jetbrains:markdown:0.2.4") {
         exclude(module = "kotlin-runtime")
         exclude(module = "kotlin-js")
     }
