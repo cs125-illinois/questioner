@@ -30,7 +30,7 @@ import org.intellij.markdown.html.HtmlGenerator
 import java.io.File
 
 data class ParsedJavaFile(val path: String, val contents: String) {
-    constructor(file: File) : this(file.path, file.readText())
+    constructor(file: File) : this(file.path, file.readText().replace("\r\n", "\n"))
 
     init {
         require(path.endsWith(".java")) { "Can only parse Java files" }
