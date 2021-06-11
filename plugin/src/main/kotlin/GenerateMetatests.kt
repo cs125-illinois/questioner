@@ -158,7 +158,7 @@ import java.nio.file.Path
 
 private val validator = Validator(
   Path.of(object {}::class.java.getResource("/questions.json")!!.toURI()).toFile(),
-  "${sourceRoot.path.replace("/", File.separator)}",
+  "${sourceRoot.path.replace("/", System.getProperty("file.separator"))}",
   seed = $seed
 )
 @Suppress("MaxLineLength", "LargeClass")
