@@ -13,7 +13,7 @@ dependencies {
     implementation("org.apache.commons:commons-text:1.9")
 
     api("com.github.cs125-illinois.jeed:core:2021.6.0")
-    api("com.github.cs125-illinois:jenisol:2021.6.0")
+    api("com.github.cs125-illinois:jenisol:2021.6.1")
     api("io.kotest:kotest-runner-junit5:4.6.0")
     api("com.google.truth:truth:1.1.3")
     api("com.github.cs125-illinois:libcs1:2021.5.7")

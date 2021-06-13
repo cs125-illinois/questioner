@@ -3,7 +3,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 plugins {
     kotlin("jvm") version "1.5.10" apply false
     kotlin("kapt") version "1.5.10" apply false
-    id("org.jmailen.kotlinter") version "3.4.4" apply false
+    id("org.jmailen.kotlinter") version "3.4.5" apply false
     id("com.github.ben-manes.versions") version "0.39.0"
 }
 subprojects {
