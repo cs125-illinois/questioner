@@ -39,6 +39,9 @@ fun randomIntArray(size: Int = 1024, min: Int = -512, max: Int = 512, random: Ra
 
 fun randomIntArray(maxSize: Int, random: Random) = randomIntArray(random.nextInt(maxSize), -16, 16, random)
 
+@JvmOverloads
+fun randomIntArrayWithSize(size: Int, random: Random, min: Int = -512, max: Int = 512) = randomIntArray(size, min, max, random)
+
 fun randomIntIntArray(maxSize: Int, rectangular: Boolean, random: Random): Array<IntArray> {
     val secondSize = random.nextInt(maxSize)
     return Array(random.nextInt(maxSize)) {
