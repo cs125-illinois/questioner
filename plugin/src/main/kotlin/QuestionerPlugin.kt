@@ -68,6 +68,9 @@ class QuestionerPlugin : Plugin<Project> {
         val reconfigureTesting = project.tasks.register("reconfigureTesting", ReconfigureTesting::class.java).get()
         project.tasks.getByName("test").dependsOn(reconfigureTesting)
         project.tasks.getByName("test").mustRunAfter(reconfigureTesting)
+        project.tasks.getByName("compileJava").mustRunAfter(reconfigureTesting)
+        project.tasks.getByName("compileKotlin").mustRunAfter(reconfigureTesting)
+        project.tasks.getByName("jar").mustRunAfter(reconfigureTesting)
         project.tasks.getByName("test").dependsOn(generateMetatests)
         project.tasks.getByName("compileTestKotlin").dependsOn(generateMetatests)
         try {
