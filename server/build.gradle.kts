@@ -23,7 +23,7 @@ dependencies {
     implementation("com.github.slugify:slugify:2.5")
     implementation("org.mongodb:mongodb-driver:3.12.8")
 
-    implementation("org.slf4j:slf4j-api:1.7.30")
+    implementation("org.slf4j:slf4j-api:1.7.31")
     implementation("ch.qos.logback:logback-classic:1.2.3")
     implementation("io.github.microutils:kotlin-logging:2.0.8")
 }
