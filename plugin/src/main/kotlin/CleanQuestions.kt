@@ -2,7 +2,7 @@ package edu.illinois.cs.cs125.questioner.plugin
 
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.FileCollection
-import org.gradle.api.plugins.JavaPluginConvention
+import org.gradle.api.plugins.JavaPluginExtension
 import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.TaskAction
 
@@ -15,7 +15,7 @@ abstract class CleanQuestions : DefaultTask() {
 
     @InputFiles
     val inputFiles: FileCollection =
-        project.convention.getPlugin(JavaPluginConvention::class.java).sourceSets.getByName("main").allSource
+        project.extensions.getByType(JavaPluginExtension::class.java).sourceSets.getByName("main").allSource
             .filter { it.name == ".validation.json" || it.name == "report.html" }
 
     @TaskAction

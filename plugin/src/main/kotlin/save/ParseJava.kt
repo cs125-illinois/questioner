@@ -5,6 +5,7 @@ import edu.illinois.cs.cs125.jeed.core.CheckstyleArguments
 import edu.illinois.cs.cs125.jeed.core.Source
 import edu.illinois.cs.cs125.jeed.core.checkstyle
 import edu.illinois.cs.cs125.jeed.core.complexity
+import edu.illinois.cs.cs125.jeed.core.features
 import edu.illinois.cs.cs125.jeed.core.fromSnippet
 import edu.illinois.cs.cs125.questioner.antlr.JavaLexer
 import edu.illinois.cs.cs125.questioner.antlr.JavaParser
@@ -198,11 +199,12 @@ data class ParsedJavaFile(val path: String, val contents: String) {
                 content.lines().filterIndexed { index, _ -> !removeLines.contains(index + 1) }.joinToString("\n")
             }
         }
-        val complexity = if (cleanSpec.notClass) {
+        val source = if (cleanSpec.notClass) {
             Source.fromSnippet(solutionContent)
         } else {
             Source(mapOf("$className.java" to solutionContent))
-        }.complexity().let {
+        }
+        val complexity = source.complexity().let {
             if (cleanSpec.notClass) {
                 // Snippet transform adds one unit of complexity
                 it.lookup("").complexity - 1
@@ -212,7 +214,14 @@ data class ParsedJavaFile(val path: String, val contents: String) {
         }.also {
             check(it >= 0) { "Invalid negative complexity value" }
         }
-        return Question.FlatFile(className, solutionContent, Question.Language.java, path, complexity)
+        val features = source.features().let {
+            if (cleanSpec.notClass) {
+                it.lookup("")
+            } else {
+                it.lookup("", "$className.java")
+            }
+        }.features
+        return Question.FlatFile(className, solutionContent, Question.Language.java, path, complexity, features)
     }
 
     fun extractTemplate(): String? {

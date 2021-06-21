@@ -32,7 +32,7 @@ import edu.illinois.cs.cs125.questioner.lib.loadQuestions
 import edu.illinois.cs.cs125.questioner.lib.saveQuestions
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.FileCollection
-import org.gradle.api.plugins.JavaPluginConvention
+import org.gradle.api.plugins.JavaPluginExtension
 import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
@@ -59,7 +59,7 @@ abstract class SaveQuestions : DefaultTask() {
     }
 
     @InputFiles
-    val inputFiles: FileCollection = project.convention.getPlugin(JavaPluginConvention::class.java)
+    val inputFiles: FileCollection = project.extensions.getByType(JavaPluginExtension::class.java)
         .sourceSets.getByName("main").allSource.filter { it.name.endsWith(".java") || it.name.endsWith(".kt") }
 
     @OutputFile
@@ -181,6 +181,8 @@ fun List<ParsedJavaFile>.findQuestions(
                 setOf<String>()
             }.map {
                 ParsedKotlinFile(File(it))
+            }.filter {
+                it.isQuestioner
             }
 
             if (solution.autoStarter) {

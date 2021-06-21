@@ -7,6 +7,8 @@ import com.squareup.moshi.Types
 import edu.illinois.cs.cs125.jeed.core.CheckstyleFailed
 import edu.illinois.cs.cs125.jeed.core.CompilationArguments
 import edu.illinois.cs.cs125.jeed.core.CompilationFailed
+import edu.illinois.cs.cs125.jeed.core.FeatureValue
+import edu.illinois.cs.cs125.jeed.core.Features
 import edu.illinois.cs.cs125.jeed.core.KtLintFailed
 import edu.illinois.cs.cs125.jeed.core.MutatedSource
 import edu.illinois.cs.cs125.jeed.core.Sandbox
@@ -129,7 +131,8 @@ data class Question(
         val contents: String,
         val language: Language,
         val path: String?,
-        val complexity: Int? = null
+        val complexity: Int? = null,
+        val features: Features? = null
     )
 
     @JsonClass(generateAdapter = true)

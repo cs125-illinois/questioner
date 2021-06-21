@@ -3,7 +3,7 @@ package edu.illinois.cs.cs125.questioner.plugin
 import edu.illinois.cs.cs125.questioner.lib.Question
 import edu.illinois.cs.cs125.questioner.lib.loadFromPath
 import org.gradle.api.DefaultTask
-import org.gradle.api.plugins.JavaPluginConvention
+import org.gradle.api.plugins.JavaPluginExtension
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.OutputFiles
@@ -21,7 +21,7 @@ abstract class GenerateMetatests : DefaultTask() {
     abstract var seed: Int
 
     @InputFiles
-    val inputFiles = project.convention.getPlugin(JavaPluginConvention::class.java)
+    val inputFiles = project.extensions.getByType(JavaPluginExtension::class.java)
         .sourceSets.getByName("main").allSource.filter { it.name == ".validation.json" }
         .toMutableList() + File(project.buildDir, "questioner/questions.json")
 

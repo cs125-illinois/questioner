@@ -42,7 +42,6 @@ data class ParsedKotlinFile(val path: String, val contents: String) {
     } else {
         null
     }
-
     val alternateSolution = if (topLevelFile) {
         parseTree.preamble().fileAnnotations().getAnnotation(AlsoCorrect::class.java)
     } else {
@@ -68,6 +67,8 @@ data class ParsedKotlinFile(val path: String, val contents: String) {
             it.simpleIdentifier().text == "reason"
         }?.expression()?.text?.removeSurrounding("\"") ?: "test"
     }
+
+    val isQuestioner = alternateSolution != null || starter != null || incorrect != null
 
     fun toIncorrectFile(cleanSpec: CleanSpec): Question.IncorrectFile {
         check(incorrect != null) { "Not an incorrect file" }
@@ -394,7 +395,7 @@ fun KotlinParser.FileAnnotationsContext.getAnnotation(vararg toFind: Class<*>): 
     }
 
 fun KotlinParser.ClassDeclarationContext.getAnnotation(annotation: Class<*>): KotlinParser.AnnotationContext? =
-    modifierList().annotations()?.find {
+    modifierList()?.annotations()?.find {
         it.annotation()?.LabelReference()?.text == "@${annotation.simpleName}"
     }?.annotation()
 

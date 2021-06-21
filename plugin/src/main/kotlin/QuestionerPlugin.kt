@@ -8,7 +8,7 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import edu.illinois.cs.cs125.questioner.plugin.save.SaveQuestions
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import org.gradle.api.plugins.JavaPluginConvention
+import org.gradle.api.plugins.JavaPluginExtension
 import java.io.File
 import java.util.UUID
 
@@ -20,7 +20,7 @@ data class QuestionerConfig(val token: String? = null, val publish: Map<String, 
 }
 
 fun Project.javaSourceDir(): File =
-    convention.getPlugin(JavaPluginConvention::class.java)
+    extensions.getByType(JavaPluginExtension::class.java)
         .sourceSets.getByName("main").java.srcDirs.let {
             check(it.size == 1) { "Found multiple source directories: ${it.joinToString(",")}" }
             it.first()!!
@@ -61,7 +61,7 @@ class QuestionerPlugin : Plugin<Project> {
                 publishAll.dependsOn(publishQuestions)
             }
         }
-        project.convention.getPlugin(JavaPluginConvention::class.java)
+        project.extensions.getByType(JavaPluginExtension::class.java)
             .sourceSets.getByName("main").resources { it.srcDirs(File(project.buildDir, "questioner")) }
         project.tasks.register("cleanQuestions", CleanQuestions::class.java)
 
