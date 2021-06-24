@@ -329,7 +329,7 @@ class IncorrectPassed(
         |${
                 if (incorrect.mutation != null) {
                     "If the code is correct, you may need to disable this mutation using " +
-                        "// ${incorrect.mutation.mutations.first().mutation.type.suppressionComment()}"
+                        "// ${incorrect.mutation.mutations.first().mutation.mutationType.suppressionComment()}"
                 } else {
                     ""
                 }
@@ -352,7 +352,7 @@ class IncorrectTooManyTests(
         |${
                 if (incorrect.mutation != null) {
                     "If the code is correct, you may need to disable this mutation using " +
-                        "// ${incorrect.mutation.mutations.first().mutation.type.suppressionComment()}\n"
+                        "// ${incorrect.mutation.mutations.first().mutation.mutationType.suppressionComment()}\n"
                 } else {
                     ""
                 }

@@ -55,6 +55,15 @@ configurations {
         exclude("ch.qos.logback")
     }
 }
+tasks {
+    val sourcesJar by creating(Jar::class) {
+        archiveClassifier.set("sources")
+        from(sourceSets["main"].allSource)
+    }
+    artifacts {
+        add("archives", sourcesJar)
+    }
+}
 gradlePlugin {
     plugins {
         create("plugin") {
