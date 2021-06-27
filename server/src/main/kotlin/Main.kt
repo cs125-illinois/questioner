@@ -41,7 +41,9 @@ import kotlin.collections.toMutableMap
 import kotlin.system.exitProcess
 import edu.illinois.cs.cs125.jeed.core.moshi.Adapters as JeedAdapters
 
-private val moshi = Moshi.Builder().build()
+private val moshi = Moshi.Builder().apply {
+    JeedAdapters.forEach { add(it) }
+}.build()
 private val logger = KotlinLogging.logger {}
 
 private val collection: MongoCollection<BsonDocument> = run {
@@ -62,6 +64,7 @@ private fun getQuestion(slug: String) = collection.find(
     }
 }
 
+@Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
 private fun getQuestions() = collection.distinct("slug", String::class.java).map { getQuestion(it) }.filterNotNull()
 
 object Questions {
