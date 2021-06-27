@@ -42,6 +42,7 @@ private val sharedClassWhitelist = setOf(
 @JsonClass(generateAdapter = true)
 data class Question(
     val name: String,
+    val type: Type,
     val klass: String,
     val metadata: Metadata,
     val control: TestingControl,
@@ -58,6 +59,8 @@ data class Question(
 ) {
     @Suppress("EnumNaming", "EnumEntryName")
     enum class Language { java, kotlin }
+
+    enum class Type { KLASS, METHOD, SNIPPET }
 
     @JsonClass(generateAdapter = true)
     data class Metadata(

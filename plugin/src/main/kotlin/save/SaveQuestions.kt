@@ -356,6 +356,7 @@ fun List<ParsedJavaFile>.findQuestions(
                     "Can't use both a template and @Wrap"
                 }
 
+                // Needed to set imports properly
                 solution.clean(javaCleanSpec)
 
                 javaTemplate = """public class ${solution.wrapWith} {
@@ -389,8 +390,11 @@ fun List<ParsedJavaFile>.findQuestions(
             javaDescriptionsByPath[solution.correct.description] = solution.path
             kotlinSolution?.description?.let { kotlinDescriptionsByPath[it] = solution.path }
 
+            val (cleanSolution, questionType) = solution.toCleanSolution(javaCleanSpec)
+
             Question(
                 solution.correct.name,
+                questionType,
                 solution.className,
                 Question.Metadata(
                     allContentHash,
@@ -411,7 +415,7 @@ fun List<ParsedJavaFile>.findQuestions(
                     Question.Language.java,
                     solution.path
                 ),
-                solution.toCleanSolution(javaCleanSpec),
+                cleanSolution,
                 alternateSolutions,
                 incorrectExamples,
                 common,

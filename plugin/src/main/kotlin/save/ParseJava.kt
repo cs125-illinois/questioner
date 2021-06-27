@@ -190,8 +190,8 @@ data class ParsedJavaFile(val path: String, val contents: String) {
         }
     }
 
-    fun toCleanSolution(cleanSpec: CleanSpec): Question.FlatFile {
-        val solutionContent = clean(cleanSpec).let { content ->
+    fun toCleanSolution(cleanSpec: CleanSpec): Pair<Question.FlatFile, Question.Type> {
+        val solutionContent = clean(cleanSpec, false).let { content ->
             Source.fromJava(content).checkstyle(CheckstyleArguments(failOnError = false)).let { results ->
                 val removeLines = results.errors.filter { error ->
                     error.message.trim().startsWith("Unused import")
@@ -199,33 +199,50 @@ data class ParsedJavaFile(val path: String, val contents: String) {
                 content.lines().filterIndexed { index, _ -> !removeLines.contains(index + 1) }.joinToString("\n")
             }
         }
-        val source = if (cleanSpec.notClass) {
-            Source.fromSnippet(solutionContent)
-        } else {
-            Source(mapOf("$className.java" to solutionContent))
+        val cleanContent = solutionContent.javaDeTemplate(cleanSpec.hasTemplate, cleanSpec.wrappedClass)
+        val questionType = cleanContent.getType()
+        val source = when (questionType) {
+            Question.Type.KLASS -> Source(mapOf("$className.java" to cleanContent))
+            Question.Type.METHOD -> Source(
+                mapOf(
+                    "$className.java" to """public class $className {
+                    |$cleanContent
+                    }""".trimMargin()
+                )
+            )
+            Question.Type.SNIPPET -> Source.fromSnippet(cleanContent)
         }
-        val complexity = source.complexity().let {
-            if (cleanSpec.notClass) {
-                // Snippet transform adds one unit of complexity
-                it.lookup("").complexity - 1
-            } else {
-                it.lookupFile("$className.java")
+        val complexity = source.complexity().let { results ->
+            when (questionType) {
+                Question.Type.KLASS -> results.lookupFile("$className.java")
+                Question.Type.METHOD -> results.lookup(className, "$className.java").complexity
+                Question.Type.SNIPPET -> results.lookup("").complexity
             }
         }.also {
             check(it >= 0) { "Invalid negative complexity value" }
         }
-        val features = source.features().let {
-            if (cleanSpec.notClass) {
-                it.lookup("")
-            } else {
-                it.lookup("", "$className.java")
+        val features = source.features().let { features ->
+            when (questionType) {
+                Question.Type.KLASS -> features.lookup("", "$className.java")
+                Question.Type.METHOD -> features.lookup(className, "$className.java")
+                Question.Type.SNIPPET -> features.lookup("")
             }
         }.features
-        return Question.FlatFile(className, solutionContent, Question.Language.java, path, complexity, features)
+        return Pair(
+            Question.FlatFile(
+                className,
+                cleanContent,
+                Question.Language.java,
+                path,
+                complexity,
+                features
+            ),
+            questionType
+        )
     }
 
     fun extractTemplate(): String? {
-        val correctSolution = toCleanSolution(CleanSpec(false, null)).contents
+        val correctSolution = toCleanSolution(CleanSpec(false, null)).first.contents
         val templateStart = Regex("""//.*TEMPLATE_START""").find(correctSolution)?.range?.start ?: return null
         val templateEnd = correctSolution.indexOf("TEMPLATE_END")
         val start = correctSolution.substring(0 until templateStart)
@@ -234,7 +251,7 @@ data class ParsedJavaFile(val path: String, val contents: String) {
     }
 
     fun extractStarter(): Question.IncorrectFile? {
-        val correctSolution = toCleanSolution(CleanSpec(false, null)).contents
+        val correctSolution = toCleanSolution(CleanSpec(false, null)).first.contents
         val parsed = correctSolution.parseJava()
         val methodDeclaration = parsed.tree
             .typeDeclaration(0)
@@ -342,7 +359,7 @@ data class ParsedJavaFile(val path: String, val contents: String) {
     }
 
     @Suppress("ComplexMethod")
-    fun clean(cleanSpec: CleanSpec): String {
+    fun clean(cleanSpec: CleanSpec, stripTemplate: Boolean = true): String {
         val (template, wrapWith, importNames) = cleanSpec
 
         val toSnip = mutableSetOf<IntRange>()
@@ -430,7 +447,13 @@ data class ParsedJavaFile(val path: String, val contents: String) {
                     content.lines().filterIndexed { index, _ -> !removeLines.contains(index + 1) }
                         .joinToString("\n")
                 }
-            }.javaDeTemplate(template, wrapWith)
+            }.let {
+                if (stripTemplate) {
+                    it.javaDeTemplate(template, wrapWith)
+                } else {
+                    it
+                }
+            }
             .stripPackage()
     }
 
@@ -564,3 +587,23 @@ fun JavaParser.CompilationUnitContext.className() = topLevelClass().let {
         it.interfaceDeclaration().IDENTIFIER()
     }
 }.toString()
+
+fun String.getType(): Question.Type {
+    try {
+        parseJava().tree.typeDeclaration(0).classDeclaration().classBody()
+        return Question.Type.KLASS
+    } catch (e: Exception) {
+    }
+    """public class Main {
+            |$this
+        """.trimMargin().parseJava().also { parsed ->
+        parsed.tree
+            .typeDeclaration(0)
+            ?.classDeclaration()
+            ?.classBody()
+            ?.classBodyDeclaration(0)
+            ?.memberDeclaration()
+            ?.methodDeclaration() ?: return Question.Type.SNIPPET
+        return Question.Type.METHOD
+    }
+}
