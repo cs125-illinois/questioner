@@ -5,7 +5,6 @@ package edu.illinois.cs.cs125.questioner.plugin.save
 import com.squareup.moshi.JsonClass
 import com.squareup.moshi.Moshi
 import edu.illinois.cs.cs125.jenisol.core.Both
-import edu.illinois.cs.cs125.jenisol.core.CheckSource
 import edu.illinois.cs.cs125.jenisol.core.Compare
 import edu.illinois.cs.cs125.jenisol.core.Configure
 import edu.illinois.cs.cs125.jenisol.core.DesignOnly
@@ -20,6 +19,7 @@ import edu.illinois.cs.cs125.jenisol.core.SimpleType
 import edu.illinois.cs.cs125.jenisol.core.Verify
 import edu.illinois.cs.cs125.questioner.lib.AlsoCorrect
 import edu.illinois.cs.cs125.questioner.lib.Blacklist
+import edu.illinois.cs.cs125.questioner.lib.CheckSource
 import edu.illinois.cs.cs125.questioner.lib.Cite
 import edu.illinois.cs.cs125.questioner.lib.Correct
 import edu.illinois.cs.cs125.questioner.lib.Ignore

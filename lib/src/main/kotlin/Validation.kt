@@ -49,7 +49,14 @@ suspend fun Question.validate(seed: Int): ValidationReport {
                         return@forEach
                     }
                     if (values.distinct().size == 1) {
-                        throw SolutionLacksEntropy(file, values.size, values.distinct().size, executable, solution.fauxStatic, values.first())
+                        throw SolutionLacksEntropy(
+                            file,
+                            values.size,
+                            values.distinct().size,
+                            executable,
+                            solution.fauxStatic,
+                            values.first()
+                        )
                     }
                 }
             }

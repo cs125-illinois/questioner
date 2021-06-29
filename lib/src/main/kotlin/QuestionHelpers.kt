@@ -19,6 +19,7 @@ import edu.illinois.cs.cs125.jeed.core.kompile
 import edu.illinois.cs.cs125.jeed.core.ktLint
 import edu.illinois.cs.cs125.jeed.core.moshi.CompiledSourceResult
 import edu.illinois.cs.cs125.jenisol.core.CapturedResult
+import java.lang.reflect.InvocationTargetException
 import kotlin.random.Random
 
 fun Question.templateSubmission(contents: String, language: Question.Language = Question.Language.java): Source {
@@ -120,6 +121,7 @@ fun Question.kompileSubmission(
 
 fun Question.checkCompiledSubmission(
     compiledSubmission: CompiledSource,
+    contents: String,
     testResults: TestResults
 ): String? = compiledSubmission.classLoader.definedClasses.topLevelClasses().let {
     when {
@@ -146,6 +148,20 @@ fun Question.checkCompiledSubmission(
             "Submission defines incorrect class: ${it.first()} != $compilationDefinedClass"
         testResults.failedSteps.add(TestResults.Step.checkSubmission)
         return null
+    }
+    if (sourceChecker != null) {
+        try {
+            sourceChecker?.invoke(null, contents)
+        } catch (e: InvocationTargetException) {
+            testResults.failed.checkSubmission =
+                "Checking source failed" + if (e.cause?.message != null) {
+                    ": ${e.cause!!.message}"
+                } else {
+                    ""
+                }
+            testResults.failedSteps.add(TestResults.Step.checkSubmission)
+            return null
+        }
     }
     return klass
 }

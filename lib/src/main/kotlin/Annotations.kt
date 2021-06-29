@@ -3,6 +3,8 @@
 package edu.illinois.cs.cs125.questioner.lib
 
 import com.squareup.moshi.JsonClass
+import java.lang.reflect.Method
+import java.lang.reflect.Modifier
 
 @JsonClass(generateAdapter = true)
 data class CorrectData(
@@ -79,3 +81,24 @@ annotation class Cite(val source: String, val link: String = "")
 
 @Target(AnnotationTarget.FIELD, AnnotationTarget.FUNCTION)
 annotation class Ignore
+
+@Target(AnnotationTarget.FUNCTION)
+@Retention(AnnotationRetention.RUNTIME)
+annotation class CheckSource {
+    companion object {
+        val name: String = CheckSource::class.java.simpleName
+        fun validate(method: Method) {
+            check(Modifier.isStatic(method.modifiers)) { "@$name methods must be static" }
+            check(method.returnType.name == "void") {
+                "@$name method return values will not be used and should be void"
+            }
+            check(method.parameterTypes.size == 1 && method.parameterTypes[0] == String::class.java) {
+                "@$name methods must accept parameters (String source)"
+            }
+            method.isAccessible = true
+        }
+    }
+}
+
+fun Method.isCheckSource() = isAnnotationPresent(CheckSource::class.java)
+

@@ -7,7 +7,6 @@ import com.squareup.moshi.Types
 import edu.illinois.cs.cs125.jeed.core.CheckstyleFailed
 import edu.illinois.cs.cs125.jeed.core.CompilationArguments
 import edu.illinois.cs.cs125.jeed.core.CompilationFailed
-import edu.illinois.cs.cs125.jeed.core.FeatureValue
 import edu.illinois.cs.cs125.jeed.core.Features
 import edu.illinois.cs.cs125.jeed.core.KtLintFailed
 import edu.illinois.cs.cs125.jeed.core.MutatedSource
@@ -197,6 +196,16 @@ data class Question(
         jenisol(compiledSolution.classLoader.loadClass(klass))
     }
 
+    @delegate:Transient
+    val sourceChecker by lazy {
+        compiledSolution.classLoader.loadClass(klass).declaredMethods.filter { it.isCheckSource() }.let {
+            require(it.size <= 1) { "Can only use @CheckSource once" }
+            it.firstOrNull()
+        }?.also {
+            CheckSource.validate(it)
+        }
+    }
+
     fun toJson(): String = moshi.adapter(Question::class.java).toJson(this)
 
     fun getTemplate(language: Language) = when (language) {
@@ -275,7 +284,7 @@ data class Question(
             return results
         }
 
-        val klassName = checkCompiledSubmission(compiledSubmission, results) ?: return results
+        val klassName = checkCompiledSubmission(compiledSubmission, contents, results) ?: return results
 
         val classLoaderConfiguration = when (language) {
             Language.java -> settings.javaWhitelist
@@ -303,7 +312,7 @@ data class Question(
                 returnTimeout = DEFAULT_RETURN_TIMEOUT
             )
         ) { (classLoader, _) ->
-            solution.submission(classLoader.loadClass(klassName), contents).test(jenisolSettings, ::captureJeedOutput)
+            solution.submission(classLoader.loadClass(klassName)).test(jenisolSettings, ::captureJeedOutput)
         }.also {
             results.taskResults = it
             results.timeout = it.timeout
