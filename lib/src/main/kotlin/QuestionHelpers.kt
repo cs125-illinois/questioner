@@ -136,7 +136,7 @@ fun Question.checkCompiledSubmission(
     }
     val klass = it.first()
     if (compiledSubmission.source.type == Source.FileType.KOTLIN &&
-        solution.skipReceiver &&
+        (solution.skipReceiver || solution.fauxStatic) &&
         klass == "${compilationDefinedClass}Kt"
     ) {
         return "${compilationDefinedClass}Kt"

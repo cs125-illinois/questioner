@@ -31,7 +31,7 @@ data class ParsedKotlinFile(val path: String, val contents: String) {
     private val parsedSource = contents.parseKotlin()
     private val parseTree = parsedSource.tree
 
-    private val topLevelFile =
+    val topLevelFile =
         parseTree.preamble().fileAnnotations()
             ?.getAnnotation(AlsoCorrect::class.java, Incorrect::class.java, Starter::class.java) != null
 
@@ -42,6 +42,7 @@ data class ParsedKotlinFile(val path: String, val contents: String) {
     } else {
         null
     }
+
     val alternateSolution = if (topLevelFile) {
         parseTree.preamble().fileAnnotations().getAnnotation(AlsoCorrect::class.java)
     } else {

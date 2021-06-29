@@ -367,10 +367,14 @@ fun List<ParsedJavaFile>.findQuestions(
                     javaTemplate = solution.usedImports.joinToString("\n") { "import $it;" } + "\n\n$javaTemplate"
                 }
 
-                kotlinTemplate = """class ${solution.wrapWith} {
+                kotlinTemplate = if (kotlinSolution?.topLevelFile == true) {
+                    "{{{ contents }}}"
+                } else {
+                    """class ${solution.wrapWith} {
                 |  {{{ contents }}}
                 |}
             """.trimMargin()
+                }
 
                 if (kotlinSolution?.usedImports?.isNotEmpty() == true) {
                     kotlinTemplate =
@@ -385,7 +389,7 @@ fun List<ParsedJavaFile>.findQuestions(
                 error("Duplicate description: ${solution.path} and ${javaDescriptionsByPath[solution.correct.description]}")
             }
             if (kotlinSolution?.description != null && kotlinSolution.description in kotlinDescriptionsByPath) {
-                error("Duplicate description: ${solution.path} and ${kotlinDescriptionsByPath[kotlinSolution.description]}")
+                error("Duplicate description: ${kotlinSolution.path} and ${kotlinDescriptionsByPath[kotlinSolution.description]}")
             }
             javaDescriptionsByPath[solution.correct.description] = solution.path
             kotlinSolution?.description?.let { kotlinDescriptionsByPath[it] = solution.path }
