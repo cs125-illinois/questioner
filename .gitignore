@@ -13,3 +13,4 @@ build/
 /local.properties
 /.env
 /email.txt
+gen/

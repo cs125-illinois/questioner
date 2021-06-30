@@ -66,6 +66,7 @@ PACKAGE:            'package';
 PRIVATE:            'private';
 PROTECTED:          'protected';
 PUBLIC:             'public';
+RECORD:             'record';
 RETURN:             'return';
 SHORT:              'short';
 STATIC:             'static';
@@ -80,6 +81,7 @@ TRANSIENT:          'transient';
 TRY:                'try';
 VOID:               'void';
 VOLATILE:           'volatile';
+YIELD:              'yield';
 WHILE:              'while';
 
 // Literals
@@ -102,6 +104,8 @@ BOOL_LITERAL:       'true'
 CHAR_LITERAL:       '\'' (~['\\\r\n] | EscapeSequence) '\'';
 
 STRING_LITERAL:     '"' (~["\\\r\n] | EscapeSequence)* '"';
+
+TEXT_BLOCK_LITERAL: '"""' .*? '"""';
 
 NULL_LITERAL:       'null';
 

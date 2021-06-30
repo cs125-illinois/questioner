@@ -546,7 +546,7 @@ fun JavaParser.TypeDeclarationContext.getAnnotations(annotation: Class<*>): List
 
 fun JavaParser.AnnotationContext.parameterMap(): Map<String, String> =
     elementValuePairs()?.elementValuePair()?.associate {
-        it.IDENTIFIER().toString() to it.elementValue().expression().primary().literal().let { literal ->
+        it.identifier().text to it.elementValue().expression().primary().literal().let { literal ->
             literal.STRING_LITERAL()
                 ?: literal.integerLiteral()?.DECIMAL_LITERAL()
                 ?: literal.BOOL_LITERAL()
@@ -577,14 +577,14 @@ fun JavaParser.AnnotationContext.comment(): String {
     }?.trim() ?: error("Error retrieving comment")
 }
 
-fun JavaParser.QualifiedNameContext.asString() = IDENTIFIER().joinToString(".")
+fun JavaParser.QualifiedNameContext.asString() = identifier().joinToString(".") { it.text }
 
 fun JavaParser.CompilationUnitContext.packageName() = packageDeclaration()?.qualifiedName()?.asString() ?: ""
 fun JavaParser.CompilationUnitContext.className() = topLevelClass().let {
     if (it.classDeclaration() != null) {
-        it.classDeclaration().IDENTIFIER()
+        it.classDeclaration().identifier().text
     } else {
-        it.interfaceDeclaration().IDENTIFIER()
+        it.interfaceDeclaration().identifier().text
     }
 }.toString()
 

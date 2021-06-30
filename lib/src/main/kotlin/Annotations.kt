@@ -3,6 +3,7 @@
 package edu.illinois.cs.cs125.questioner.lib
 
 import com.squareup.moshi.JsonClass
+import java.lang.RuntimeException
 import java.lang.reflect.Method
 import java.lang.reflect.Modifier
 
@@ -101,4 +102,6 @@ annotation class CheckSource {
 }
 
 fun Method.isCheckSource() = isAnnotationPresent(CheckSource::class.java)
+
+class SourceCheckException(message: String) : RuntimeException(message)
 
