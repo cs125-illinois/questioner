@@ -37,7 +37,7 @@ open class PublishQuestions : DefaultTask() {
             .header("Content-Type", "application/json")
             .POST(HttpRequest.BodyPublishers.ofString(questions.toJSON())).build()
         client.send(request, HttpResponse.BodyHandlers.ofString()).also {
-            check(it.statusCode() == HttpStatusCodes.STATUS_CODE_OK) { "Bad status: ${it.statusCode()}" }
+            check(it.statusCode() == HttpStatusCodes.STATUS_CODE_OK) { "Bad status for $destination: ${it.statusCode()}" }
         }
     }
 }
