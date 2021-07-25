@@ -292,7 +292,6 @@ data class Question(
             results.complete.complexity = computeComplexity(contents, language)
             results.completedSteps.add(TestResults.Step.complexity)
         } catch (e: Exception) {
-            e.printStackTrace()
             results.failedSteps.add(TestResults.Step.complexity)
         }
 

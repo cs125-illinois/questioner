@@ -49,7 +49,7 @@ annotation class Correct(
         const val DEFAULT_MAX_TEST_COUNT = 1024
         const val DEFAULT_MIN_TIMEOUT = 128
         const val DEFAULT_MAX_TIMEOUT = 2048
-        const val DEFAULT_TIMEOUT_MULTIPLIER = 4
+        const val DEFAULT_TIMEOUT_MULTIPLIER = 8
         const val DEFAULT_MIN_MUTATION_COUNT = 0
         const val DEFAULT_MAX_MUTATION_COUNT = 32
         const val DEFAULT_OUTPUT_MULTIPLIER = 8
