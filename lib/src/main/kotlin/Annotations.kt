@@ -13,7 +13,6 @@ data class CorrectData(
     val version: String,
     val author: String,
     val description: String,
-    val checkstyle: Boolean,
     val solutionThrows: Boolean,
     val focused: Boolean,
     val minTestCount: Int,
@@ -32,7 +31,6 @@ annotation class Correct(
     val name: String,
     val version: String,
     val author: String,
-    val checkstyle: Boolean = DEFAULT_CHECKSTYLE,
     val solutionThrows: Boolean = DEFAULT_SOLUTION_THROWS,
     val focused: Boolean = DEFAULT_FOCUSED,
     val minTestCount: Int = DEFAULT_MIN_TEST_COUNT,
@@ -45,7 +43,6 @@ annotation class Correct(
     val outputMultiplier: Int = DEFAULT_OUTPUT_MULTIPLIER,
 ) {
     companion object {
-        const val DEFAULT_CHECKSTYLE = true
         const val DEFAULT_SOLUTION_THROWS = false
         const val DEFAULT_FOCUSED = false
         const val DEFAULT_MIN_TEST_COUNT = 128

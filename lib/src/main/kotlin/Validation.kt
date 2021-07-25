@@ -116,8 +116,8 @@ suspend fun Question.validate(seed: Int): ValidationReport {
         outputLimit = Question.UNLIMITED_OUTPUT_LINES,
         javaWhitelist = null,
         kotlinWhitelist = null,
-        useCheckstyle = true,
-        shrink = false
+        shrink = false,
+        failOnLint = true
     )
     (setOf(correct) + alternativeSolutions).forEach { right ->
         test(right.contents, right.language, bootstrapSettings).also {
@@ -153,14 +153,14 @@ suspend fun Question.validate(seed: Int): ValidationReport {
         outputLimit = Question.UNLIMITED_OUTPUT_LINES,
         javaWhitelist = javaClassWhitelist,
         kotlinWhitelist = kotlinClassWhitelist,
-        useCheckstyle = true,
-        shrink = false
+        shrink = false,
+        failOnLint = true
     )
     val incorrectResults = allIncorrect.map { wrong ->
         test(
             wrong.contents,
             wrong.language,
-            incorrectSettings.copy(useCheckstyle = wrong.mutation == null)
+            incorrectSettings.copy(failOnLint = wrong.mutation == null)
         ).let {
             it.checkIncorrect(wrong, wrong.mutation != null)
             IncorrectResults(wrong, it)
@@ -182,8 +182,8 @@ suspend fun Question.validate(seed: Int): ValidationReport {
         outputLimit = Question.UNLIMITED_OUTPUT_LINES,
         javaWhitelist = javaClassWhitelist,
         kotlinWhitelist = kotlinClassWhitelist,
-        useCheckstyle = false,
-        shrink = false
+        shrink = false,
+        failOnLint = true
     )
     val calibrationResults = (setOf(correct) + alternativeSolutions).map { right ->
         test(
@@ -206,7 +206,6 @@ suspend fun Question.validate(seed: Int): ValidationReport {
         outputLimit = solutionMaxOutputLines.coerceAtLeast(testCount * control.outputMultiplier),
         javaWhitelist = javaClassWhitelist,
         kotlinWhitelist = kotlinClassWhitelist,
-        useCheckstyle = metadata.checkstyle,
         shrink = false
     )
     validationResults = Question.ValidationResults(

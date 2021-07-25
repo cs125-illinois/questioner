@@ -69,7 +69,6 @@ data class Question(
         val author: String,
         val javaDescription: String,
         val kotlinDescription: String?,
-        val checkstyle: Boolean,
         val citation: Citation?,
         val usedFiles: List<String> = listOf(),
         val focused: Boolean? = null
@@ -108,8 +107,8 @@ data class Question(
         val outputLimit: Int,
         val javaWhitelist: Set<String>?,
         val kotlinWhitelist: Set<String>?,
-        val useCheckstyle: Boolean,
-        val shrink: Boolean
+        val shrink: Boolean,
+        val failOnLint: Boolean? = null
     )
 
     @JsonClass(generateAdapter = true)
@@ -151,6 +150,9 @@ data class Question(
     ) {
         enum class Reason { DESIGN, COMPILE, TEST, CHECKSTYLE, TIMEOUT }
     }
+
+    @JsonClass(generateAdapter = true)
+    data class ComplexityComparison(val solution: Int, val submission: Int)
 
     @delegate:Transient
     val compiledCommon by lazy {
@@ -264,14 +266,14 @@ data class Question(
                         contents,
                         InvertingClassLoader(setOf(klass)),
                         results,
-                        settings.useCheckstyle
+                        failOnCheckstyle = settings.failOnLint!!
                     )
                 Language.kotlin ->
                     kompileSubmission(
                         contents,
                         InvertingClassLoader(setOf(klass, "${klass}Kt")),
                         results,
-                        settings.useCheckstyle
+                        failOnKtlint = settings.failOnLint!!
                     )
             }
         } catch (e: TemplatingFailed) {
@@ -285,6 +287,14 @@ data class Question(
         }
 
         val klassName = checkCompiledSubmission(compiledSubmission, contents, results) ?: return results
+
+        try {
+            results.complete.complexity = computeComplexity(contents, language)
+            results.completedSteps.add(TestResults.Step.complexity)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            results.failedSteps.add(TestResults.Step.complexity)
+        }
 
         val classLoaderConfiguration = when (language) {
             Language.java -> settings.javaWhitelist

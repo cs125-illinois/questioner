@@ -100,7 +100,6 @@ data class ParsedJavaFile(val path: String, val contents: String) {
                             .removeSurrounding("<body>", "</body>")
                     }
                 }
-                val checkstyle = parameters["checkstyle"]?.toBoolean() ?: Correct.DEFAULT_CHECKSTYLE
                 val solutionThrows = parameters["solutionThrows"]?.toBoolean() ?: Correct.DEFAULT_SOLUTION_THROWS
                 val focused = parameters["focused"]?.toBoolean() ?: Correct.DEFAULT_FOCUSED
                 val minTestCount = parameters["minTestCount"]?.toInt() ?: Correct.DEFAULT_MIN_TEST_COUNT
@@ -117,7 +116,6 @@ data class ParsedJavaFile(val path: String, val contents: String) {
                     version,
                     author,
                     description,
-                    checkstyle,
                     solutionThrows,
                     focused,
                     minTestCount,
@@ -219,7 +217,7 @@ data class ParsedJavaFile(val path: String, val contents: String) {
                 Question.Type.SNIPPET -> results.lookup("").complexity
             }
         }.also {
-            check(it >= 0) { "Invalid negative complexity value" }
+            check(it > 0) { "Invalid complexity value" }
         }
         val features = source.features().let { features ->
             when (questionType) {

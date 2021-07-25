@@ -9,11 +9,14 @@ import edu.illinois.cs.cs125.jeed.core.KompilationArguments
 import edu.illinois.cs.cs125.jeed.core.KtLintArguments
 import edu.illinois.cs.cs125.jeed.core.KtLintFailed
 import edu.illinois.cs.cs125.jeed.core.Sandbox
+import edu.illinois.cs.cs125.jeed.core.SnippetArguments
 import edu.illinois.cs.cs125.jeed.core.Source
 import edu.illinois.cs.cs125.jeed.core.TemplatingFailed
 import edu.illinois.cs.cs125.jeed.core.allFixedMutations
 import edu.illinois.cs.cs125.jeed.core.checkstyle
 import edu.illinois.cs.cs125.jeed.core.compile
+import edu.illinois.cs.cs125.jeed.core.complexity
+import edu.illinois.cs.cs125.jeed.core.fromSnippet
 import edu.illinois.cs.cs125.jeed.core.fromTemplates
 import edu.illinois.cs.cs125.jeed.core.kompile
 import edu.illinois.cs.cs125.jeed.core.ktLint
@@ -246,6 +249,54 @@ fun Question.mutations(seed: Int, count: Int) = templateSubmission(
             mutation = source
         )
     }
+
+fun Question.computeComplexity(contents: String, language: Question.Language): Question.ComplexityComparison {
+    val solutionComplexity = if (language == Question.Language.java) {
+        correct.complexity
+    } else {
+        alternativeSolutions.filter { it.language == language }.mapNotNull { it.complexity }.minOrNull()
+    }
+    check(solutionComplexity != null) { "Solution complexity not available" }
+
+    val submissionComplexity = when (language) {
+        Question.Language.java -> {
+            val source = when (type) {
+                Question.Type.KLASS -> Source(mapOf("$klass.java" to contents))
+                Question.Type.METHOD -> Source(
+                    mapOf(
+                        "$klass.java" to """public class $klass {
+                    |$contents
+                    }""".trimMargin()
+                    )
+                )
+                Question.Type.SNIPPET -> Source.fromSnippet(contents)
+            }
+            source.complexity().let { results ->
+                when (type) {
+                    Question.Type.KLASS -> results.lookupFile("$klass.java")
+                    Question.Type.METHOD -> results.lookup(klass, "$klass.java").complexity
+                    Question.Type.SNIPPET -> results.lookup("").complexity
+                }
+            }
+        }
+        Question.Language.kotlin -> {
+            val source = when (type) {
+                Question.Type.SNIPPET -> Source.fromSnippet(
+                    contents,
+                    SnippetArguments(fileType = Source.FileType.KOTLIN)
+                )
+                else -> Source(mapOf("$klass.kt" to contents))
+            }
+            source.complexity().let { results ->
+                when (type) {
+                    Question.Type.SNIPPET -> results.lookup("").complexity
+                    else -> results.lookupFile("$klass.kt")
+                }
+            }
+        }
+    }
+    return Question.ComplexityComparison(solutionComplexity, submissionComplexity)
+}
 
 class InvertingClassLoader(private val inversions: Set<String>) : ClassLoader() {
     // Invert the usual delegation strategy for classes in this package to avoid using the system ClassLoader

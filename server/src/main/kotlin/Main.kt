@@ -79,10 +79,12 @@ object Questions {
         val question = load(submission.path) ?: error("No question ${submission.path}")
         check(question.validated) { "Question ${submission.path} is not validated" }
         val start = Instant.now().toEpochMilli()
-        logger.trace("Testing ${question.name}")
+        val settings = question.testingSettings!!.copy(failOnLint = submission.failOnLint)
+        logger.trace("Testing ${question.name} with settings $settings")
         return question.test(
             submission.contents,
-            language = submission.language
+            language = submission.language,
+            settings = settings
         ).also {
             logger.trace("Tested ${question.name} in ${Instant.now().toEpochMilli() - start}")
         }
@@ -90,7 +92,12 @@ object Questions {
 }
 
 @JsonClass(generateAdapter = true)
-data class Submission(val path: String, val contents: String, val language: Question.Language = Question.Language.java)
+data class Submission(
+    val path: String,
+    val contents: String,
+    val language: Question.Language,
+    val failOnLint: Boolean
+)
 
 @JsonClass(generateAdapter = true)
 data class QuestionStatus(
@@ -109,8 +116,7 @@ data class QuestionDescription(
     val description: String,
     val author: String,
     val packageName: String,
-    val starter: String?,
-    val checkstyle: Boolean? = null
+    val starter: String?
 )
 
 private val serverStarted = Instant.now()
@@ -159,7 +165,6 @@ fun Application.questioner() {
                     question.metadata.author,
                     question.metadata.packageName,
                     question.detemplatedJavaStarter,
-                    question.metadata.checkstyle,
                 )
             )
         }

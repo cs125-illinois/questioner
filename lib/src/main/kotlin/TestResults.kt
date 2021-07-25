@@ -38,6 +38,7 @@ data class TestResults(
         ktlint,
         compileSubmission,
         checkSubmission,
+        complexity,
         test,
     }
 
@@ -47,7 +48,8 @@ data class TestResults(
         var checkstyle: CheckstyleResults? = null,
         var ktlint: KtLintResults? = null,
         var compileTest: CompiledSourceResult? = null,
-        var testing: TestingResult? = null
+        var testing: TestingResult? = null,
+        var complexity: Question.ComplexityComparison? = null
     )
 
     @JsonClass(generateAdapter = true)

@@ -98,13 +98,13 @@ data class ParsedKotlinFile(val path: String, val contents: String) {
             Source(mapOf("$className.kt" to solutionContent))
         }.complexity().let {
             if (cleanSpec.notClass) {
-                // Snippet transform adds one unit of complexity
-                it.lookup("").complexity - 1
+                it.lookup("").complexity
             } else {
                 it.lookupFile("$className.kt")
             }
         }.also {
-            check(it >= 0) { "Invalid negative complexity value" }
+            // Kotlin class declarations with implicit getters can have zero complexity
+            check(it >= 0) { "Invalid complexity value" }
         }
         return Question.FlatFile(className, solutionContent, Question.Language.kotlin, path, complexity)
     }

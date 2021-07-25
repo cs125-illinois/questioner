@@ -407,7 +407,6 @@ fun List<ParsedJavaFile>.findQuestions(
                     solution.correct.author,
                     solution.correct.description,
                     kotlinSolution?.description,
-                    solution.correct.checkstyle,
                     solution.citation,
                     myUsedFiles,
                     solution.correct.focused
