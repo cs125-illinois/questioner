@@ -22,7 +22,7 @@ dependencies {
         exclude(module = "kotlin-js")
     }
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.3")
-    implementation("com.google.googlejavaformat:google-java-format:1.10.0")
+    implementation("com.google.googlejavaformat:google-java-format:1.11.0")
     implementation("com.google.guava:guava:30.1.1-jre")
     implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.12.4")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.12.4")
