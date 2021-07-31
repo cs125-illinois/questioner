@@ -56,7 +56,8 @@ data class TestResults(
     data class TestingResult(
         val tests: List<TestResult>,
         val testCount: Int,
-        val passed: Boolean = tests.size == testCount && tests.none { !it.passed }
+        val completed: Boolean,
+        val passed: Boolean = completed && tests.none { !it.passed }
     ) {
         @JsonClass(generateAdapter = true)
         data class TestResult(
@@ -88,7 +89,7 @@ data class TestResults(
     val completed: Boolean
         get() = completedSteps.contains(Step.test)
     val succeeded: Boolean
-        get() = !timeout && complete.testing?.passed ?: false
+        get() = !timeout && complete.testing?.passed == true && complete.testing?.completed == true
 
     val summary: String
         get() = if (failed.templateSubmission != null) {
@@ -105,9 +106,12 @@ data class TestResults(
             "Compiling test failed: ${failed.compileTest?.message?.let { ": $it" } ?: ""}"
         } else if (timeout) {
             "Testing timed out"
-        } else if (!succeeded) {
+        } else if (complete.testing?.passed == false) {
             "Testing failed: ${complete.testing!!.tests.find { !it.passed }!!.explanation}"
+        } else if (!completed) {
+            "Didn't complete all required tests"
         } else {
+            check(succeeded)
             "Passed"
         }
 

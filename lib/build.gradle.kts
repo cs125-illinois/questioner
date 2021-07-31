@@ -12,11 +12,11 @@ dependencies {
     implementation("com.github.slugify:slugify:2.5")
     implementation("org.apache.commons:commons-text:1.9")
 
-    api("com.github.cs125-illinois.jeed:core:2021.7.8")
-    api("com.github.cs125-illinois:jenisol:2021.7.1")
+    api("com.github.cs125-illinois.jeed:core:2021.7.9")
+    api("com.github.cs125-illinois:jenisol:2021.7.2")
     api("io.kotest:kotest-runner-junit5:4.6.1")
     api("com.google.truth:truth:1.1.3")
-    api("com.github.cs125-illinois:libcs1:2021.5.7")
+    api("com.github.cs125-illinois:libcs1:2021.7.0")
 }
 tasks {
     val sourcesJar by creating(Jar::class) {

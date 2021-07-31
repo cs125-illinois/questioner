@@ -357,7 +357,8 @@ data class Question(
             results.completedSteps.add(TestResults.Step.test)
             results.complete.testing = TestResults.TestingResult(
                 testingResults.returned!!.map { it.asTestResult(compiledSubmission.source) },
-                testingResults.returned!!.size
+                settings.testCount,
+                testingResults.completed && !testingResults.timeout
             )
         }
 

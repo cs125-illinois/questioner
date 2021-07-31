@@ -79,7 +79,8 @@ object Questions {
         val question = load(submission.path) ?: error("No question ${submission.path}")
         check(question.validated) { "Question ${submission.path} is not validated" }
         val start = Instant.now().toEpochMilli()
-        val settings = question.testingSettings!!.copy(failOnLint = submission.failOnLint)
+        val timeout = question.testingSettings!!.timeout * (System.getenv("TIMEOUT_MULTIPLIER")?.toInt() ?: 1)
+        val settings = question.testingSettings!!.copy(failOnLint = submission.failOnLint, timeout = timeout)
         logger.trace("Testing ${question.name} with settings $settings")
         return question.test(
             submission.contents,
