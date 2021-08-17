@@ -3,12 +3,12 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 plugins {
     kotlin("jvm") version "1.5.21" apply false
     kotlin("kapt") version "1.5.21" apply false
-    id("org.jmailen.kotlinter") version "3.4.5" apply false
+    id("org.jmailen.kotlinter") version "3.5.0" apply false
     id("com.github.ben-manes.versions") version "0.39.0"
 }
 subprojects {
     group = "com.github.cs125-illinois.questioner"
-    version = "2021.8.0"
+    version = "2021.8.1"
     tasks.withType<KotlinCompile> {
         val javaVersion = JavaVersion.VERSION_1_8.toString()
         sourceCompatibility = javaVersion
