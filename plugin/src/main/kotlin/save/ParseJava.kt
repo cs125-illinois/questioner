@@ -29,6 +29,7 @@ import org.apache.tools.ant.filters.StringInputStream
 import org.intellij.markdown.flavours.commonmark.CommonMarkFlavourDescriptor
 import org.intellij.markdown.html.HtmlGenerator
 import java.io.File
+import java.util.Locale
 
 data class ParsedJavaFile(val path: String, val contents: String) {
     constructor(file: File) : this(file.path, file.readText().replace("\r\n", "\n"))
@@ -264,7 +265,11 @@ data class ParsedJavaFile(val path: String, val contents: String) {
         val starterReturn = when {
             returnType == "void" -> ""
             returnType == "String" -> " \"\""
-            returnType.capitalize() == returnType || returnType.endsWith("[]") -> " null"
+            returnType.replaceFirstChar {
+                if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString()
+            } == returnType || returnType.endsWith(
+                "[]"
+            ) -> " null"
             returnType == "byte" -> " 0"
             returnType == "short" -> " 0"
             returnType == "int" -> " 0"
@@ -288,17 +293,17 @@ data class ParsedJavaFile(val path: String, val contents: String) {
                 "return$starterReturn;" +
                 correctSolution.substring(postfix until correctSolution.length)
             ).let {
-            Formatter().formatSource(it)
-        }.javaDeTemplate(false, wrapWith).let {
-            Question.IncorrectFile(
-                className,
-                it,
-                Question.IncorrectFile.Reason.TEST,
-                Question.Language.java,
-                null,
-                true
-            )
-        }
+                Formatter().formatSource(it)
+            }.javaDeTemplate(false, wrapWith).let {
+                Question.IncorrectFile(
+                    className,
+                    it,
+                    Question.IncorrectFile.Reason.TEST,
+                    Question.Language.java,
+                    null,
+                    true
+                )
+            }
     }
 
     fun toIncorrectFile(cleanSpec: CleanSpec): Question.IncorrectFile {

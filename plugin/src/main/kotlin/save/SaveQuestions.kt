@@ -44,6 +44,7 @@ import java.nio.file.Files
 import java.nio.file.Paths
 import java.security.DigestInputStream
 import java.security.MessageDigest
+import java.util.Locale
 import java.util.regex.Pattern
 import java.util.stream.Collectors
 
@@ -511,7 +512,7 @@ internal fun String.stripPackage(): String {
 
 val markdownParser = MarkdownParser(CommonMarkFlavourDescriptor())
 
-fun String.toReason() = when (toUpperCase()) {
+fun String.toReason() = when (uppercase(Locale.getDefault())) {
     "DESIGN" -> Question.IncorrectFile.Reason.DESIGN
     "TEST" -> Question.IncorrectFile.Reason.TEST
     "COMPILE" -> Question.IncorrectFile.Reason.COMPILE

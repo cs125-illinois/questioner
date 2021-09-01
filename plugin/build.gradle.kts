@@ -12,8 +12,7 @@ dependencies {
 
     antlr("org.antlr:antlr4:4.9.2")
 
-    implementation(kotlin("stdlib"))
-    implementation(kotlin("reflect"))
+    implementation("org.jetbrains.kotlin:kotlin-reflect:1.5.30")
     implementation(gradleApi())
     implementation(project(":lib"))
     implementation("com.squareup.moshi:moshi:1.12.0")
@@ -21,13 +20,13 @@ dependencies {
         exclude(module = "kotlin-runtime")
         exclude(module = "kotlin-js")
     }
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.3")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.1-native-mt")
     implementation("com.google.googlejavaformat:google-java-format:1.11.0")
     implementation("com.google.guava:guava:30.1.1-jre")
-    implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.12.4")
-    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.12.4")
+    implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.12.5")
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.12.5")
 
-    testImplementation("io.kotest:kotest-runner-junit5:4.6.1")
+    testImplementation("io.kotest:kotest-runner-junit5:4.6.2")
 }
 tasks.compileKotlin {
     dependsOn(tasks.generateGrammarSource)

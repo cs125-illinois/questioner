@@ -326,7 +326,6 @@ fun ValidationFailed.report(question: Question): String {
             }"> ${StringEscapeUtils.escapeHtml4(incorrect.contents)}</code></pre>
                 |<p>Check the arguments to <code>@Incorrect(reason = REASON)</code></p>""".trimMargin()
         }
-        else -> error("Unexpected error: $this")
     }
     return wrapDocument(question, body)
 }
