@@ -293,17 +293,17 @@ data class ParsedJavaFile(val path: String, val contents: String) {
                 "return$starterReturn;" +
                 correctSolution.substring(postfix until correctSolution.length)
             ).let {
-                Formatter().formatSource(it)
-            }.javaDeTemplate(false, wrapWith).let {
-                Question.IncorrectFile(
-                    className,
-                    it,
-                    Question.IncorrectFile.Reason.TEST,
-                    Question.Language.java,
-                    null,
-                    true
-                )
-            }
+            Formatter().formatSource(it)
+        }.javaDeTemplate(false, wrapWith).let {
+            Question.IncorrectFile(
+                className,
+                it,
+                Question.IncorrectFile.Reason.TEST,
+                Question.Language.java,
+                null,
+                true
+            )
+        }
     }
 
     fun toIncorrectFile(cleanSpec: CleanSpec): Question.IncorrectFile {
