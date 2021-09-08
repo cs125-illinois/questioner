@@ -40,6 +40,7 @@ import kotlin.collections.set
 import kotlin.collections.toMutableMap
 import kotlin.system.exitProcess
 import edu.illinois.cs.cs125.jeed.core.moshi.Adapters as JeedAdapters
+import java.util.Properties
 
 private val moshi = Moshi.Builder().apply {
     JeedAdapters.forEach { add(it) }
@@ -122,8 +123,20 @@ data class QuestionDescription(
 
 private val serverStarted = Instant.now()
 
+
+val _version = run {
+    @Suppress("TooGenericExceptionCaught")
+    try {
+        val versionFile = object {}::class.java.getResource("/edu.illinois.cs.cs125.questioner.server.version")
+        Properties().also { it.load(versionFile.openStream()) }["version"] as String
+    } catch (e: Exception) {
+        println(e)
+        "unspecified"
+    }
+}
+
 @JsonClass(generateAdapter = true)
-data class Status(val started: Instant = serverStarted, var questions: List<QuestionStatus>)
+data class Status(val started: Instant = serverStarted, var questions: List<QuestionStatus>, val version: String = _version)
 
 fun getStatus(kotlinOnly: Boolean = false) = Status(
     questions = Questions.questions.map { (path, question) ->
@@ -208,7 +221,8 @@ fun Application.questioner() {
 }
 
 fun main() {
-    logger.debug(
+    logger.debug(getStatus().copy(questions = listOf()).toString())
+    logger.trace(
         Questions.questions.entries.sortedBy { it.key }.joinToString("\n") { (key, value) ->
             "$key -> ${value.name}"
         }

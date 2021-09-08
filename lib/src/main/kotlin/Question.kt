@@ -311,21 +311,28 @@ data class Question(
             )
         )
 
-        val testingResults = Sandbox.execute(
-            compiledSubmission.classLoader,
-            Sandbox.ExecutionArguments(
-                timeout = settings.timeout.toLong(),
-                classLoaderConfiguration = classLoaderConfiguration,
-                maxOutputLines = settings.outputLimit,
-                permissions = SAFE_PERMISSIONS,
-                returnTimeout = DEFAULT_RETURN_TIMEOUT
-            )
-        ) { (classLoader, _) ->
-            solution.submission(classLoader.loadClass(klassName)).test(jenisolSettings, ::captureJeedOutput)
-        }.also {
-            results.taskResults = it
-            results.timeout = it.timeout
+        var testingResults: Sandbox.TaskResults<out edu.illinois.cs.cs125.jenisol.core.TestResults?>? = null
+        for (retryCount in 0 until 2) {
+            testingResults = Sandbox.execute(
+                compiledSubmission.classLoader,
+                Sandbox.ExecutionArguments(
+                    timeout = settings.timeout.toLong(),
+                    classLoaderConfiguration = classLoaderConfiguration,
+                    maxOutputLines = settings.outputLimit,
+                    permissions = SAFE_PERMISSIONS,
+                    returnTimeout = DEFAULT_RETURN_TIMEOUT
+                )
+            ) { (classLoader, _) ->
+                solution.submission(classLoader.loadClass(klassName)).test(jenisolSettings, ::captureJeedOutput)
+            }.also {
+                results.taskResults = it
+                results.timeout = it.timeout
+            }
+            if (!testingResults.timeout) {
+                break
+            }
         }
+        check(testingResults != null) { "Testing results should not be null" }
 
         if (!testingResults.timeout && testingResults.threw != null) {
             results.failedSteps.add(TestResults.Step.checkSubmission)
@@ -400,6 +407,7 @@ fun Question.validationFile(sourceDir: String) = File(
     sourceDir,
     "${metadata.packageName.replace(".", File.separator)}/.validation.json"
 )
+
 fun Question.reportFile(sourceDir: String) = File(
     sourceDir,
     "${metadata.packageName.replace(".", File.separator)}/report.html"

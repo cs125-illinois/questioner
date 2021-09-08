@@ -40,7 +40,7 @@ annotation class Correct(
     val timeoutMultiplier: Int = DEFAULT_TIMEOUT_MULTIPLIER,
     val minMutationCount: Int = DEFAULT_MIN_MUTATION_COUNT,
     val maxMutationCount: Int = DEFAULT_MAX_MUTATION_COUNT,
-    val outputMultiplier: Int = DEFAULT_OUTPUT_MULTIPLIER,
+    val outputMultiplier: Int = DEFAULT_OUTPUT_MULTIPLIER
 ) {
     companion object {
         const val DEFAULT_SOLUTION_THROWS = false
