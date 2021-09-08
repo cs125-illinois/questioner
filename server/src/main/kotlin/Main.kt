@@ -28,6 +28,7 @@ import kotlinx.coroutines.withContext
 import mu.KotlinLogging
 import org.bson.BsonDocument
 import java.time.Instant
+import java.util.Properties
 import kotlin.collections.List
 import kotlin.collections.associateBy
 import kotlin.collections.component1
@@ -40,7 +41,6 @@ import kotlin.collections.set
 import kotlin.collections.toMutableMap
 import kotlin.system.exitProcess
 import edu.illinois.cs.cs125.jeed.core.moshi.Adapters as JeedAdapters
-import java.util.Properties
 
 private val moshi = Moshi.Builder().apply {
     JeedAdapters.forEach { add(it) }
@@ -122,7 +122,6 @@ data class QuestionDescription(
 )
 
 private val serverStarted = Instant.now()
-
 
 val _version = run {
     @Suppress("TooGenericExceptionCaught")
