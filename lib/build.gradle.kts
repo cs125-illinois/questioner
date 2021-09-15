@@ -11,7 +11,7 @@ dependencies {
     implementation("com.github.slugify:slugify:2.5")
     implementation("org.apache.commons:commons-text:1.9")
 
-    api("com.github.cs125-illinois.jeed:core:2021.9.2")
+    api("com.github.cs125-illinois.jeed:core:2021.9.4")
     api("com.github.cs125-illinois:jenisol:2021.9.0")
     api("io.kotest:kotest-runner-junit5:4.6.2")
     api("com.google.truth:truth:1.1.3")

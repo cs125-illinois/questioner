@@ -82,13 +82,13 @@ object Questions {
         val start = Instant.now().toEpochMilli()
         val timeout = question.testingSettings!!.timeout * (System.getenv("TIMEOUT_MULTIPLIER")?.toInt() ?: 1)
         val settings = question.testingSettings!!.copy(failOnLint = submission.failOnLint, timeout = timeout)
-        logger.trace("Testing ${question.name} with settings $settings")
+        logger.trace { "Testing ${question.name} with settings $settings" }
         return question.test(
             submission.contents,
             language = submission.language,
             settings = settings
         ).also {
-            logger.trace("Tested ${question.name} in ${Instant.now().toEpochMilli() - start}")
+            logger.trace { "Tested ${question.name} in ${Instant.now().toEpochMilli() - start}" }
         }
     }
 }
@@ -123,11 +123,11 @@ data class QuestionDescription(
 
 private val serverStarted = Instant.now()
 
-val _version = run {
+val versionString = run {
     @Suppress("TooGenericExceptionCaught")
     try {
         val versionFile = object {}::class.java.getResource("/edu.illinois.cs.cs125.questioner.server.version")
-        Properties().also { it.load(versionFile.openStream()) }["version"] as String
+        Properties().also { it.load(versionFile!!.openStream()) }["version"] as String
     } catch (e: Exception) {
         println(e)
         "unspecified"
@@ -135,7 +135,11 @@ val _version = run {
 }
 
 @JsonClass(generateAdapter = true)
-data class Status(val started: Instant = serverStarted, var questions: List<QuestionStatus>, val version: String = _version)
+data class Status(
+    val started: Instant = serverStarted,
+    var questions: List<QuestionStatus>,
+    val version: String = versionString
+)
 
 fun getStatus(kotlinOnly: Boolean = false) = Status(
     questions = Questions.questions.map { (path, question) ->
