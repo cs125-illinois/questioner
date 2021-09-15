@@ -60,7 +60,7 @@ private fun getQuestion(slug: String) = collection.find(
     try {
         moshi.adapter(Question::class.java).fromJson(it.toJson())
     } catch (e: Exception) {
-        logger.warn("Couldn't load question $slug, which might use an old schema")
+        logger.warn { "Couldn't load question $slug, which might use an old schema" }
         null
     }
 }
@@ -224,11 +224,11 @@ fun Application.questioner() {
 }
 
 fun main() {
-    logger.debug(getStatus().copy(questions = listOf()).toString())
-    logger.trace(
+    logger.debug { getStatus().copy(questions = listOf()).toString() }
+    logger.trace {
         Questions.questions.entries.sortedBy { it.key }.joinToString("\n") { (key, value) ->
             "$key -> ${value.name}"
         }
-    )
+    }
     embeddedServer(Netty, port = 8888, module = Application::questioner).start(wait = true)
 }
