@@ -12,7 +12,7 @@ dependencies {
 
     antlr("org.antlr:antlr4:4.9.2")
 
-    implementation("org.jetbrains.kotlin:kotlin-reflect:1.5.30")
+    implementation("org.jetbrains.kotlin:kotlin-reflect:1.5.31")
     implementation(gradleApi())
     implementation(project(":lib"))
     implementation("com.squareup.moshi:moshi:1.12.0")
@@ -26,7 +26,7 @@ dependencies {
     implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.12.5")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.12.5")
 
-    testImplementation("io.kotest:kotest-runner-junit5:4.6.2")
+    testImplementation("io.kotest:kotest-runner-junit5:4.6.3")
 }
 tasks.compileKotlin {
     dependsOn(tasks.generateGrammarSource)

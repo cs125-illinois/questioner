@@ -13,7 +13,7 @@ plugins {
 dependencies {
     kapt("com.squareup.moshi:moshi-kotlin-codegen:1.12.0")
 
-    implementation("org.jetbrains.kotlin:kotlin-reflect:1.5.30")
+    implementation("org.jetbrains.kotlin:kotlin-reflect:1.5.31")
     implementation(project(":lib"))
 
     implementation("io.ktor:ktor-server-netty:1.6.3")

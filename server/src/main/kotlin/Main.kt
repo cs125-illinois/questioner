@@ -27,6 +27,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import mu.KotlinLogging
 import org.bson.BsonDocument
+import java.time.Duration
 import java.time.Instant
 import java.util.Properties
 import kotlin.collections.List
@@ -39,6 +40,7 @@ import kotlin.collections.forEach
 import kotlin.collections.map
 import kotlin.collections.set
 import kotlin.collections.toMutableMap
+import kotlin.concurrent.timer
 import kotlin.system.exitProcess
 import edu.illinois.cs.cs125.jeed.core.moshi.Adapters as JeedAdapters
 
@@ -212,10 +214,10 @@ fun Application.questioner() {
                     val results = Questions.test(submission)
                     call.respond(results)
                 } catch (e: Error) {
-                    logger.error(e.toString())
+                    logger.error { e.toString() }
                     exitProcess(-1)
                 } catch (e: Throwable) {
-                    logger.warn(e.toString())
+                    logger.warn { e.toString() }
                     call.respond(HttpStatusCode.BadRequest)
                 }
             }
@@ -230,5 +232,18 @@ fun main() {
             "$key -> ${value.name}"
         }
     }
+
+    val runtime = Runtime.getRuntime()
+    timer(period = System.getenv("MEMORY_CHECK_INTERVAL")?.toLong() ?: (60 * 1000L)) {
+        val available = (runtime.freeMemory().toFloat() / 1024.0 / 1024.0).toInt()
+        System.getenv("RESTART_THRESHOLD_INTERVAL")?.toLong()?.also {
+            if (available < it) {
+                val duration = Duration.between(serverStarted, Instant.now())
+                logger.debug { "Would restart after $duration" }
+            }
+        }
+        logger.debug { available }
+    }
+
     embeddedServer(Netty, port = 8888, module = Application::questioner).start(wait = true)
 }
