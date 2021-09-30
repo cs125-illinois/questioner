@@ -27,20 +27,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import mu.KotlinLogging
 import org.bson.BsonDocument
-import java.time.Duration
 import java.time.Instant
 import java.util.Properties
-import kotlin.collections.List
-import kotlin.collections.associateBy
 import kotlin.collections.component1
 import kotlin.collections.component2
-import kotlin.collections.filter
-import kotlin.collections.filterNotNull
 import kotlin.collections.forEach
-import kotlin.collections.map
 import kotlin.collections.set
-import kotlin.collections.toMutableMap
-import kotlin.concurrent.timer
 import kotlin.system.exitProcess
 import edu.illinois.cs.cs125.jeed.core.moshi.Adapters as JeedAdapters
 
@@ -214,8 +206,10 @@ fun Application.questioner() {
                     val results = Questions.test(submission)
                     call.respond(results)
                 } catch (e: Error) {
+                    /*
                     e.printStackTrace()
                     logger.debug { submission }
+                    */
                     logger.error { e.toString() }
                     exitProcess(-1)
                 } catch (e: Throwable) {
@@ -235,6 +229,7 @@ fun main() {
         }
     }
 
+    /*
     val runtime = Runtime.getRuntime()
     timer(period = System.getenv("MEMORY_CHECK_INTERVAL")?.toLong() ?: (60 * 1000L)) {
         val available = (runtime.freeMemory().toFloat() / 1024.0 / 1024.0).toInt()
@@ -246,6 +241,7 @@ fun main() {
         }
         logger.debug { available }
     }
+    */
 
     embeddedServer(Netty, port = 8888, module = Application::questioner).start(wait = true)
 }

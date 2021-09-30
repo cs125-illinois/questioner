@@ -8,7 +8,7 @@ plugins {
 }
 subprojects {
     group = "com.github.cs125-illinois.questioner"
-    version = "2021.9.7"
+    version = "2021.9.8"
     tasks.withType<KotlinCompile> {
         val javaVersion = JavaVersion.VERSION_16.toString()
         sourceCompatibility = javaVersion
