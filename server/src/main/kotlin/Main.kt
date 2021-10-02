@@ -206,10 +206,8 @@ fun Application.questioner() {
                     val results = Questions.test(submission)
                     call.respond(results)
                 } catch (e: Error) {
-                    /*
                     e.printStackTrace()
                     logger.debug { submission }
-                    */
                     logger.error { e.toString() }
                     exitProcess(-1)
                 } catch (e: Throwable) {
