@@ -4,6 +4,7 @@ import com.squareup.moshi.JsonClass
 import edu.illinois.cs.cs125.jeed.core.CheckstyleFailed
 import edu.illinois.cs.cs125.jeed.core.CheckstyleResults
 import edu.illinois.cs.cs125.jeed.core.CompilationFailed
+import edu.illinois.cs.cs125.jeed.core.ComplexityFailed
 import edu.illinois.cs.cs125.jeed.core.KtLintFailed
 import edu.illinois.cs.cs125.jeed.core.KtLintResults
 import edu.illinois.cs.cs125.jeed.core.Sandbox
@@ -82,7 +83,8 @@ data class TestResults(
         var checkstyle: CheckstyleFailed? = null,
         var checkSubmission: String? = null,
         var compileTest: CompilationFailed? = null,
-        var ktlint: KtLintFailed? = null
+        var ktlint: KtLintFailed? = null,
+        var complexity: ComplexityFailed? = null
     )
 
     @Suppress("MemberVisibilityCanBePrivate", "unused")
@@ -100,6 +102,8 @@ data class TestResults(
             "Checkstyle failed:${failed.checkstyle?.let { ": $it" } ?: ""}"
         } else if (failed.ktlint != null) {
             "Ktlint failed:${failed.ktlint?.let { ": $it" } ?: ""}"
+        } else if (failed.complexity != null) {
+            "Computing complexity failed: ${failed.complexity!!.message ?: "unknown error"}"
         } else if (failed.checkSubmission != null) {
             "Checking submission failed: ${failed.checkSubmission}"
         } else if (failed.compileTest != null) {

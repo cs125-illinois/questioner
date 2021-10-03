@@ -7,6 +7,7 @@ import com.squareup.moshi.Types
 import edu.illinois.cs.cs125.jeed.core.CheckstyleFailed
 import edu.illinois.cs.cs125.jeed.core.CompilationArguments
 import edu.illinois.cs.cs125.jeed.core.CompilationFailed
+import edu.illinois.cs.cs125.jeed.core.ComplexityFailed
 import edu.illinois.cs.cs125.jeed.core.Features
 import edu.illinois.cs.cs125.jeed.core.KtLintFailed
 import edu.illinois.cs.cs125.jeed.core.MutatedSource
@@ -291,7 +292,8 @@ data class Question(
         try {
             results.complete.complexity = computeComplexity(contents, language)
             results.completedSteps.add(TestResults.Step.complexity)
-        } catch (e: Exception) {
+        } catch (e: ComplexityFailed) {
+            results.failed.complexity = e
             results.failedSteps.add(TestResults.Step.complexity)
         }
 
