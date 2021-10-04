@@ -258,8 +258,9 @@ fun Question.computeComplexity(contents: String, language: Question.Language): Q
     }
     check(solutionComplexity != null) { "Solution complexity not available" }
 
-    val submissionComplexity = when (language) {
-        Question.Language.java -> {
+    val submissionComplexity = when {
+        type == Question.Type.SNIPPET && contents.isBlank() -> 0
+        language == Question.Language.java -> {
             val source = when (type) {
                 Question.Type.KLASS -> Source(mapOf("$klass.java" to contents))
                 Question.Type.METHOD -> Source(
@@ -279,7 +280,7 @@ fun Question.computeComplexity(contents: String, language: Question.Language): Q
                 }
             }
         }
-        Question.Language.kotlin -> {
+        language == Question.Language.kotlin -> {
             val source = when (type) {
                 Question.Type.SNIPPET -> Source.fromSnippet(
                     contents,
@@ -294,6 +295,7 @@ fun Question.computeComplexity(contents: String, language: Question.Language): Q
                 }
             }
         }
+        else -> error("Shouldn't get here")
     }
     return Question.ComplexityComparison(solutionComplexity, submissionComplexity)
 }
