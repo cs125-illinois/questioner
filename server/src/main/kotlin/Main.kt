@@ -23,16 +23,19 @@ import io.ktor.routing.post
 import io.ktor.routing.routing
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.withContext
 import mu.KotlinLogging
 import org.bson.BsonDocument
+import java.time.Duration
 import java.time.Instant
 import java.util.Properties
+import java.util.concurrent.Executors
 import kotlin.collections.component1
 import kotlin.collections.component2
 import kotlin.collections.forEach
 import kotlin.collections.set
+import kotlin.concurrent.timer
 import kotlin.system.exitProcess
 import edu.illinois.cs.cs125.jeed.core.moshi.Adapters as JeedAdapters
 
@@ -149,6 +152,9 @@ fun getStatus(kotlinOnly: Boolean = false) = Status(
     }
 )
 
+val threadPool = Executors.newFixedThreadPool(System.getenv("QUESTIONER_THREAD_POOL_SIZE")?.toIntOrNull() ?: 8)
+    .asCoroutineDispatcher()
+
 @Suppress("LongMethod")
 fun Application.questioner() {
     install(ContentNegotiation) {
@@ -198,7 +204,7 @@ fun Application.questioner() {
             )
         }
         post("/") {
-            withContext(Dispatchers.IO) {
+            withContext(threadPool) {
                 val submission = call.receive<Submission>()
                 Questions.load(submission.path) ?: return@withContext call.respond(HttpStatusCode.NotFound)
                 @Suppress("TooGenericExceptionCaught")
@@ -227,7 +233,6 @@ fun main() {
         }
     }
 
-    /*
     val runtime = Runtime.getRuntime()
     timer(period = System.getenv("MEMORY_CHECK_INTERVAL")?.toLong() ?: (60 * 1000L)) {
         val available = (runtime.freeMemory().toFloat() / 1024.0 / 1024.0).toInt()
@@ -239,7 +244,6 @@ fun main() {
         }
         logger.debug { available }
     }
-    */
 
     embeddedServer(Netty, port = 8888, module = Application::questioner).start(wait = true)
 }
