@@ -7,7 +7,7 @@ plugins {
     kotlin("kapt")
     application
     id("org.jmailen.kotlinter")
-    id("com.github.johnrengelman.shadow") version "7.0.0"
+    id("com.github.johnrengelman.shadow") version "7.1.0"
     id("com.palantir.docker") version "0.30.0"
 }
 dependencies {

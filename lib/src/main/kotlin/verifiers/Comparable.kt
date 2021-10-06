@@ -6,7 +6,7 @@ import edu.illinois.cs.cs125.jenisol.core.One
 import edu.illinois.cs.cs125.jenisol.core.TestResult
 import edu.illinois.cs.cs125.jenisol.core.TestResult.Differs
 
-fun verify(results: TestResult<Int?, One<Any?>>) {
+fun <T> verify(results: TestResult<Int?, One<T>>) {
     val solutionThrew = results.solution.threw
     val submissionThrew = results.submission.threw
     if (solutionThrew != null) {
