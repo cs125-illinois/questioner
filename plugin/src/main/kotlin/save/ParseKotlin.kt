@@ -93,7 +93,7 @@ data class ParsedKotlinFile(val path: String, val contents: String) {
         check(alternateSolution != null) { "Not an alternate solution file" }
         val solutionContent = clean(cleanSpec)
         val complexity = if (cleanSpec.notClass) {
-            Source.fromSnippet(solutionContent, SnippetArguments(fileType = Source.FileType.KOTLIN))
+            Source.fromSnippet(solutionContent, SnippetArguments(fileType = Source.FileType.KOTLIN, noEmptyMain = true))
         } else {
             Source(mapOf("$className.kt" to solutionContent))
         }.complexity().let {
