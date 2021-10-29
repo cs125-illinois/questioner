@@ -3,8 +3,8 @@ package edu.illinois.cs.cs125.questioner.plugin
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
-import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.readValue
+import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import edu.illinois.cs.cs125.questioner.plugin.save.SaveQuestions
 import org.gradle.api.Plugin
 import org.gradle.api.Project
@@ -33,7 +33,7 @@ class QuestionerPlugin : Plugin<Project> {
         val configuration = project.file("questioner.yaml").let {
             if (it.exists()) {
                 try {
-                    ObjectMapper(YAMLFactory()).apply { registerModule(KotlinModule()) }.readValue(it)
+                    ObjectMapper(YAMLFactory()).apply { registerKotlinModule() }.readValue(it)
                 } catch (e: Exception) {
                     project.logger.warn("Invalid questioner.yaml file.")
                     QuestionerConfig()
