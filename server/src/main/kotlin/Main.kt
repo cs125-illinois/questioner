@@ -35,7 +35,6 @@ import kotlin.collections.component1
 import kotlin.collections.component2
 import kotlin.collections.forEach
 import kotlin.collections.set
-import kotlin.concurrent.timer
 import kotlin.system.exitProcess
 import edu.illinois.cs.cs125.jeed.core.moshi.Adapters as JeedAdapters
 
@@ -155,6 +154,14 @@ fun getStatus(kotlinOnly: Boolean = false) = Status(
 val threadPool = Executors.newFixedThreadPool(System.getenv("QUESTIONER_THREAD_POOL_SIZE")?.toIntOrNull() ?: 8)
     .asCoroutineDispatcher()
 
+@JsonClass(generateAdapter = true)
+data class ServerResponse(val results: TestResults, val serverStats: ServerStats) {
+    @JsonClass(generateAdapter = true)
+    data class ServerStats(val startMemory: Int, val endMemory: Int)
+}
+
+val runtime: Runtime = Runtime.getRuntime()
+
 @Suppress("LongMethod")
 fun Application.questioner() {
     install(ContentNegotiation) {
@@ -209,8 +216,20 @@ fun Application.questioner() {
                 Questions.load(submission.path) ?: return@withContext call.respond(HttpStatusCode.NotFound)
                 @Suppress("TooGenericExceptionCaught")
                 try {
+                    val startMemory = (runtime.freeMemory().toFloat() / 1024.0 / 1024.0).toInt()
                     val results = Questions.test(submission)
-                    call.respond(results)
+                    System.gc()
+                    System.gc()
+                    val endMemory = (runtime.freeMemory().toFloat() / 1024.0 / 1024.0).toInt()
+                    call.respond(ServerResponse(results, ServerResponse.ServerStats(startMemory, endMemory)))
+                    logger.debug { "$startMemory -> $endMemory" }
+                    System.getenv("RESTART_THRESHOLD_INTERVAL")?.toLong()?.also {
+                        if (endMemory < it) {
+                            val duration = Duration.between(serverStarted, Instant.now())
+                            logger.debug { "Restarting after $duration" }
+                            exitProcess(-1)
+                        }
+                    }
                 } catch (e: Error) {
                     e.printStackTrace()
                     logger.debug { submission }
@@ -232,18 +251,5 @@ fun main() {
             "$key -> ${value.name}"
         }
     }
-
-    val runtime = Runtime.getRuntime()
-    timer(period = System.getenv("MEMORY_CHECK_INTERVAL")?.toLong() ?: (60 * 1000L)) {
-        val available = (runtime.freeMemory().toFloat() / 1024.0 / 1024.0).toInt()
-        System.getenv("RESTART_THRESHOLD_INTERVAL")?.toLong()?.also {
-            if (available < it) {
-                val duration = Duration.between(serverStarted, Instant.now())
-                logger.debug { "Would restart after $duration" }
-            }
-        }
-        logger.debug { available }
-    }
-
     embeddedServer(Netty, port = 8888, module = Application::questioner).start(wait = true)
 }
