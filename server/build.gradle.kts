@@ -8,7 +8,7 @@ plugins {
     application
     id("org.jmailen.kotlinter")
     id("com.github.johnrengelman.shadow") version "7.1.0"
-    id("com.palantir.docker") version "0.30.0"
+    id("com.palantir.docker") version "0.31.0"
 }
 dependencies {
     kapt("com.squareup.moshi:moshi-kotlin-codegen:1.12.0")
@@ -23,8 +23,8 @@ dependencies {
     implementation("org.mongodb:mongodb-driver:3.12.10")
 
     implementation("org.slf4j:slf4j-api:1.7.32")
-    implementation("ch.qos.logback:logback-classic:1.2.6")
-    implementation("io.github.microutils:kotlin-logging:2.0.11")
+    implementation("ch.qos.logback:logback-classic:1.2.7")
+    implementation("io.github.microutils:kotlin-logging:2.1.0")
 }
 task("createProperties") {
     doLast {
