@@ -10,6 +10,26 @@ import java.util.*
 
 @Suppress("USELESS_CAST")
 fun verify(results: TestResult<Int, One<IntArray>>) {
+    val solutionThrew = results.solution.threw
+    val submissionThrew = results.submission.threw
+    if (solutionThrew != null) {
+        if (submissionThrew == null) {
+            results.differs.add(Differs.THREW)
+        } else if (solutionThrew is IllegalArgumentException) {
+            if (!(submissionThrew is IllegalArgumentException || (results.submissionIsKotlin && submissionThrew is NullPointerException))
+            ) {
+                results.differs.add(Differs.THREW)
+            }
+        } else if (solutionThrew.javaClass != submissionThrew.javaClass) {
+            results.differs.add(Differs.THREW)
+        }
+        return
+    }
+    if (submissionThrew != null) {
+        results.differs.add(Differs.THREW)
+        return
+    }
+
     val pivotLocation = results.solution.returned
     if (pivotLocation != results.submission.returned) {
         results.differs.add(Differs.RETURN)

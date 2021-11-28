@@ -139,18 +139,19 @@ fun Question.checkCompiledSubmission(
             return null
         }
     }
-    val klass = it.first()
+    var klass = it.first()
     if (compiledSubmission.source.type == Source.FileType.KOTLIN &&
         (solution.skipReceiver || solution.fauxStatic) &&
         klass == "${compilationDefinedClass}Kt"
     ) {
-        return "${compilationDefinedClass}Kt"
-    }
-    if (klass != compilationDefinedClass) {
-        testResults.failed.checkSubmission =
-            "Submission defines incorrect class: ${it.first()} != $compilationDefinedClass"
-        testResults.failedSteps.add(TestResults.Step.checkSubmission)
-        return null
+        klass = "${compilationDefinedClass}Kt"
+    } else {
+        if (klass != compilationDefinedClass) {
+            testResults.failed.checkSubmission =
+                "Submission defines incorrect class: ${it.first()} != $compilationDefinedClass"
+            testResults.failedSteps.add(TestResults.Step.checkSubmission)
+            return null
+        }
     }
     if (sourceChecker != null) {
         try {
