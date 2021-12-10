@@ -4,18 +4,18 @@ plugins {
     `maven-publish`
 }
 dependencies {
-    kapt("com.squareup.moshi:moshi-kotlin-codegen:1.12.0")
+    kapt("com.squareup.moshi:moshi-kotlin-codegen:1.13.0")
 
-    implementation("org.jetbrains.kotlin:kotlin-reflect:1.5.31")
-    implementation("com.squareup.moshi:moshi-kotlin-codegen:1.12.0")
+    implementation("org.jetbrains.kotlin:kotlin-reflect:1.6.0")
+    implementation("com.squareup.moshi:moshi-kotlin:1.13.0")
     implementation("com.github.slugify:slugify:2.5")
     implementation("org.apache.commons:commons-text:1.9")
 
-    api("com.github.cs125-illinois.jeed:core:2021.11.2")
-    api("com.github.cs125-illinois:jenisol:2021.11.1")
+    api("com.github.cs125-illinois.jeed:core:2021.12.1")
+    api("com.github.cs125-illinois:jenisol:2021.12.0")
     api("io.kotest:kotest-runner-junit5:4.6.3")
     api("com.google.truth:truth:1.1.3")
-    api("com.github.cs125-illinois:libcs1:2021.11.0")
+    api("com.github.cs125-illinois:libcs1:2021.12.0")
 }
 tasks {
     val sourcesJar by creating(Jar::class) {
