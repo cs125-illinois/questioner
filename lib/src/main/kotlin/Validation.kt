@@ -65,18 +65,28 @@ suspend fun Question.validate(seed: Int): ValidationReport {
         if (size > Question.DEFAULT_MAX_OUTPUT_SIZE || taskResults!!.truncatedLines > 0) {
             throw TooMuchOutput(file.contents, file.path, size, Question.DEFAULT_MAX_OUTPUT_SIZE, file.language)
         }
+        if (complete.coverage!!.submission.missed > control.maxDeadCode) {
+            throw SolutionDeadCode(
+                file,
+                complete.coverage!!.submission.missed,
+                control.maxDeadCode,
+                complete.coverage!!.dead
+            )
+        }
         when (file.language) {
             Question.Language.java -> {
                 javaClassWhitelist.addAll(
                     taskResults!!.sandboxedClassLoader!!.loadedClasses.filter { klass ->
-                        !klass.startsWith("edu.illinois.cs.cs125.jeed.core")
+                        !klass.startsWith("edu.illinois.cs.cs125.jeed.core") &&
+                            !klass.startsWith("java.lang.invoke.MethodHandles")
                     }
                 )
             }
             Question.Language.kotlin -> {
                 kotlinClassWhitelist.addAll(
                     taskResults!!.sandboxedClassLoader!!.loadedClasses.filter { klass ->
-                        !klass.startsWith("edu.illinois.cs.cs125.jeed.core")
+                        !klass.startsWith("edu.illinois.cs.cs125.jeed.core") &&
+                            !klass.startsWith("java.lang.invoke.MethodHandles")
                     }
                 )
             }
@@ -84,12 +94,14 @@ suspend fun Question.validate(seed: Int): ValidationReport {
     }
 
     fun TestResults.checkIncorrect(file: Question.IncorrectFile, mutated: Boolean) {
-        if (succeeded) {
-            throw IncorrectPassed(file, correct)
-        }
-        if (tests()?.size?.let { it > control.maxTestCount } == true) {
-            val failingInput = tests()!!.find { !it.passed }?.arguments
-            throw IncorrectTooManyTests(file, correct, tests()!!.size, control.maxTestCount, failingInput)
+        if (file.reason !== Question.IncorrectFile.Reason.DEADCODE) {
+            if (succeeded) {
+                throw IncorrectPassed(file, correct)
+            }
+            if (tests()?.size?.let { it > control.maxTestCount } == true) {
+                val failingInput = tests()!!.find { !it.passed }?.arguments
+                throw IncorrectTooManyTests(file, correct, tests()!!.size, control.maxTestCount, failingInput)
+            }
         }
         try {
             validate(file.reason, mutated)
@@ -107,6 +119,7 @@ suspend fun Question.validate(seed: Int): ValidationReport {
     }
 
     val bootStrapStart = Instant.now()
+
     // The solution and alternate solutions define what external classes can be used, so they need to be run first
     // Sets javaClassWhitelist and kotlinClassWhitelist
     val bootstrapSettings = Question.TestingSettings(
@@ -117,19 +130,25 @@ suspend fun Question.validate(seed: Int): ValidationReport {
         javaWhitelist = null,
         kotlinWhitelist = null,
         shrink = false,
-        failOnLint = true
+        failOnLint = true,
+        checkBlacklist = false
     )
-    (setOf(correct) + alternativeSolutions).forEach { right ->
-        test(right.contents, right.language, bootstrapSettings).also {
-            it.checkCorrect(right)
+    val firstCorrectResults = (setOf(correct) + alternativeSolutions).map { right ->
+        test(right.contents, right.language, bootstrapSettings).also { testResults ->
+            testResults.checkCorrect(right)
         }
     }
+
+    val solutionCoverage = firstCorrectResults.mapNotNull { it.complete.coverage }.minByOrNull {
+        it.solution.covered / it.solution.total
+    }!!.solution
+
     val bootstrapLength = Instant.now().toEpochMilli() - bootStrapStart.toEpochMilli()
 
     val mutationStart = Instant.now()
     val mutations = mutations(seed, control.maxMutationCount).also {
         if (it.size < control.minMutationCount) {
-            throw TooFewMutations(it.size, control.minMutationCount)
+            throw TooFewMutations(correct, it.size, control.minMutationCount)
         }
     }
     val allIncorrect = (incorrect + mutations).also { allIncorrect ->
@@ -137,7 +156,7 @@ suspend fun Question.validate(seed: Int): ValidationReport {
             "Incorrect solution identical to correct solution"
         }
         if (allIncorrect.isEmpty()) {
-            throw NoIncorrect()
+            throw NoIncorrect(correct)
         }
     }
     val mutationLength = Instant.now().toEpochMilli() - mutationStart.toEpochMilli()
@@ -154,7 +173,8 @@ suspend fun Question.validate(seed: Int): ValidationReport {
         javaWhitelist = javaClassWhitelist,
         kotlinWhitelist = kotlinClassWhitelist,
         shrink = false,
-        failOnLint = true
+        failOnLint = true,
+        solutionCoverage = solutionCoverage
     )
     val incorrectResults = allIncorrect.map { wrong ->
         test(
@@ -174,6 +194,7 @@ suspend fun Question.validate(seed: Int): ValidationReport {
 
     // Rerun solutions to set timeouts and output limits
     // sets solutionRuntime and solutionOutputLines
+
     val calibrationStart = Instant.now()
     val calibrationSettings = Question.TestingSettings(
         seed = seed,
@@ -199,6 +220,7 @@ suspend fun Question.validate(seed: Int): ValidationReport {
 
     val solutionMaxRuntime = calibrationResults.maxOf { it.results.taskResults!!.interval.length.toInt() }
     val solutionMaxOutputLines = calibrationResults.maxOf { it.results.taskResults!!.outputLines.size }
+
     testingSettings = Question.TestingSettings(
         seed = seed,
         testCount = testCount,
@@ -216,7 +238,8 @@ suspend fun Question.validate(seed: Int): ValidationReport {
         bootstrapLength = bootstrapLength,
         mutationLength = mutationLength,
         incorrectLength = incorrectLength,
-        calibrationLength = calibrationLength
+        calibrationLength = calibrationLength,
+        solutionCoverage = solutionCoverage
     )
 
     return ValidationReport(
@@ -296,15 +319,32 @@ class SolutionLacksEntropy(
         """.trimMargin()
 }
 
-class NoIncorrect : ValidationFailed() {
-    override val message = """ No incorrect examples found or generated through mutation
-        |Please add some using the @Incorrect annotation
+class SolutionDeadCode(
+    val solution: Question.FlatFile,
+    val amount: Int,
+    val maximum: Int,
+    val dead: List<Int>
+) :
+    ValidationFailed() {
+    override val message = """
+        |Solution contains $amount lines of dead code, more than the maximum of $maximum
+        |Dead lines: ${dead.joinToString(", ")}
+        |You may need to add or adjust the @RandomParameters method
+        |${printContents(solution.contents, solution.path)}
         """.trimMargin()
 }
 
-class TooFewMutations(val found: Int, val needed: Int) : ValidationFailed() {
+class NoIncorrect(val solution: Question.FlatFile) : ValidationFailed() {
+    override val message = """ No incorrect examples found or generated through mutation
+        |Please add some using the @Incorrect annotation
+        |${printContents(solution.contents, solution.path)}
+        """.trimMargin()
+}
+
+class TooFewMutations(val solution: Question.FlatFile, val found: Int, val needed: Int) : ValidationFailed() {
     override val message = """ Too few incorrect mutations generated : found $found, needed $needed
         |Please reduce the required number or remove mutation suppressions
+        |${printContents(solution.contents, solution.path)}
         """.trimMargin()
 }
 

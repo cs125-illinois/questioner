@@ -326,6 +326,15 @@ fun ValidationFailed.report(question: Question): String {
             }"> ${StringEscapeUtils.escapeHtml4(incorrect.contents)}</code></pre>
                 |<p>Check the arguments to <code>@Incorrect(reason = REASON)</code></p>""".trimMargin()
         }
+        is SolutionDeadCode -> {
+           """
+               |<h2>Solution Contains Dead Code</h2>
+               |<p>Solution contains $amount lines of untested code, more than the maximum of $maximum.
+               |Either adjust the inputs, prune unused code paths, or increase the amount of allowed dead code.
+               |</p>
+           """.trimMargin()
+        }
+        else -> error("Invalid error")
     }
     return wrapDocument(question, body)
 }

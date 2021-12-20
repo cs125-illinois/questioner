@@ -195,7 +195,7 @@ fun Question.checkExecutedSubmission(
             }
         }
     }
-    taskResults.sandboxedClassLoader?.loadedClasses?.find { imported ->
+    taskResults.sandboxedClassLoader!!.loadedClasses.find { imported ->
         importBlacklist.any { imported.startsWith(it) }
     }?.let {
         message = "Cannot use $it for this problem"

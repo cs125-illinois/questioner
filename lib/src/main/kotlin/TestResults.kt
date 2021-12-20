@@ -14,10 +14,10 @@ import edu.illinois.cs.cs125.jeed.core.getStackTraceForSource
 import edu.illinois.cs.cs125.jeed.core.moshi.CompiledSourceResult
 import edu.illinois.cs.cs125.jenisol.core.TestResult
 import edu.illinois.cs.cs125.jenisol.core.safePrint
+import edu.illinois.cs.cs125.jenisol.core.TestResult as JenisolTestResult
 
 @JsonClass(generateAdapter = true)
 data class TestResults(
-    val type: Type,
     val completedSteps: MutableSet<Step> = mutableSetOf(),
     val complete: CompletedTasks = CompletedTasks(),
     val failedSteps: MutableSet<Step> = mutableSetOf(),
@@ -30,9 +30,6 @@ data class TestResults(
     fun tests() = complete.testing?.tests
 
     @Suppress("EnumNaming", "EnumEntryName")
-    enum class Type { jenisol }
-
-    @Suppress("EnumNaming", "EnumEntryName")
     enum class Step {
         templateSubmission,
         checkstyle,
@@ -40,6 +37,7 @@ data class TestResults(
         compileSubmission,
         checkSubmission,
         complexity,
+        coverage,
         test,
     }
 
@@ -50,7 +48,8 @@ data class TestResults(
         var ktlint: KtLintResults? = null,
         var compileTest: CompiledSourceResult? = null,
         var testing: TestingResult? = null,
-        var complexity: Question.ComplexityComparison? = null
+        var complexity: Question.ComplexityComparison? = null,
+        var coverage: Question.CoverageComparison? = null
     )
 
     @JsonClass(generateAdapter = true)
@@ -71,7 +70,7 @@ data class TestResults(
             val explanation: String? = null,
             val output: String? = null,
             val complexity: Int? = null,
-            @Transient val jenisol: edu.illinois.cs.cs125.jenisol.core.TestResult<*, *>? = null,
+            @Transient val jenisol: JenisolTestResult<*, *>? = null,
             val submissionStackTrace: String? = null
         )
     }
@@ -132,6 +131,9 @@ data class TestResults(
             }
             Question.IncorrectFile.Reason.TIMEOUT -> require(timeout || !succeeded) {
                 "Expected submission to timeout"
+            }
+            Question.IncorrectFile.Reason.DEADCODE -> require(complete.coverage!!.deadLines > 0) {
+                "Expected submission to contain dead code"
             }
             else -> require(isMutated || (!timeout && complete.testing?.passed == false)) {
                 "Expected submission to fail tests"

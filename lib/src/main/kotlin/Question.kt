@@ -8,6 +8,7 @@ import edu.illinois.cs.cs125.jeed.core.CheckstyleFailed
 import edu.illinois.cs.cs125.jeed.core.CompilationArguments
 import edu.illinois.cs.cs125.jeed.core.CompilationFailed
 import edu.illinois.cs.cs125.jeed.core.ComplexityFailed
+import edu.illinois.cs.cs125.jeed.core.EmptyRuntime
 import edu.illinois.cs.cs125.jeed.core.Features
 import edu.illinois.cs.cs125.jeed.core.KtLintFailed
 import edu.illinois.cs.cs125.jeed.core.MutatedSource
@@ -18,11 +19,19 @@ import edu.illinois.cs.cs125.jeed.core.compile
 import edu.illinois.cs.cs125.jenisol.core.Settings
 import edu.illinois.cs.cs125.jenisol.core.SubmissionDesignError
 import edu.illinois.cs.cs125.questioner.lib.moshi.Adapters
+import org.jacoco.core.analysis.Analyzer
+import org.jacoco.core.analysis.CoverageBuilder
+import org.jacoco.core.analysis.ICounter
+import org.jacoco.core.data.ExecutionDataStore
+import org.jacoco.core.data.SessionInfoStore
+import org.jacoco.core.instr.Instrumenter
+import org.jacoco.core.runtime.RuntimeData
 import java.io.File
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.ReflectPermission
 import edu.illinois.cs.cs125.jeed.core.moshi.Adapters as JeedAdapters
 import edu.illinois.cs.cs125.jenisol.core.solution as jenisol
+import edu.illinois.cs.cs125.jenisol.core.TestResults as JenisolTestResults
 
 val moshi: Moshi = Moshi.Builder().apply {
     Adapters.forEach { add(it) }
@@ -85,7 +94,8 @@ data class Question(
         val timeoutMultiplier: Int,
         val minMutationCount: Int,
         val maxMutationCount: Int,
-        val outputMultiplier: Int
+        val outputMultiplier: Int,
+        val maxDeadCode: Int
     ) {
         constructor(correct: CorrectData) : this(
             correct.solutionThrows,
@@ -96,7 +106,8 @@ data class Question(
             correct.timeoutMultiplier,
             correct.minMutationCount,
             correct.maxMutationCount,
-            correct.outputMultiplier
+            correct.outputMultiplier,
+            correct.maxDeadCode
         )
     }
 
@@ -109,7 +120,9 @@ data class Question(
         val javaWhitelist: Set<String>?,
         val kotlinWhitelist: Set<String>?,
         val shrink: Boolean,
-        val failOnLint: Boolean? = null
+        val failOnLint: Boolean? = null,
+        var solutionCoverage: CoverageComparison.LineCoverage? = null,
+        val checkBlacklist: Boolean = true
     )
 
     @JsonClass(generateAdapter = true)
@@ -121,7 +134,8 @@ data class Question(
         val bootstrapLength: Long,
         val mutationLength: Long,
         val incorrectLength: Long,
-        val calibrationLength: Long
+        val calibrationLength: Long,
+        val solutionCoverage: CoverageComparison.LineCoverage
     )
 
     @JsonClass(generateAdapter = true)
@@ -149,11 +163,25 @@ data class Question(
         @Transient
         val mutation: MutatedSource? = null
     ) {
-        enum class Reason { DESIGN, COMPILE, TEST, CHECKSTYLE, TIMEOUT }
+        enum class Reason { DESIGN, COMPILE, TEST, CHECKSTYLE, TIMEOUT, DEADCODE }
     }
 
     @JsonClass(generateAdapter = true)
     data class ComplexityComparison(val solution: Int, val submission: Int)
+
+    @JsonClass(generateAdapter = true)
+    data class CoverageComparison(val solution: LineCoverage, val submission: LineCoverage, val dead: List<Int>) {
+        @JsonClass(generateAdapter = true)
+        data class LineCoverage(val covered: Int, val total: Int) {
+            init {
+                check(covered <= total) { "Invalid coverage result" }
+            }
+
+            val missed = total - covered
+        }
+
+        val deadLines = (submission.missed - solution.missed).coerceAtLeast(0)
+    }
 
     @delegate:Transient
     val compiledCommon by lazy {
@@ -257,7 +285,7 @@ data class Question(
     ): TestResults {
         check(settings != null) { "No test settings provided" }
 
-        val results = TestResults(TestResults.Type.jenisol)
+        val results = TestResults()
 
         @Suppress("SwallowedException")
         val compiledSubmission = try {
@@ -313,10 +341,29 @@ data class Question(
             )
         )
 
-        var testingResults: Sandbox.TaskResults<out edu.illinois.cs.cs125.jenisol.core.TestResults?>? = null
+        var testingResults: Sandbox.TaskResults<out JenisolTestResults?>? = null
+        var coverageBuilder: CoverageBuilder? = null
+
+        val runtime = EmptyRuntime()
+        val instrumenter = Instrumenter(runtime)
+
+        val originalByteMap = mutableMapOf<String, ByteArray>()
+        val safeClassLoader = Sandbox.SandboxedClassLoader(
+            compiledSubmission.classLoader, classLoaderConfiguration
+        ).apply {
+            transform { bytes, name ->
+                originalByteMap[name] = bytes
+                instrumenter.instrument(bytes, name)
+            }
+        }
+
         for (retryCount in 0 until 2) {
-            testingResults = Sandbox.execute(
-                compiledSubmission.classLoader,
+            val data = RuntimeData()
+            runtime.startup(data)
+            val executionData = ExecutionDataStore()
+
+            testingResults = Sandbox.safeExecute(
+                safeClassLoader,
                 Sandbox.ExecutionArguments(
                     timeout = settings.timeout.toLong(),
                     classLoaderConfiguration = classLoaderConfiguration,
@@ -324,12 +371,29 @@ data class Question(
                     permissions = SAFE_PERMISSIONS,
                     returnTimeout = DEFAULT_RETURN_TIMEOUT
                 )
-            ) { (classLoader, _) ->
-                solution.submission(classLoader.loadClass(klassName)).test(jenisolSettings, ::captureJeedOutput)
+            ) {
+                try {
+                    solution.submission(safeClassLoader.loadClass(klassName)).test(jenisolSettings, ::captureJeedOutput)
+                } catch (e: InvocationTargetException) {
+                    throw e.cause ?: e
+                }
             }.also {
                 results.taskResults = it
                 results.timeout = it.timeout
             }
+
+            coverageBuilder = CoverageBuilder()
+            data.collect(executionData, SessionInfoStore(), false)
+            runtime.shutdown()
+            Analyzer(executionData, coverageBuilder).apply {
+                for ((name, bytes) in originalByteMap) {
+                    try {
+                        analyzeClass(bytes, name)
+                    } catch (_: Exception) {
+                    }
+                }
+            }
+
             if (!testingResults.timeout) {
                 break
             }
@@ -360,6 +424,7 @@ data class Question(
         if (!checkExecutedSubmission(testingResults, results, language)) {
             return results
         }
+
         if (testingResults.returned == null) {
             results.failedSteps.add(TestResults.Step.test)
         } else {
@@ -369,6 +434,19 @@ data class Question(
                 settings.testCount,
                 testingResults.completed && !testingResults.timeout
             )
+
+            val coverage = coverageBuilder!!.classes.find { it.name == klassName }!!
+            val submissionCoverage = coverage.let {
+                CoverageComparison.LineCoverage(it.lineCounter.coveredCount, it.lineCounter.totalCount)
+            }
+            val solutionCoverage =
+                validationResults?.solutionCoverage ?: settings.solutionCoverage ?: submissionCoverage
+            val dead = (coverage.firstLine..coverage.lastLine).filter {
+                coverage.getLine(it).status == ICounter.NOT_COVERED
+            }
+            results.complete.coverage = CoverageComparison(solutionCoverage, submissionCoverage, dead)
+
+            results.completedSteps.add(TestResults.Step.coverage)
         }
 
         return results

@@ -22,7 +22,8 @@ data class CorrectData(
     val timeoutMultiplier: Int,
     val minMutationCount: Int,
     val maxMutationCount: Int,
-    val outputMultiplier: Int
+    val outputMultiplier: Int,
+    val maxDeadCode: Int
 )
 
 @Suppress("LongParameterList")
@@ -40,7 +41,8 @@ annotation class Correct(
     val timeoutMultiplier: Int = DEFAULT_TIMEOUT_MULTIPLIER,
     val minMutationCount: Int = DEFAULT_MIN_MUTATION_COUNT,
     val maxMutationCount: Int = DEFAULT_MAX_MUTATION_COUNT,
-    val outputMultiplier: Int = DEFAULT_OUTPUT_MULTIPLIER
+    val outputMultiplier: Int = DEFAULT_OUTPUT_MULTIPLIER,
+    val maxDeadCode: Int = DEFAULT_MAX_DEAD_CODE
 ) {
     companion object {
         const val DEFAULT_SOLUTION_THROWS = false
@@ -53,6 +55,7 @@ annotation class Correct(
         const val DEFAULT_MIN_MUTATION_COUNT = 0
         const val DEFAULT_MAX_MUTATION_COUNT = 32
         const val DEFAULT_OUTPUT_MULTIPLIER = 8
+        const val DEFAULT_MAX_DEAD_CODE = 1
     }
 }
 

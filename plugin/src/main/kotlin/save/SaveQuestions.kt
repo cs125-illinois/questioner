@@ -518,5 +518,6 @@ fun String.toReason() = when (uppercase(Locale.getDefault())) {
     "COMPILE" -> Question.IncorrectFile.Reason.COMPILE
     "CHECKSTYLE" -> Question.IncorrectFile.Reason.CHECKSTYLE
     "TIMEOUT" -> Question.IncorrectFile.Reason.TIMEOUT
+    "DEADCODE" -> Question.IncorrectFile.Reason.DEADCODE
     else -> error("Invalid incorrect reason: $this")
 }

@@ -111,6 +111,7 @@ data class ParsedJavaFile(val path: String, val contents: String) {
                 val minMutationCount = parameters["minMutationCount"]?.toInt() ?: Correct.DEFAULT_MIN_MUTATION_COUNT
                 val maxMutationCount = parameters["maxMutationCount"]?.toInt() ?: Correct.DEFAULT_MAX_MUTATION_COUNT
                 val outputMultiplier = parameters["outputMultiplier"]?.toInt() ?: Correct.DEFAULT_OUTPUT_MULTIPLIER
+                val maxDeadCode = parameters["maxDeadCode"]?.toInt() ?: Correct.DEFAULT_MAX_DEAD_CODE
 
                 CorrectData(
                     name,
@@ -126,7 +127,8 @@ data class ParsedJavaFile(val path: String, val contents: String) {
                     timeoutMultiplier,
                     minMutationCount,
                     maxMutationCount,
-                    outputMultiplier
+                    outputMultiplier,
+                    maxDeadCode
                 )
             }
         } catch (e: Exception) {
