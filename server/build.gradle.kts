@@ -11,7 +11,7 @@ plugins {
     id("com.palantir.docker") version "0.31.0"
 }
 dependencies {
-    kapt("com.squareup.moshi:moshi-kotlin:1.13.0")
+    kapt("com.squareup.moshi:moshi-kotlin-codegen:1.13.0")
 
     implementation("org.jetbrains.kotlin:kotlin-reflect:1.6.10")
     implementation(project(":lib"))
