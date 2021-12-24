@@ -3,18 +3,15 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 plugins {
     kotlin("jvm") version "1.6.10" apply false
     kotlin("kapt") version "1.6.10" apply false
-    id("org.jmailen.kotlinter") version "3.7.0" apply false
+    id("org.jmailen.kotlinter") version "3.8.0" apply false
     id("com.github.ben-manes.versions") version "0.39.0"
 }
 subprojects {
     group = "com.github.cs125-illinois.questioner"
-    version = "2021.12.1"
+    version = "2021.12.3"
     tasks.withType<KotlinCompile> {
-        val javaVersion = JavaVersion.VERSION_16.toString()
-        sourceCompatibility = javaVersion
-        targetCompatibility = javaVersion
         kotlinOptions {
-            jvmTarget = javaVersion
+            jvmTarget = JavaVersion.VERSION_16.toString()
         }
     }
     tasks.withType<Test> {

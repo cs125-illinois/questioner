@@ -122,7 +122,13 @@ fun IncorrectResults.html(index: Int, question: Question): String {
                 "@Starter annotated"
             }
         } else {
-            "@Incorrect annotated"
+            "@Incorrect annotated${
+                if (incorrect.reason != Question.IncorrectFile.Reason.TEST) {
+                    ": (Reason ${incorrect.reason})"
+                } else {
+                    ""
+                }
+            }"
         }
     }</p>${
         if (results.tests() != null) {
@@ -131,7 +137,9 @@ fun IncorrectResults.html(index: Int, question: Question): String {
             } else {
                 results.tests()!!.size
             }
-            val alert = if (results.tests()!!.size > question.control.minTestCount) {
+            val alert = if (results.succeeded && incorrect.reason == Question.IncorrectFile.Reason.DEADCODE) {
+                """<div class="alert alert-success" role="alert">Testing succeeded, but found ${results.complete.coverage!!.deadLines} line(s) of dead code as expected.</div>"""
+            } else if (results.tests()!!.size > question.control.minTestCount) {
                 """<div class="alert alert-warning" role="alert">Slowly found a failing test. Consider adding this input to @FixedParameters.</div>"""
             } else {
                 """<div class="alert alert-success" role="alert">Quickly found a failing test.</div>"""
@@ -152,7 +160,7 @@ fun IncorrectResults.html(index: Int, question: Question): String {
         </tr>
       </tbody>
     </table>
-    <pre>${results.tests()?.find { !it.passed }?.explanation ?: "No explanation available" }</pre>"""
+    <pre>${results.tests()?.find { !it.passed }?.explanation ?: "No explanation available"}</pre>"""
         } else {
             """<div class="alert alert-warning" role="alert">${results.summary}</div>"""
         }
@@ -327,7 +335,7 @@ fun ValidationFailed.report(question: Question): String {
                 |<p>Check the arguments to <code>@Incorrect(reason = REASON)</code></p>""".trimMargin()
         }
         is SolutionDeadCode -> {
-           """
+            """
                |<h2>Solution Contains Dead Code</h2>
                |<p>Solution contains $amount lines of untested code, more than the maximum of $maximum.
                |Either adjust the inputs, prune unused code paths, or increase the amount of allowed dead code.

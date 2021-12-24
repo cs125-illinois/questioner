@@ -11,6 +11,7 @@ import edu.illinois.cs.cs125.jeed.core.ComplexityFailed
 import edu.illinois.cs.cs125.jeed.core.EmptyRuntime
 import edu.illinois.cs.cs125.jeed.core.Features
 import edu.illinois.cs.cs125.jeed.core.KtLintFailed
+import edu.illinois.cs.cs125.jeed.core.MemoryClassLoader
 import edu.illinois.cs.cs125.jeed.core.MutatedSource
 import edu.illinois.cs.cs125.jeed.core.Sandbox
 import edu.illinois.cs.cs125.jeed.core.Source
@@ -19,6 +20,8 @@ import edu.illinois.cs.cs125.jeed.core.compile
 import edu.illinois.cs.cs125.jenisol.core.Settings
 import edu.illinois.cs.cs125.jenisol.core.SubmissionDesignError
 import edu.illinois.cs.cs125.questioner.lib.moshi.Adapters
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jacoco.core.analysis.Analyzer
 import org.jacoco.core.analysis.CoverageBuilder
 import org.jacoco.core.analysis.ICounter
@@ -347,23 +350,18 @@ data class Question(
         val runtime = EmptyRuntime()
         val instrumenter = Instrumenter(runtime)
 
-        val originalByteMap = mutableMapOf<String, ByteArray>()
-        val safeClassLoader = Sandbox.SandboxedClassLoader(
-            compiledSubmission.classLoader, classLoaderConfiguration
-        ).apply {
-            transform { bytes, name ->
-                originalByteMap[name] = bytes
-                instrumenter.instrument(bytes, name)
-            }
-        }
+        val instrumentedClassLoader = MemoryClassLoader(compiledSubmission.classLoader.parent,
+            compiledSubmission.classLoader.bytecodeForClasses.mapValues { (name, bytes) ->
+            instrumenter.instrument(bytes, name)
+        })
 
         for (retryCount in 0 until 2) {
             val data = RuntimeData()
             runtime.startup(data)
             val executionData = ExecutionDataStore()
 
-            testingResults = Sandbox.safeExecute(
-                safeClassLoader,
+            testingResults = Sandbox.execute(
+                instrumentedClassLoader,
                 Sandbox.ExecutionArguments(
                     timeout = settings.timeout.toLong(),
                     classLoaderConfiguration = classLoaderConfiguration,
@@ -371,9 +369,9 @@ data class Question(
                     permissions = SAFE_PERMISSIONS,
                     returnTimeout = DEFAULT_RETURN_TIMEOUT
                 )
-            ) {
+            ) { (classLoader) ->
                 try {
-                    solution.submission(safeClassLoader.loadClass(klassName)).test(jenisolSettings, ::captureJeedOutput)
+                    solution.submission(classLoader.loadClass(klassName)).test(jenisolSettings, ::captureJeedOutput)
                 } catch (e: InvocationTargetException) {
                     throw e.cause ?: e
                 }
@@ -385,11 +383,15 @@ data class Question(
             coverageBuilder = CoverageBuilder()
             data.collect(executionData, SessionInfoStore(), false)
             runtime.shutdown()
-            Analyzer(executionData, coverageBuilder).apply {
-                for ((name, bytes) in originalByteMap) {
-                    try {
-                        analyzeClass(bytes, name)
-                    } catch (_: Exception) {
+            withContext(Dispatchers.IO) {
+                runCatching {
+                    Analyzer(executionData, coverageBuilder).apply {
+                        for ((name, bytes) in compiledSubmission.classLoader.bytecodeForClasses) {
+                            try {
+                                analyzeClass(bytes, name)
+                            } catch (_: Exception) {
+                            }
+                        }
                     }
                 }
             }
