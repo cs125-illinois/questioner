@@ -2,6 +2,7 @@
 
 package edu.illinois.cs.cs125.questioner.lib
 
+import edu.illinois.cs.cs125.jeed.core.FeatureName
 import edu.illinois.cs.cs125.jeed.core.suppressionComment
 import edu.illinois.cs.cs125.jenisol.core.ParameterGroup
 import edu.illinois.cs.cs125.jenisol.core.fullName
@@ -65,11 +66,20 @@ suspend fun Question.validate(seed: Int): ValidationReport {
         if (size > Question.DEFAULT_MAX_OUTPUT_SIZE || taskResults!!.truncatedLines > 0) {
             throw TooMuchOutput(file.contents, file.path, size, Question.DEFAULT_MAX_OUTPUT_SIZE, file.language)
         }
-        if (complete.coverage!!.submission.missed > control.maxDeadCode) {
+
+        val features = file.features ?: correct.features
+        check(features != null) { "Couldn't load features" }
+
+        val deadCodeLimit = control.maxDeadCode + features.featureMap[FeatureName.ASSERT] + if (features.featureMap[FeatureName.CONSTRUCTOR] == 0) {
+            1
+        } else {
+            0
+        }
+        if (complete.coverage!!.submission.missed > deadCodeLimit) {
             throw SolutionDeadCode(
                 file,
                 complete.coverage!!.submission.missed,
-                control.maxDeadCode,
+                deadCodeLimit,
                 complete.coverage!!.dead
             )
         }

@@ -322,7 +322,36 @@ data class ParsedJavaFile(val path: String, val contents: String) {
 
     fun toAlternateFile(cleanSpec: CleanSpec): Question.FlatFile {
         check(alternateSolution != null) { "Not an alternate solution file" }
-        return Question.FlatFile(className, clean(cleanSpec), Question.Language.java, path)
+        val cleanContent = clean(cleanSpec)
+        val questionType = cleanContent.getType()
+        val source = when (questionType) {
+            Question.Type.KLASS -> Source(mapOf("$className.java" to cleanContent))
+            Question.Type.METHOD -> Source(
+                mapOf(
+                    "$className.java" to """public class $className {
+                    |$cleanContent
+                    }""".trimMargin()
+                )
+            )
+            Question.Type.SNIPPET -> Source.fromSnippet(cleanContent)
+        }
+        val complexity = source.complexity().let { results ->
+            when (questionType) {
+                Question.Type.KLASS -> results.lookupFile("$className.java")
+                Question.Type.METHOD -> results.lookup(className, "$className.java").complexity
+                Question.Type.SNIPPET -> results.lookup("").complexity
+            }
+        }.also {
+            check(it > 0) { "Invalid complexity value" }
+        }
+        val features = source.features().let { features ->
+            when (questionType) {
+                Question.Type.KLASS -> features.lookup("", "$className.java")
+                Question.Type.METHOD -> features.lookup(className, "$className.java")
+                Question.Type.SNIPPET -> features.lookup("")
+            }
+        }.features
+        return Question.FlatFile(className, clean(cleanSpec), Question.Language.java, path, complexity, features)
     }
 
     fun toStarterFile(cleanSpec: CleanSpec): Question.IncorrectFile {
@@ -597,7 +626,7 @@ fun String.getType(): Question.Type {
     try {
         parseJava().tree.typeDeclaration(0).classDeclaration().classBody()
         return Question.Type.KLASS
-    } catch (e: Exception) {
+    } catch (_: Exception) {
     }
     """public class Main {
             |$this

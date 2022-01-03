@@ -175,9 +175,10 @@ data class Question(
     @JsonClass(generateAdapter = true)
     data class CoverageComparison(val solution: LineCoverage, val submission: LineCoverage, val dead: List<Int>) {
         @JsonClass(generateAdapter = true)
-        data class LineCoverage(val covered: Int, val total: Int) {
+        data class LineCoverage(val covered: Int, val total: Int, val missedLines: List<Int>) {
             init {
                 check(covered <= total) { "Invalid coverage result" }
+                check(total - covered == missedLines.size) { "Inconsistent result: $total $covered $missedLines" }
             }
 
             val missed = total - covered
@@ -439,7 +440,10 @@ data class Question(
 
             val coverage = coverageBuilder!!.classes.find { it.name == klassName }!!
             val submissionCoverage = coverage.let {
-                CoverageComparison.LineCoverage(it.lineCounter.coveredCount, it.lineCounter.totalCount)
+                val missed = (it.firstLine..it.lastLine).toList().filter { line ->
+                    it.getLine(line).status == ICounter.NOT_COVERED || it.getLine(line).status == ICounter.PARTLY_COVERED
+                }
+                CoverageComparison.LineCoverage(it.lineCounter.totalCount - missed.size, it.lineCounter.totalCount, missed)
             }
             val solutionCoverage =
                 validationResults?.solutionCoverage ?: settings.solutionCoverage ?: submissionCoverage
