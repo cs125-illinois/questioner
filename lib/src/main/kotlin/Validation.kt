@@ -70,17 +70,21 @@ suspend fun Question.validate(seed: Int): ValidationReport {
         val features = file.features ?: correct.features
         check(features != null) { "Couldn't load features" }
 
-        val deadCodeLimit = control.maxDeadCode + features.featureMap[FeatureName.ASSERT] + if (features.featureMap[FeatureName.CONSTRUCTOR] == 0) {
-            1
-        } else {
-            0
+        // Line 1 gets used both for the empty constructor and for the assert inserted method
+        val deadCodeLimit = control.maxDeadCode + when {
+            features.featureMap[FeatureName.ASSERT] > 0 -> features.featureMap[FeatureName.ASSERT] + 1
+            else -> 0
+        } + when {
+            features.featureMap[FeatureName.ASSERT] == 0 && features.featureMap[FeatureName.CONSTRUCTOR] == 0 -> 1
+            else -> 0
         }
+
         if (complete.coverage!!.submission.missed > deadCodeLimit) {
             throw SolutionDeadCode(
                 file,
                 complete.coverage!!.submission.missed,
                 deadCodeLimit,
-                complete.coverage!!.dead
+                complete.coverage!!.missed
             )
         }
         when (file.language) {

@@ -42,32 +42,32 @@ val moshi: Moshi = Moshi.Builder().apply {
 }.build()
 
 private val sharedClassWhitelist = setOf(
-    "java.lang.",
-    "java.io.PrintStream",
-    "kotlin.Metadata",
-    "jdk.internal.reflect.",
-    "kotlin.reflect.jvm.",
-    "com.sun."
+        "java.lang.",
+        "java.io.PrintStream",
+        "kotlin.Metadata",
+        "jdk.internal.reflect.",
+        "kotlin.reflect.jvm.",
+        "com.sun."
 )
 
 @Suppress("MemberVisibilityCanBePrivate", "LargeClass", "TooManyFunctions")
 @JsonClass(generateAdapter = true)
 data class Question(
-    val name: String,
-    val type: Type,
-    val klass: String,
-    val metadata: Metadata,
-    val control: TestingControl,
-    val question: FlatFile,
-    val correct: FlatFile,
-    val alternativeSolutions: List<FlatFile>,
-    val incorrect: List<IncorrectFile>,
-    val common: List<String>?,
-    var javaTemplate: String?,
-    var kotlinTemplate: String?,
-    val importWhitelist: Set<String>,
-    val importBlacklist: Set<String>,
-    val slug: String = Slugify().slugify(name)
+        val name: String,
+        val type: Type,
+        val klass: String,
+        val metadata: Metadata,
+        val control: TestingControl,
+        val question: FlatFile,
+        val correct: FlatFile,
+        val alternativeSolutions: List<FlatFile>,
+        val incorrect: List<IncorrectFile>,
+        val common: List<String>?,
+        var javaTemplate: String?,
+        var kotlinTemplate: String?,
+        val importWhitelist: Set<String>,
+        val importBlacklist: Set<String>,
+        val slug: String = Slugify().slugify(name)
 ) {
     @Suppress("EnumNaming", "EnumEntryName")
     enum class Language { java, kotlin }
@@ -76,69 +76,69 @@ data class Question(
 
     @JsonClass(generateAdapter = true)
     data class Metadata(
-        val contentHash: String,
-        val packageName: String,
-        val version: String,
-        val author: String,
-        val javaDescription: String,
-        val kotlinDescription: String?,
-        val citation: Citation?,
-        val usedFiles: List<String> = listOf(),
-        val focused: Boolean? = null
+            val contentHash: String,
+            val packageName: String,
+            val version: String,
+            val author: String,
+            val javaDescription: String,
+            val kotlinDescription: String?,
+            val citation: Citation?,
+            val usedFiles: List<String> = listOf(),
+            val focused: Boolean? = null
     )
 
     @JsonClass(generateAdapter = true)
     data class TestingControl(
-        val solutionThrows: Boolean,
-        val minTestCount: Int,
-        val maxTestCount: Int,
-        val minTimeout: Int,
-        val maxTimeout: Int,
-        val timeoutMultiplier: Int,
-        val minMutationCount: Int,
-        val maxMutationCount: Int,
-        val outputMultiplier: Int,
-        val maxDeadCode: Int
+            val solutionThrows: Boolean,
+            val minTestCount: Int,
+            val maxTestCount: Int,
+            val minTimeout: Int,
+            val maxTimeout: Int,
+            val timeoutMultiplier: Int,
+            val minMutationCount: Int,
+            val maxMutationCount: Int,
+            val outputMultiplier: Int,
+            val maxDeadCode: Int
     ) {
         constructor(correct: CorrectData) : this(
-            correct.solutionThrows,
-            correct.minTestCount,
-            correct.maxTestCount,
-            correct.minTimeout,
-            correct.maxTimeout,
-            correct.timeoutMultiplier,
-            correct.minMutationCount,
-            correct.maxMutationCount,
-            correct.outputMultiplier,
-            correct.maxDeadCode
+                correct.solutionThrows,
+                correct.minTestCount,
+                correct.maxTestCount,
+                correct.minTimeout,
+                correct.maxTimeout,
+                correct.timeoutMultiplier,
+                correct.minMutationCount,
+                correct.maxMutationCount,
+                correct.outputMultiplier,
+                correct.maxDeadCode
         )
     }
 
     @JsonClass(generateAdapter = true)
     data class TestingSettings(
-        val seed: Int,
-        val testCount: Int,
-        val timeout: Int,
-        val outputLimit: Int,
-        val javaWhitelist: Set<String>?,
-        val kotlinWhitelist: Set<String>?,
-        val shrink: Boolean,
-        val failOnLint: Boolean? = null,
-        var solutionCoverage: CoverageComparison.LineCoverage? = null,
-        val checkBlacklist: Boolean = true
+            val seed: Int,
+            val testCount: Int,
+            val timeout: Int,
+            val outputLimit: Int,
+            val javaWhitelist: Set<String>?,
+            val kotlinWhitelist: Set<String>?,
+            val shrink: Boolean,
+            val failOnLint: Boolean? = null,
+            var solutionCoverage: CoverageComparison.LineCoverage? = null,
+            val checkBlacklist: Boolean = true
     )
 
     @JsonClass(generateAdapter = true)
     data class ValidationResults(
-        val seed: Int,
-        val requiredTestCount: Int,
-        val mutationCount: Int,
-        val solutionMaxRuntime: Int,
-        val bootstrapLength: Long,
-        val mutationLength: Long,
-        val incorrectLength: Long,
-        val calibrationLength: Long,
-        val solutionCoverage: CoverageComparison.LineCoverage
+            val seed: Int,
+            val requiredTestCount: Int,
+            val mutationCount: Int,
+            val solutionMaxRuntime: Int,
+            val bootstrapLength: Long,
+            val mutationLength: Long,
+            val incorrectLength: Long,
+            val calibrationLength: Long,
+            val solutionCoverage: CoverageComparison.LineCoverage
     )
 
     @JsonClass(generateAdapter = true)
@@ -146,25 +146,25 @@ data class Question(
 
     @JsonClass(generateAdapter = true)
     data class FlatFile(
-        val klass: String,
-        val contents: String,
-        val language: Language,
-        val path: String?,
-        val complexity: Int? = null,
-        val features: Features? = null
+            val klass: String,
+            val contents: String,
+            val language: Language,
+            val path: String?,
+            val complexity: Int? = null,
+            val features: Features? = null
     )
 
     @JsonClass(generateAdapter = true)
     data class IncorrectFile(
-        val klass: String,
-        val contents: String,
-        val reason: Reason,
-        val language: Language,
-        val path: String?,
-        val starter: Boolean,
-        var needed: Boolean = true,
-        @Transient
-        val mutation: MutatedSource? = null
+            val klass: String,
+            val contents: String,
+            val reason: Reason,
+            val language: Language,
+            val path: String?,
+            val starter: Boolean,
+            var needed: Boolean = true,
+            @Transient
+            val mutation: MutatedSource? = null
     ) {
         enum class Reason { DESIGN, COMPILE, TEST, CHECKSTYLE, TIMEOUT, DEADCODE }
     }
@@ -173,14 +173,12 @@ data class Question(
     data class ComplexityComparison(val solution: Int, val submission: Int)
 
     @JsonClass(generateAdapter = true)
-    data class CoverageComparison(val solution: LineCoverage, val submission: LineCoverage, val dead: List<Int>) {
+    data class CoverageComparison(val solution: LineCoverage, val submission: LineCoverage, val missed: List<Int>) {
         @JsonClass(generateAdapter = true)
-        data class LineCoverage(val covered: Int, val total: Int, val missedLines: List<Int>) {
+        data class LineCoverage(val covered: Int, val total: Int) {
             init {
                 check(covered <= total) { "Invalid coverage result" }
-                check(total - covered == missedLines.size) { "Inconsistent result: $total $covered $missedLines" }
             }
-
             val missed = total - covered
         }
 
@@ -204,11 +202,11 @@ data class Question(
                 questionSource.compile(CompilationArguments(isolatedClassLoader = true, parameters = true))
             } else {
                 questionSource.compile(
-                    CompilationArguments(
-                        parentClassLoader = compiledCommon!!.classLoader,
-                        parentFileManager = compiledCommon!!.fileManager,
-                        parameters = true
-                    )
+                        CompilationArguments(
+                                parentClassLoader = compiledCommon!!.classLoader,
+                                parentFileManager = compiledCommon!!.fileManager,
+                                parameters = true
+                        )
                 )
             }
         }
@@ -259,8 +257,16 @@ data class Question(
     val detemplatedKotlinStarter = incorrect.find { it.language == Language.kotlin && it.starter }?.contents
 
     val hasKotlin =
-        metadata.kotlinDescription != null && alternativeSolutions.find { it.language == Language.kotlin } != null &&
-            ((detemplatedJavaStarter != null) == (detemplatedKotlinStarter != null))
+            metadata.kotlinDescription != null && alternativeSolutions.find { it.language == Language.kotlin } != null &&
+                    ((detemplatedJavaStarter != null) == (detemplatedKotlinStarter != null))
+
+    val javaTemplateAddsLines = javaTemplate?.lines()?.indexOfFirst {
+        it.trim().startsWith("{{{")
+    } ?: 0
+
+    val kotlinTemplateAddsLines = kotlinTemplate?.lines()?.indexOfFirst {
+        it.trim().startsWith("{{{")
+    } ?: 0
 
     @Transient
     val defaultJavaClassWhitelist = importWhitelist.toMutableSet().also {
@@ -283,9 +289,9 @@ data class Question(
 
     @Suppress("ReturnCount", "LongMethod", "ComplexMethod", "LongParameterList")
     suspend fun test(
-        contents: String,
-        language: Language,
-        settings: TestingSettings? = testingSettings
+            contents: String,
+            language: Language,
+            settings: TestingSettings? = testingSettings
     ): TestResults {
         check(settings != null) { "No test settings provided" }
 
@@ -296,17 +302,17 @@ data class Question(
             when (language) {
                 Language.java ->
                     compileSubmission(
-                        contents,
-                        InvertingClassLoader(setOf(klass)),
-                        results,
-                        failOnCheckstyle = settings.failOnLint!!
+                            contents,
+                            InvertingClassLoader(setOf(klass)),
+                            results,
+                            failOnCheckstyle = settings.failOnLint!!
                     )
                 Language.kotlin ->
                     kompileSubmission(
-                        contents,
-                        InvertingClassLoader(setOf(klass, "${klass}Kt")),
-                        results,
-                        failOnKtlint = settings.failOnLint!!
+                            contents,
+                            InvertingClassLoader(setOf(klass, "${klass}Kt")),
+                            results,
+                            failOnKtlint = settings.failOnLint!!
                     )
             }
         } catch (e: TemplatingFailed) {
@@ -337,12 +343,12 @@ data class Question(
         } ?: Sandbox.ClassLoaderConfiguration()
 
         val jenisolSettings = Settings(
-            seed = settings.seed,
-            shrink = settings.shrink,
-            overrideTotalCount = settings.testCount,
-            startMultipleCount = (settings.testCount / 2).coerceAtMost(
-                MAX_START_MULTIPLE_COUNT
-            )
+                seed = settings.seed,
+                shrink = settings.shrink,
+                overrideTotalCount = settings.testCount,
+                startMultipleCount = (settings.testCount / 2).coerceAtMost(
+                        MAX_START_MULTIPLE_COUNT
+                )
         )
 
         var testingResults: Sandbox.TaskResults<out JenisolTestResults?>? = null
@@ -352,9 +358,9 @@ data class Question(
         val instrumenter = Instrumenter(runtime)
 
         val instrumentedClassLoader = MemoryClassLoader(compiledSubmission.classLoader.parent,
-            compiledSubmission.classLoader.bytecodeForClasses.mapValues { (name, bytes) ->
-            instrumenter.instrument(bytes, name)
-        })
+                compiledSubmission.classLoader.bytecodeForClasses.mapValues { (name, bytes) ->
+                    instrumenter.instrument(bytes, name)
+                })
 
         for (retryCount in 0 until 2) {
             val data = RuntimeData()
@@ -362,14 +368,14 @@ data class Question(
             val executionData = ExecutionDataStore()
 
             testingResults = Sandbox.execute(
-                instrumentedClassLoader,
-                Sandbox.ExecutionArguments(
-                    timeout = settings.timeout.toLong(),
-                    classLoaderConfiguration = classLoaderConfiguration,
-                    maxOutputLines = settings.outputLimit,
-                    permissions = SAFE_PERMISSIONS,
-                    returnTimeout = DEFAULT_RETURN_TIMEOUT
-                )
+                    instrumentedClassLoader,
+                    Sandbox.ExecutionArguments(
+                            timeout = settings.timeout.toLong(),
+                            classLoaderConfiguration = classLoaderConfiguration,
+                            maxOutputLines = settings.outputLimit,
+                            permissions = SAFE_PERMISSIONS,
+                            returnTimeout = DEFAULT_RETURN_TIMEOUT
+                    )
             ) { (classLoader) ->
                 try {
                     solution.submission(classLoader.loadClass(klassName)).test(jenisolSettings, ::captureJeedOutput)
@@ -407,11 +413,11 @@ data class Question(
             results.failedSteps.add(TestResults.Step.checkSubmission)
             when (testingResults.threw) {
                 is ClassNotFoundException -> results.failed.checkSubmission =
-                    "Class design error: could not find class $klass"
+                        "Class design error: could not find class $klass"
                 is SubmissionDesignError -> results.failed.checkSubmission =
-                    "Class design error: ${testingResults.threw?.message}"
+                        "Class design error: ${testingResults.threw?.message}"
                 is NoClassDefFoundError -> results.failed.checkSubmission =
-                    "Class design error: attempted to use unavailable class ${testingResults.threw?.message}"
+                        "Class design error: attempted to use unavailable class ${testingResults.threw?.message}"
                 else -> {
                     val actualException = if (testingResults.threw is InvocationTargetException) {
                         (testingResults.threw as InvocationTargetException).targetException ?: testingResults.threw
@@ -433,25 +439,25 @@ data class Question(
         } else {
             results.completedSteps.add(TestResults.Step.test)
             results.complete.testing = TestResults.TestingResult(
-                testingResults.returned!!.map { it.asTestResult(compiledSubmission.source) },
-                settings.testCount,
-                testingResults.completed && !testingResults.timeout
+                    testingResults.returned!!.map { it.asTestResult(compiledSubmission.source) },
+                    settings.testCount,
+                    testingResults.completed && !testingResults.timeout
             )
 
             val coverage = coverageBuilder!!.classes.find { it.name == klassName }!!
-            val submissionCoverage = coverage.let {
-                val missed = (it.firstLine..it.lastLine).toList().filter { line ->
-                    it.getLine(line).status == ICounter.NOT_COVERED || it.getLine(line).status == ICounter.PARTLY_COVERED
+            val missed = (coverage.firstLine..coverage.lastLine).toList().filter { line ->
+                coverage.getLine(line).status == ICounter.NOT_COVERED || coverage.getLine(line).status == ICounter.PARTLY_COVERED
+            }.map { line ->
+                line - when (language) {
+                    Language.java -> javaTemplateAddsLines
+                    Language.kotlin -> kotlinTemplateAddsLines
                 }
-                CoverageComparison.LineCoverage(it.lineCounter.totalCount - missed.size, it.lineCounter.totalCount, missed)
             }
+            val submissionCoverage = CoverageComparison.LineCoverage(coverage.lineCounter.totalCount - missed.size, coverage.lineCounter.totalCount)
             val solutionCoverage =
-                validationResults?.solutionCoverage ?: settings.solutionCoverage ?: submissionCoverage
-            val dead = (coverage.firstLine..coverage.lastLine).filter {
-                coverage.getLine(it).status == ICounter.NOT_COVERED
-            }
-            results.complete.coverage = CoverageComparison(solutionCoverage, submissionCoverage, dead)
+                    validationResults?.solutionCoverage ?: settings.solutionCoverage ?: submissionCoverage
 
+            results.complete.coverage = CoverageComparison(solutionCoverage, submissionCoverage, missed)
             results.completedSteps.add(TestResults.Step.coverage)
         }
 
@@ -466,12 +472,12 @@ data class Question(
 
         @Transient
         val SAFE_PERMISSIONS =
-            setOf(
-                RuntimePermission("accessDeclaredMembers"),
-                ReflectPermission("suppressAccessChecks"),
-                RuntimePermission("getClassLoader"),
-                RuntimePermission("localeServiceProvider")
-            )
+                setOf(
+                        RuntimePermission("accessDeclaredMembers"),
+                        ReflectPermission("suppressAccessChecks"),
+                        RuntimePermission("getClassLoader"),
+                        RuntimePermission("localeServiceProvider")
+                )
     }
 }
 
@@ -490,22 +496,22 @@ fun String.deTemplate(template: String?): String {
 }
 
 fun Question.validationFile(sourceDir: String) = File(
-    sourceDir,
-    "${metadata.packageName.replace(".", File.separator)}/.validation.json"
+        sourceDir,
+        "${metadata.packageName.replace(".", File.separator)}/.validation.json"
 )
 
 fun Question.reportFile(sourceDir: String) = File(
-    sourceDir,
-    "${metadata.packageName.replace(".", File.separator)}/report.html"
+        sourceDir,
+        "${metadata.packageName.replace(".", File.separator)}/report.html"
 )
 
 fun loadFromPath(questionsFile: File, sourceDir: String, validated: Boolean = true): Map<String, Question> {
     return moshi.adapter<Map<String, Question>>(
-        Types.newParameterizedType(
-            Map::class.java,
-            String::class.java,
-            Question::class.java
-        )
+            Types.newParameterizedType(
+                    Map::class.java,
+                    String::class.java,
+                    Question::class.java
+            )
     ).fromJson(questionsFile.readText())!!.toMutableMap().mapValues { (_, question) ->
         if (validated) {
             val validationPath = question.validationFile(sourceDir)
@@ -530,28 +536,28 @@ fun loadFromPath(questionsFile: File, sourceDir: String, validated: Boolean = tr
 }
 
 fun Collection<Question>.toJSON(): String =
-    moshi.adapter<List<Question>>(Types.newParameterizedType(List::class.java, Question::class.java))
-        .toJson(this.toList())
+        moshi.adapter<List<Question>>(Types.newParameterizedType(List::class.java, Question::class.java))
+                .toJson(this.toList())
 
 fun File.loadQuestions() = try {
     moshi.adapter<Map<String, Question>>(
-        Types.newParameterizedType(
-            Map::class.java,
-            String::class.java,
-            Question::class.java
-        )
+            Types.newParameterizedType(
+                    Map::class.java,
+                    String::class.java,
+                    Question::class.java
+            )
     ).fromJson(readText())!!
 } catch (e: Exception) {
     mapOf()
 }
 
 fun File.saveQuestions(questions: Map<String, Question>) =
-    writeText(
-        moshi.adapter<Map<String, Question>>(
-            Types.newParameterizedType(
-                Map::class.java,
-                String::class.java,
-                Question::class.java
-            )
-        ).indent("  ").toJson(questions)
-    )
+        writeText(
+                moshi.adapter<Map<String, Question>>(
+                        Types.newParameterizedType(
+                                Map::class.java,
+                                String::class.java,
+                                Question::class.java
+                        )
+                ).indent("  ").toJson(questions)
+        )

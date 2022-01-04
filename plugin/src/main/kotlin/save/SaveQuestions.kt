@@ -512,7 +512,7 @@ internal fun String.stripPackage(): String {
 
 val markdownParser = MarkdownParser(CommonMarkFlavourDescriptor())
 
-fun String.toReason() = when (uppercase(Locale.getDefault())) {
+fun String.toReason() = when (toUpperCase(Locale.getDefault())) {
     "DESIGN" -> Question.IncorrectFile.Reason.DESIGN
     "TEST" -> Question.IncorrectFile.Reason.TEST
     "COMPILE" -> Question.IncorrectFile.Reason.COMPILE

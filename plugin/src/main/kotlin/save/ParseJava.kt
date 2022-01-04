@@ -29,7 +29,6 @@ import org.apache.tools.ant.filters.StringInputStream
 import org.intellij.markdown.flavours.commonmark.CommonMarkFlavourDescriptor
 import org.intellij.markdown.html.HtmlGenerator
 import java.io.File
-import java.util.Locale
 
 data class ParsedJavaFile(val path: String, val contents: String) {
     constructor(file: File) : this(file.path, file.readText().replace("\r\n", "\n"))
@@ -199,7 +198,7 @@ data class ParsedJavaFile(val path: String, val contents: String) {
                 }.map { it.location.line }.toSet()
                 content.lines().filterIndexed { index, _ -> !removeLines.contains(index + 1) }.joinToString("\n")
             }
-        }
+        }.trimStart()
         val cleanContent = solutionContent.javaDeTemplate(cleanSpec.hasTemplate, cleanSpec.wrappedClass)
         val questionType = cleanContent.getType()
         val source = when (questionType) {
@@ -263,24 +262,18 @@ data class ParsedJavaFile(val path: String, val contents: String) {
             ?.methodDeclaration() ?: return null
         val start = methodDeclaration.methodBody().start.startIndex
         val end = methodDeclaration.methodBody().stop.stopIndex
-        val returnType = methodDeclaration.typeTypeOrVoid().text
-        val starterReturn = when {
-            returnType == "void" -> ""
-            returnType == "String" -> " \"\""
-            returnType.replaceFirstChar {
-                if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString()
-            } == returnType || returnType.endsWith(
-                "[]"
-            ) -> " null"
-            returnType == "byte" -> " 0"
-            returnType == "short" -> " 0"
-            returnType == "int" -> " 0"
-            returnType == "long" -> " 0"
-            returnType == "float" -> " 0.0"
-            returnType == "double" -> " 0.0"
-            returnType == "char" -> " ' '"
-            returnType == "boolean" -> " false"
-            else -> error("Invalid return type $returnType")
+        val starterReturn = when (methodDeclaration.typeTypeOrVoid().text) {
+            "void" -> ""
+            "String" -> " \"\""
+            "byte" -> " 0"
+            "short" -> " 0"
+            "int" -> " 0"
+            "long" -> " 0"
+            "float" -> " 0.0"
+            "double" -> " 0.0"
+            "char" -> " ' '"
+            "boolean" -> " false"
+            else -> " null"
         }
         val prefix = (start + 1 until correctSolution.length).find { i -> !correctSolution[i].isWhitespace() }.let {
             check(it != null) { "Couldn't find method contents" }
@@ -312,7 +305,7 @@ data class ParsedJavaFile(val path: String, val contents: String) {
         check(incorrect != null) { "Not an incorrect file" }
         return Question.IncorrectFile(
             className,
-            clean(cleanSpec),
+            clean(cleanSpec).trimStart(),
             incorrect.toReason(),
             Question.Language.java,
             path,
@@ -322,7 +315,7 @@ data class ParsedJavaFile(val path: String, val contents: String) {
 
     fun toAlternateFile(cleanSpec: CleanSpec): Question.FlatFile {
         check(alternateSolution != null) { "Not an alternate solution file" }
-        val cleanContent = clean(cleanSpec)
+        val cleanContent = clean(cleanSpec).trimStart()
         val questionType = cleanContent.getType()
         val source = when (questionType) {
             Question.Type.KLASS -> Source(mapOf("$className.java" to cleanContent))
@@ -351,14 +344,14 @@ data class ParsedJavaFile(val path: String, val contents: String) {
                 Question.Type.SNIPPET -> features.lookup("")
             }
         }.features
-        return Question.FlatFile(className, clean(cleanSpec), Question.Language.java, path, complexity, features)
+        return Question.FlatFile(className, clean(cleanSpec).trimStart(), Question.Language.java, path, complexity, features)
     }
 
     fun toStarterFile(cleanSpec: CleanSpec): Question.IncorrectFile {
         check(starter != null) { "Not an starter code file" }
         return Question.IncorrectFile(
             className,
-            clean(cleanSpec),
+            clean(cleanSpec).trimStart(),
             incorrect?.toReason() ?: "test".toReason(),
             Question.Language.java,
             path,
