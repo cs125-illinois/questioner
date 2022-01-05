@@ -91,6 +91,10 @@ data class TestResults(
         get() = completedSteps.contains(Step.test)
     val succeeded: Boolean
         get() = !timeout && complete.testing?.passed == true && complete.testing?.completed == true
+    val failedLinting: Boolean
+        get() = complete.checkstyle?.errors?.isNotEmpty()
+            ?: complete.ktlint?.errors?.isNotEmpty()
+            ?: error("Linting did not run or did not succeed")
 
     val summary: String
         get() = if (failed.templateSubmission != null) {

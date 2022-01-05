@@ -2,7 +2,6 @@
 
 package edu.illinois.cs.cs125.questioner.lib
 
-import edu.illinois.cs.cs125.jeed.core.FeatureName
 import edu.illinois.cs.cs125.jeed.core.suppressionComment
 import edu.illinois.cs.cs125.jenisol.core.ParameterGroup
 import edu.illinois.cs.cs125.jenisol.core.fullName
@@ -24,6 +23,9 @@ suspend fun Question.validate(seed: Int): ValidationReport {
     fun TestResults.checkCorrect(file: Question.FlatFile) {
         if (!succeeded) {
             throw SolutionFailed(file, summary)
+        }
+        if (failedLinting) {
+            throw SolutionFailedLinting(file)
         }
         val solutionThrew = tests()?.firstOrNull { it.jenisol!!.solution.threw != null }
         if (!control.solutionThrows && solutionThrew != null) {
@@ -67,17 +69,9 @@ suspend fun Question.validate(seed: Int): ValidationReport {
             throw TooMuchOutput(file.contents, file.path, size, Question.DEFAULT_MAX_OUTPUT_SIZE, file.language)
         }
 
-        val features = file.features ?: correct.features
-        check(features != null) { "Couldn't load features" }
-
-        // Line 1 gets used both for the empty constructor and for the assert inserted method
-        val deadCodeLimit = control.maxDeadCode + when {
-            features.featureMap[FeatureName.ASSERT] > 0 -> features.featureMap[FeatureName.ASSERT] + 1
-            else -> 0
-        } + when {
-            features.featureMap[FeatureName.ASSERT] == 0 && features.featureMap[FeatureName.CONSTRUCTOR] == 0 -> 1
-            else -> 0
-        }
+        val expectedDeadCode =
+            file.expectedDeadCount ?: correct.expectedDeadCount ?: error("Couldn't load dead code count")
+        val deadCodeLimit = control.maxDeadCode + expectedDeadCode
 
         if (complete.coverage!!.submission.missed > deadCodeLimit) {
             throw SolutionDeadCode(
@@ -108,6 +102,9 @@ suspend fun Question.validate(seed: Int): ValidationReport {
     }
 
     fun TestResults.checkIncorrect(file: Question.IncorrectFile, mutated: Boolean) {
+        if (!mutated && failedLinting) {
+            throw IncorrectFailedLinting(file, correct)
+        }
         if (file.reason !== Question.IncorrectFile.Reason.DEADCODE) {
             if (succeeded) {
                 throw IncorrectPassed(file, correct)
@@ -144,7 +141,6 @@ suspend fun Question.validate(seed: Int): ValidationReport {
         javaWhitelist = null,
         kotlinWhitelist = null,
         shrink = false,
-        failOnLint = true,
         checkBlacklist = false
     )
     val firstCorrectResults = (setOf(correct) + alternativeSolutions).map { right ->
@@ -187,14 +183,13 @@ suspend fun Question.validate(seed: Int): ValidationReport {
         javaWhitelist = javaClassWhitelist,
         kotlinWhitelist = kotlinClassWhitelist,
         shrink = false,
-        failOnLint = true,
         solutionCoverage = solutionCoverage
     )
     val incorrectResults = allIncorrect.map { wrong ->
         test(
             wrong.contents,
             wrong.language,
-            incorrectSettings.copy(failOnLint = wrong.mutation == null)
+            incorrectSettings
         ).let {
             it.checkIncorrect(wrong, wrong.mutation != null)
             IncorrectResults(wrong, it)
@@ -217,8 +212,7 @@ suspend fun Question.validate(seed: Int): ValidationReport {
         outputLimit = Question.UNLIMITED_OUTPUT_LINES,
         javaWhitelist = javaClassWhitelist,
         kotlinWhitelist = kotlinClassWhitelist,
-        shrink = false,
-        failOnLint = true
+        shrink = false
     )
     val calibrationResults = (setOf(correct) + alternativeSolutions).map { right ->
         test(
@@ -300,6 +294,19 @@ class SolutionFailed(val solution: Question.FlatFile, val explanation: String) :
     """.trimMargin()
 }
 
+class SolutionFailedLinting(val solution: Question.FlatFile) : ValidationFailed() {
+    override val message = """
+        |Solution failed linting with ${
+        if (solution.language == Question.Language.kotlin) {
+            "ktlint"
+        } else {
+            "checkstyle"
+        }
+    }
+        |${printContents(solution.contents, solution.path)}
+    """.trimMargin()
+}
+
 class SolutionThrew(val solution: Question.FlatFile, val threw: Throwable, val parameters: ParameterGroup) :
     ValidationFailed() {
     override val message = """
@@ -374,6 +381,23 @@ class TooMuchOutput(
         |${printContents(contents, path)}
         |Maybe reduce the number of tests using @Correct(minTestCount = NUM)
         """.trimMargin()
+}
+
+class IncorrectFailedLinting(
+    val incorrect: Question.IncorrectFile, val correct: Question.FlatFile
+) : ValidationFailed() {
+    override val message: String
+        get() {
+            val contents = incorrect.mutation?.marked()?.contents ?: incorrect.contents
+            return """
+        |Incorrect code failed linting with ${'$'}{
+        if (solution.language == Question.Language.kotlin) {
+            "ktlint"
+        } else {
+            "checkstyle"
+        }
+        |${printContents(contents, incorrect.path ?: correct.path)}""".trimMargin()
+        }
 }
 
 class IncorrectPassed(

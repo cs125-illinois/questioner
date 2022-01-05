@@ -12,6 +12,7 @@ data class CorrectData(
     val name: String,
     val version: String,
     val author: String,
+    val path: String?,
     val description: String,
     val solutionThrows: Boolean,
     val focused: Boolean,
@@ -23,6 +24,7 @@ data class CorrectData(
     val minMutationCount: Int,
     val maxMutationCount: Int,
     val outputMultiplier: Int,
+    val maxExtraComplexity: Int,
     val maxDeadCode: Int
 )
 
@@ -32,6 +34,7 @@ annotation class Correct(
     val name: String,
     val version: String,
     val author: String,
+    val path: String = "",
     val solutionThrows: Boolean = DEFAULT_SOLUTION_THROWS,
     val focused: Boolean = DEFAULT_FOCUSED,
     val minTestCount: Int = DEFAULT_MIN_TEST_COUNT,
@@ -42,6 +45,7 @@ annotation class Correct(
     val minMutationCount: Int = DEFAULT_MIN_MUTATION_COUNT,
     val maxMutationCount: Int = DEFAULT_MAX_MUTATION_COUNT,
     val outputMultiplier: Int = DEFAULT_OUTPUT_MULTIPLIER,
+    val maxExtraComplexity: Int = DEFAULT_MAX_EXTRA_COMPLEXITY,
     val maxDeadCode: Int = DEFAULT_MAX_DEAD_CODE
 ) {
     companion object {
@@ -55,6 +59,7 @@ annotation class Correct(
         const val DEFAULT_MIN_MUTATION_COUNT = 0
         const val DEFAULT_MAX_MUTATION_COUNT = 32
         const val DEFAULT_OUTPUT_MULTIPLIER = 8
+        const val DEFAULT_MAX_EXTRA_COMPLEXITY = 2
         const val DEFAULT_MAX_DEAD_CODE = 0
     }
 }

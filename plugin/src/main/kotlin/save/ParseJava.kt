@@ -2,6 +2,7 @@ package edu.illinois.cs.cs125.questioner.plugin.save
 
 import com.google.googlejavaformat.java.Formatter
 import edu.illinois.cs.cs125.jeed.core.CheckstyleArguments
+import edu.illinois.cs.cs125.jeed.core.FeatureName
 import edu.illinois.cs.cs125.jeed.core.Source
 import edu.illinois.cs.cs125.jeed.core.checkstyle
 import edu.illinois.cs.cs125.jeed.core.complexity
@@ -100,6 +101,7 @@ data class ParsedJavaFile(val path: String, val contents: String) {
                             .removeSurrounding("<body>", "</body>")
                     }
                 }
+                val path = parameters["path"]
                 val solutionThrows = parameters["solutionThrows"]?.toBoolean() ?: Correct.DEFAULT_SOLUTION_THROWS
                 val focused = parameters["focused"]?.toBoolean() ?: Correct.DEFAULT_FOCUSED
                 val minTestCount = parameters["minTestCount"]?.toInt() ?: Correct.DEFAULT_MIN_TEST_COUNT
@@ -110,12 +112,14 @@ data class ParsedJavaFile(val path: String, val contents: String) {
                 val minMutationCount = parameters["minMutationCount"]?.toInt() ?: Correct.DEFAULT_MIN_MUTATION_COUNT
                 val maxMutationCount = parameters["maxMutationCount"]?.toInt() ?: Correct.DEFAULT_MAX_MUTATION_COUNT
                 val outputMultiplier = parameters["outputMultiplier"]?.toInt() ?: Correct.DEFAULT_OUTPUT_MULTIPLIER
+                val maxExtraComplexity = parameters["maxExtraComplexity"]?.toInt() ?: Correct.DEFAULT_MAX_EXTRA_COMPLEXITY
                 val maxDeadCode = parameters["maxDeadCode"]?.toInt() ?: Correct.DEFAULT_MAX_DEAD_CODE
 
                 CorrectData(
                     name,
                     version,
                     author,
+                    path,
                     description,
                     solutionThrows,
                     focused,
@@ -127,6 +131,7 @@ data class ParsedJavaFile(val path: String, val contents: String) {
                     minMutationCount,
                     maxMutationCount,
                     outputMultiplier,
+                    maxExtraComplexity,
                     maxDeadCode
                 )
             }
@@ -228,6 +233,15 @@ data class ParsedJavaFile(val path: String, val contents: String) {
                 Question.Type.SNIPPET -> features.lookup("")
             }
         }.features
+        val expectedDeadCode = features.let {
+            when {
+                features.featureMap[FeatureName.ASSERT] > 0 -> features.featureMap[FeatureName.ASSERT] + 1
+                else -> 0
+            } + when {
+                features.featureMap[FeatureName.ASSERT] == 0 && features.featureMap[FeatureName.CONSTRUCTOR] == 0 -> 1
+                else -> 0
+            }
+        }
         return Pair(
             Question.FlatFile(
                 className,
@@ -235,7 +249,8 @@ data class ParsedJavaFile(val path: String, val contents: String) {
                 Question.Language.java,
                 path,
                 complexity,
-                features
+                features,
+                expectedDeadCode
             ),
             questionType
         )

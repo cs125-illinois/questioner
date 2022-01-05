@@ -77,7 +77,7 @@ object Questions {
         check(question.validated) { "Question ${submission.path} is not validated" }
         val start = Instant.now().toEpochMilli()
         val timeout = question.testingSettings!!.timeout * (System.getenv("TIMEOUT_MULTIPLIER")?.toInt() ?: 1)
-        val settings = question.testingSettings!!.copy(failOnLint = submission.failOnLint, timeout = timeout)
+        val settings = question.testingSettings!!.copy(timeout = timeout)
         logger.trace { "Testing ${question.name} with settings $settings" }
         return question.test(
             submission.contents,
@@ -94,7 +94,6 @@ data class Submission(
     val path: String,
     val contents: String,
     val language: Question.Language,
-    val failOnLint: Boolean
 )
 
 @JsonClass(generateAdapter = true)
@@ -137,7 +136,7 @@ data class Status(
     val version: String = versionString
 )
 
-fun getStatus(kotlinOnly: Boolean = false) = Status(
+fun getStatus() = Status(
     questions = Questions.questions.map { (path, question) ->
         QuestionStatus(
             path,
@@ -146,8 +145,6 @@ fun getStatus(kotlinOnly: Boolean = false) = Status(
             question.validated,
             question.hasKotlin
         )
-    }.filter {
-        !kotlinOnly || it.kotlin
     }
 )
 
@@ -173,42 +170,6 @@ fun Application.questioner() {
     routing {
         get("/") {
             call.respond(getStatus())
-        }
-        get("/kotlin") {
-            call.respond(getStatus(true))
-        }
-        get("/question/java/{path}") {
-            val path = call.parameters["path"] ?: return@get call.respond(HttpStatusCode.BadRequest)
-            val question = Questions.load(path) ?: return@get call.respond(HttpStatusCode.NotFound)
-            call.respond(
-                QuestionDescription(
-                    path,
-                    question.name,
-                    question.metadata.version,
-                    question.metadata.javaDescription,
-                    question.metadata.author,
-                    question.metadata.packageName,
-                    question.detemplatedJavaStarter,
-                )
-            )
-        }
-        get("/question/kotlin/{path}") {
-            val path = call.parameters["path"] ?: return@get call.respond(HttpStatusCode.BadRequest)
-            val question = Questions.load(path) ?: return@get call.respond(HttpStatusCode.NotFound)
-            if (!question.hasKotlin) {
-                return@get call.respond(HttpStatusCode.NotFound)
-            }
-            call.respond(
-                QuestionDescription(
-                    path,
-                    question.name,
-                    question.metadata.version,
-                    question.metadata.kotlinDescription!!,
-                    question.metadata.author,
-                    question.metadata.packageName,
-                    starter = question.detemplatedKotlinStarter
-                )
-            )
         }
         post("/") {
             withContext(threadPool) {

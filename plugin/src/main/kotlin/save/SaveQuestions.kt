@@ -2,6 +2,7 @@
 
 package edu.illinois.cs.cs125.questioner.plugin.save
 
+import com.github.slugify.Slugify
 import com.squareup.moshi.JsonClass
 import com.squareup.moshi.Moshi
 import edu.illinois.cs.cs125.jenisol.core.Both
@@ -48,6 +49,7 @@ import java.util.Locale
 import java.util.regex.Pattern
 import java.util.stream.Collectors
 
+private val slugify = Slugify()
 private val moshi = Moshi.Builder().build()
 
 @JsonClass(generateAdapter = true)
@@ -427,7 +429,8 @@ fun List<ParsedJavaFile>.findQuestions(
                 javaTemplate,
                 kotlinTemplate,
                 solution.whitelist.toSet(),
-                solution.blacklist.toSet()
+                solution.blacklist.toSet(),
+                solution.correct.path ?: slugify.slugify(solution.correct.name)
             )
         } catch (e: Exception) {
             throw Exception("Process ${solution.path} failed", e)
@@ -512,7 +515,7 @@ internal fun String.stripPackage(): String {
 
 val markdownParser = MarkdownParser(CommonMarkFlavourDescriptor())
 
-fun String.toReason() = when (toUpperCase(Locale.getDefault())) {
+fun String.toReason() = when (uppercase(Locale.getDefault())) {
     "DESIGN" -> Question.IncorrectFile.Reason.DESIGN
     "TEST" -> Question.IncorrectFile.Reason.TEST
     "COMPILE" -> Question.IncorrectFile.Reason.COMPILE

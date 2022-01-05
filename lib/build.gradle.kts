@@ -8,10 +8,9 @@ dependencies {
 
     implementation("org.jetbrains.kotlin:kotlin-reflect:1.6.10")
     implementation("com.squareup.moshi:moshi-kotlin:1.13.0")
-    implementation("com.github.slugify:slugify:2.5")
     implementation("org.apache.commons:commons-text:1.9")
 
-    api("com.github.cs125-illinois.jeed:core:2021.12.3")
+    api("com.github.cs125-illinois.jeed:core:2022.1.0")
     api("com.github.cs125-illinois:jenisol:2021.12.2")
     api("io.kotest:kotest-runner-junit5:4.6.3")
     api("com.google.truth:truth:1.1.3")

@@ -75,7 +75,7 @@ data class ParsedKotlinFile(val path: String, val contents: String) {
         check(incorrect != null) { "Not an incorrect file" }
         return Question.IncorrectFile(
             className,
-            clean(cleanSpec),
+            clean(cleanSpec).trimStart(),
             incorrect.toReason(),
             Question.Language.kotlin,
             path,
@@ -91,7 +91,7 @@ data class ParsedKotlinFile(val path: String, val contents: String) {
 
     fun toAlternateFile(cleanSpec: CleanSpec): Question.FlatFile {
         check(alternateSolution != null) { "Not an alternate solution file" }
-        val solutionContent = clean(cleanSpec)
+        val solutionContent = clean(cleanSpec).trimStart()
         val complexity = if (cleanSpec.notClass) {
             Source.fromSnippet(solutionContent, SnippetArguments(fileType = Source.FileType.KOTLIN, noEmptyMain = true))
         } else {
@@ -113,7 +113,7 @@ data class ParsedKotlinFile(val path: String, val contents: String) {
         check(starter != null) { "Not an starter code file" }
         return Question.IncorrectFile(
             className,
-            clean(cleanSpec),
+            clean(cleanSpec).trimStart(),
             incorrect?.toReason() ?: "test".toReason(),
             Question.Language.kotlin,
             path,
@@ -236,7 +236,7 @@ data class ParsedKotlinFile(val path: String, val contents: String) {
     var usedImports: List<String> = listOf()
 
     fun extractTemplate(): String? {
-        val correctSolution = clean(CleanSpec(false, null))
+        val correctSolution = clean(CleanSpec(false, null)).trimStart()
         val templateStart = Regex("""//.*TEMPLATE_START""").find(correctSolution)?.range?.start ?: return null
         val templateEnd = correctSolution.indexOf("TEMPLATE_END")
         val start = correctSolution.substring(0 until templateStart)
@@ -245,7 +245,7 @@ data class ParsedKotlinFile(val path: String, val contents: String) {
     }
 
     fun extractStarter(wrappedClass: String?): Question.IncorrectFile? {
-        val correctSolution = clean(CleanSpec(false, null))
+        val correctSolution = clean(CleanSpec(false, null)).trimStart()
         val parsed = correctSolution.parseKotlin()
         val methodDeclaration = if (topLevelFile) {
             parsed.tree.topLevelObject(0)?.functionDeclaration()

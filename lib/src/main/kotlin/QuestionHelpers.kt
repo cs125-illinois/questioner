@@ -42,8 +42,7 @@ fun Question.templateSubmission(contents: String, language: Question.Language = 
 fun Question.compileSubmission(
     contents: String,
     parentClassLoader: ClassLoader,
-    testResults: TestResults,
-    failOnCheckstyle: Boolean = true
+    testResults: TestResults
 ): CompiledSource {
     return try {
         val actualParents = Pair(compiledCommon?.classLoader ?: parentClassLoader, compiledCommon?.fileManager)
@@ -62,7 +61,7 @@ fun Question.compileSubmission(
             testResults.complete.compileSubmission = CompiledSourceResult(it)
             testResults.completedSteps.add(TestResults.Step.compileSubmission)
         }
-        testResults.complete.checkstyle = source.checkstyle(CheckstyleArguments(failOnError = failOnCheckstyle))
+        testResults.complete.checkstyle = source.checkstyle(CheckstyleArguments(failOnError = false))
         testResults.completedSteps.add(TestResults.Step.checkstyle)
         compiledSource
     } catch (e: TemplatingFailed) {
@@ -84,8 +83,7 @@ fun Question.compileSubmission(
 fun Question.kompileSubmission(
     contents: String,
     parentClassLoader: ClassLoader,
-    testResults: TestResults,
-    failOnKtlint: Boolean = true
+    testResults: TestResults
 ): CompiledSource {
     return try {
         val actualParents = Pair(compiledCommon?.classLoader ?: parentClassLoader, compiledCommon?.fileManager)
@@ -104,7 +102,7 @@ fun Question.kompileSubmission(
             testResults.complete.compileSubmission = CompiledSourceResult(it)
             testResults.completedSteps.add(TestResults.Step.compileSubmission)
         }
-        testResults.complete.ktlint = source.ktLint(KtLintArguments(failOnError = failOnKtlint))
+        testResults.complete.ktlint = source.ktLint(KtLintArguments(failOnError = false))
         testResults.completedSteps.add(TestResults.Step.ktlint)
         compiledSource
     } catch (e: TemplatingFailed) {
@@ -298,7 +296,7 @@ fun Question.computeComplexity(contents: String, language: Question.Language): Q
         }
         else -> error("Shouldn't get here")
     }
-    return Question.ComplexityComparison(solutionComplexity, submissionComplexity)
+    return Question.ComplexityComparison(solutionComplexity, submissionComplexity, control.maxExtraComplexity)
 }
 
 class InvertingClassLoader(private val inversions: Set<String>) : ClassLoader() {
