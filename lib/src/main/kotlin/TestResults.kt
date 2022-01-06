@@ -18,6 +18,7 @@ import edu.illinois.cs.cs125.jenisol.core.TestResult as JenisolTestResult
 
 @JsonClass(generateAdapter = true)
 data class TestResults(
+    var language: Question.Language,
     val completedSteps: MutableSet<Step> = mutableSetOf(),
     val complete: CompletedTasks = CompletedTasks(),
     val failedSteps: MutableSet<Step> = mutableSetOf(),
@@ -38,6 +39,7 @@ data class TestResults(
         checkSubmission,
         complexity,
         coverage,
+        executioncount,
         test,
     }
 
@@ -49,7 +51,8 @@ data class TestResults(
         var compileTest: CompiledSourceResult? = null,
         var testing: TestingResult? = null,
         var complexity: Question.ComplexityComparison? = null,
-        var coverage: Question.CoverageComparison? = null
+        var coverage: Question.CoverageComparison? = null,
+        var executionCount: Question.ExecutionCountComparison? = null
     )
 
     @JsonClass(generateAdapter = true)
@@ -86,15 +89,32 @@ data class TestResults(
         var complexity: ComplexityFailed? = null
     )
 
-    @Suppress("MemberVisibilityCanBePrivate", "unused")
-    val completed: Boolean
-        get() = completedSteps.contains(Step.test)
-    val succeeded: Boolean
-        get() = !timeout && complete.testing?.passed == true && complete.testing?.completed == true
-    val failedLinting: Boolean
-        get() = complete.checkstyle?.errors?.isNotEmpty()
-            ?: complete.ktlint?.errors?.isNotEmpty()
-            ?: error("Linting did not run or did not succeed")
+    var failedLinting: Boolean? = null
+    fun addCheckstyleResults(checkstyle: CheckstyleResults) {
+        completedSteps.add(Step.checkstyle)
+        complete.checkstyle = checkstyle
+        failedLinting = checkstyle.errors.isNotEmpty()
+    }
+    fun addKtlintResults(ktlint: KtLintResults) {
+        completedSteps.add(Step.ktlint)
+        complete.ktlint = ktlint
+        failedLinting = ktlint.errors.isNotEmpty()
+    }
+
+    @Suppress("MemberVisibilityCanBePrivate")
+    var completed: Boolean = false
+    @Suppress("MemberVisibilityCanBePrivate")
+    var succeeded: Boolean = false
+    @Suppress("MemberVisibilityCanBePrivate")
+    var failureCount: Int? = null
+
+    fun addTestingResults(testing: TestingResult) {
+        completedSteps.add(Step.test)
+        complete.testing = testing
+        completed = true
+        succeeded = !timeout && testing.passed == true && testing.completed == true
+        failureCount = testing.tests.filter { !it.passed }.size
+    }
 
     val summary: String
         get() = if (failed.templateSubmission != null) {
@@ -133,7 +153,7 @@ data class TestResults(
             Question.IncorrectFile.Reason.DESIGN -> require(failed.checkSubmission != null) {
                 "Expected submission to fail design"
             }
-            Question.IncorrectFile.Reason.TIMEOUT -> require(timeout || !succeeded) {
+            Question.IncorrectFile.Reason.TIMEOUT -> require(timeout || succeeded == false) {
                 "Expected submission to timeout"
             }
             Question.IncorrectFile.Reason.DEADCODE -> require(complete.coverage!!.deadLines > 0) {

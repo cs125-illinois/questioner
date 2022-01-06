@@ -112,7 +112,8 @@ data class ParsedJavaFile(val path: String, val contents: String) {
                 val minMutationCount = parameters["minMutationCount"]?.toInt() ?: Correct.DEFAULT_MIN_MUTATION_COUNT
                 val maxMutationCount = parameters["maxMutationCount"]?.toInt() ?: Correct.DEFAULT_MAX_MUTATION_COUNT
                 val outputMultiplier = parameters["outputMultiplier"]?.toInt() ?: Correct.DEFAULT_OUTPUT_MULTIPLIER
-                val maxExtraComplexity = parameters["maxExtraComplexity"]?.toInt() ?: Correct.DEFAULT_MAX_EXTRA_COMPLEXITY
+                val maxExtraComplexity =
+                    parameters["maxExtraComplexity"]?.toInt() ?: Correct.DEFAULT_MAX_EXTRA_COMPLEXITY
                 val maxDeadCode = parameters["maxDeadCode"]?.toInt() ?: Correct.DEFAULT_MAX_DEAD_CODE
 
                 CorrectData(
@@ -359,7 +360,24 @@ data class ParsedJavaFile(val path: String, val contents: String) {
                 Question.Type.SNIPPET -> features.lookup("")
             }
         }.features
-        return Question.FlatFile(className, clean(cleanSpec).trimStart(), Question.Language.java, path, complexity, features)
+        val expectedDeadCode = features.let {
+            when {
+                features.featureMap[FeatureName.ASSERT] > 0 -> features.featureMap[FeatureName.ASSERT] + 1
+                else -> 0
+            } + when {
+                features.featureMap[FeatureName.ASSERT] == 0 && features.featureMap[FeatureName.CONSTRUCTOR] == 0 -> 1
+                else -> 0
+            }
+        }
+        return Question.FlatFile(
+            className,
+            clean(cleanSpec).trimStart(),
+            Question.Language.java,
+            path,
+            complexity,
+            features,
+            expectedDeadCode
+        )
     }
 
     fun toStarterFile(cleanSpec: CleanSpec): Question.IncorrectFile {

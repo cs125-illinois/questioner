@@ -7,15 +7,17 @@ import edu.illinois.cs.cs125.jeed.core.CheckstyleFailed
 import edu.illinois.cs.cs125.jeed.core.CompilationArguments
 import edu.illinois.cs.cs125.jeed.core.CompilationFailed
 import edu.illinois.cs.cs125.jeed.core.ComplexityFailed
+import edu.illinois.cs.cs125.jeed.core.ConfiguredSandboxPlugin
 import edu.illinois.cs.cs125.jeed.core.Features
+import edu.illinois.cs.cs125.jeed.core.Jacoco
 import edu.illinois.cs.cs125.jeed.core.KtLintFailed
+import edu.illinois.cs.cs125.jeed.core.LineTrace
+import edu.illinois.cs.cs125.jeed.core.LineTraceArguments
 import edu.illinois.cs.cs125.jeed.core.MutatedSource
 import edu.illinois.cs.cs125.jeed.core.Sandbox
 import edu.illinois.cs.cs125.jeed.core.Source
-import edu.illinois.cs.cs125.jeed.core.SourceExecutionArguments
 import edu.illinois.cs.cs125.jeed.core.TemplatingFailed
 import edu.illinois.cs.cs125.jeed.core.compile
-import edu.illinois.cs.cs125.jeed.core.jacocoWith
 import edu.illinois.cs.cs125.jenisol.core.Settings
 import edu.illinois.cs.cs125.jenisol.core.SubmissionDesignError
 import edu.illinois.cs.cs125.questioner.lib.moshi.Adapters
@@ -176,6 +178,7 @@ data class Question(
         val kotlinWhitelist: Set<String>?,
         val shrink: Boolean,
         var solutionCoverage: CoverageComparison.LineCoverage? = null,
+        var solutionExecutionCount: ValidationResults.SolutionExecutionCounts? = null,
         val checkBlacklist: Boolean = true
     )
 
@@ -189,8 +192,12 @@ data class Question(
         val mutationLength: Long,
         val incorrectLength: Long,
         val calibrationLength: Long,
-        val solutionCoverage: CoverageComparison.LineCoverage
-    )
+        val solutionCoverage: CoverageComparison.LineCoverage,
+        val executionCounts: SolutionExecutionCounts
+    ) {
+        @JsonClass(generateAdapter = true)
+        data class SolutionExecutionCounts(val java: Int, val kotlin: Int? = null)
+    }
 
     @JsonClass(generateAdapter = true)
     data class Citation(val source: String, val link: String? = null)
@@ -248,6 +255,12 @@ data class Question(
 
         val deadLines = (submission.missed - solution.missed).coerceAtLeast(0)
     }
+
+    @JsonClass(generateAdapter = true)
+    data class ExecutionCountComparison(
+        val solution: Int,
+        val submission: Int
+    )
 
     @delegate:Transient
     val compiledCommon by lazy {
@@ -352,7 +365,7 @@ data class Question(
     ): TestResults {
         check(settings != null) { "No test settings provided" }
 
-        val results = TestResults()
+        val results = TestResults(language)
 
         @Suppress("SwallowedException")
         val compiledSubmission = try {
@@ -406,21 +419,34 @@ data class Question(
             )
         )
 
-        val executionArguments = SourceExecutionArguments(
+        val executionArguments = Sandbox.ExecutionArguments(
             timeout = settings.timeout.toLong(),
             classLoaderConfiguration = classLoaderConfiguration,
             maxOutputLines = settings.outputLimit,
             permissions = SAFE_PERMISSIONS,
             returnTimeout = DEFAULT_RETURN_TIMEOUT
         )
-
-        val (taskResults, coverageBuilder) = compiledSubmission.jacocoWith(executionArguments) { classLoader ->
+        val plugins = listOf(
+            ConfiguredSandboxPlugin(Jacoco, Unit),
+            ConfiguredSandboxPlugin(LineTrace, LineTraceArguments(recordedLineLimit = 0))
+        )
+        /*
+        val plugins = listOf(
+            ConfiguredSandboxPlugin(Jacoco, Unit)
+        )
+         */
+        val taskResults = Sandbox.execute(
+            compiledSubmission.classLoader,
+            executionArguments,
+            configuredPlugins = plugins
+        ) { (classLoader, _) ->
             try {
                 solution.submission(classLoader.loadClass(klassName)).test(jenisolSettings, ::captureJeedOutput)
             } catch (e: InvocationTargetException) {
                 throw e.cause ?: e
             }
         }
+
         results.taskResults = taskResults
         results.timeout = taskResults.timeout
 
@@ -454,14 +480,15 @@ data class Question(
             return results
         }
 
-        results.completedSteps.add(TestResults.Step.test)
-        results.complete.testing = TestResults.TestingResult(
-            taskResults.returned!!.map { it.asTestResult(compiledSubmission.source) },
-            settings.testCount,
-            taskResults.completed && !taskResults.timeout
+        results.addTestingResults(
+            TestResults.TestingResult(
+                taskResults.returned!!.map { it.asTestResult(compiledSubmission.source) },
+                settings.testCount,
+                taskResults.completed && !taskResults.timeout
+            )
         )
 
-        val coverage = coverageBuilder.classes.find { it.name == klassName }!!
+        val coverage = taskResults.pluginResult(Jacoco).classes.find { it.name == klassName }!!
         val missed = (coverage.firstLine..coverage.lastLine).toList().filter { line ->
             coverage.getLine(line).status == ICounter.NOT_COVERED || coverage.getLine(line).status == ICounter.PARTLY_COVERED
         }.map { line ->
@@ -481,6 +508,18 @@ data class Question(
             CoverageComparison(solutionCoverage, submissionCoverage, missed, control.maxDeadCode)
         results.completedSteps.add(TestResults.Step.coverage)
 
+        val submissionExecutionCount = taskResults.pluginResult(LineTrace).linesRun.toInt()
+        val solutionExecutionCount = if (language == Language.java) {
+            validationResults?.executionCounts?.java ?: settings.solutionExecutionCount?.java
+        } else {
+            validationResults?.executionCounts?.kotlin ?: settings.solutionExecutionCount?.kotlin
+        } ?: submissionExecutionCount
+
+        results.complete.executionCount = ExecutionCountComparison(solutionExecutionCount, submissionExecutionCount)
+        results.completedSteps.add(TestResults.Step.executioncount)
+
+        //results.complete.executionCount = ExecutionCountComparison(0, 0)
+        //results.completedSteps.add(TestResults.Step.executioncount)
         return results
     }
 

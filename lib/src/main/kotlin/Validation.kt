@@ -24,7 +24,7 @@ suspend fun Question.validate(seed: Int): ValidationReport {
         if (!succeeded) {
             throw SolutionFailed(file, summary)
         }
-        if (failedLinting) {
+        if (failedLinting!!) {
             throw SolutionFailedLinting(file)
         }
         val solutionThrew = tests()?.firstOrNull { it.jenisol!!.solution.threw != null }
@@ -102,7 +102,7 @@ suspend fun Question.validate(seed: Int): ValidationReport {
     }
 
     fun TestResults.checkIncorrect(file: Question.IncorrectFile, mutated: Boolean) {
-        if (!mutated && failedLinting) {
+        if (!mutated && failedLinting == true) {
             throw IncorrectFailedLinting(file, correct)
         }
         if (file.reason !== Question.IncorrectFile.Reason.DEADCODE) {
@@ -153,6 +153,21 @@ suspend fun Question.validate(seed: Int): ValidationReport {
         it.solution.covered / it.solution.total
     }!!.solution
 
+    val javaSolutionExecutionCount = firstCorrectResults
+        .filter { it.language == Question.Language.java }
+        .mapNotNull { it.complete.executionCount }
+        .maxByOrNull {
+            it.solution
+        }!!.solution
+    val kotlinSolutionExecutionCount = firstCorrectResults
+        .filter { it.language == Question.Language.kotlin }
+        .mapNotNull { it.complete.executionCount }
+        .maxByOrNull {
+            it.solution
+        }?.solution
+    val executionCounts =
+        Question.ValidationResults.SolutionExecutionCounts(javaSolutionExecutionCount, kotlinSolutionExecutionCount)
+
     val bootstrapLength = Instant.now().toEpochMilli() - bootStrapStart.toEpochMilli()
 
     val mutationStart = Instant.now()
@@ -183,7 +198,8 @@ suspend fun Question.validate(seed: Int): ValidationReport {
         javaWhitelist = javaClassWhitelist,
         kotlinWhitelist = kotlinClassWhitelist,
         shrink = false,
-        solutionCoverage = solutionCoverage
+        solutionCoverage = solutionCoverage,
+        solutionExecutionCount = executionCounts
     )
     val incorrectResults = allIncorrect.map { wrong ->
         test(
@@ -247,7 +263,8 @@ suspend fun Question.validate(seed: Int): ValidationReport {
         mutationLength = mutationLength,
         incorrectLength = incorrectLength,
         calibrationLength = calibrationLength,
-        solutionCoverage = solutionCoverage
+        solutionCoverage = solutionCoverage,
+        executionCounts = executionCounts
     )
 
     return ValidationReport(

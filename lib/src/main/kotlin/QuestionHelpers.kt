@@ -61,8 +61,7 @@ fun Question.compileSubmission(
             testResults.complete.compileSubmission = CompiledSourceResult(it)
             testResults.completedSteps.add(TestResults.Step.compileSubmission)
         }
-        testResults.complete.checkstyle = source.checkstyle(CheckstyleArguments(failOnError = false))
-        testResults.completedSteps.add(TestResults.Step.checkstyle)
+        testResults.addCheckstyleResults(source.checkstyle(CheckstyleArguments(failOnError = false)))
         compiledSource
     } catch (e: TemplatingFailed) {
         testResults.failed.templateSubmission = e
@@ -102,8 +101,7 @@ fun Question.kompileSubmission(
             testResults.complete.compileSubmission = CompiledSourceResult(it)
             testResults.completedSteps.add(TestResults.Step.compileSubmission)
         }
-        testResults.complete.ktlint = source.ktLint(KtLintArguments(failOnError = false))
-        testResults.completedSteps.add(TestResults.Step.ktlint)
+        testResults.addKtlintResults(source.ktLint(KtLintArguments(failOnError = false)))
         compiledSource
     } catch (e: TemplatingFailed) {
         testResults.failed.templateSubmission = e
