@@ -2,33 +2,9 @@
 
 package edu.illinois.cs.cs125.questioner.lib
 
-import com.squareup.moshi.JsonClass
 import java.lang.RuntimeException
 import java.lang.reflect.Method
 import java.lang.reflect.Modifier
-
-@JsonClass(generateAdapter = true)
-data class CorrectData(
-    val name: String,
-    val version: String,
-    val author: String,
-    val path: String?,
-    val description: String,
-    val solutionThrows: Boolean,
-    val focused: Boolean,
-    val minTestCount: Int,
-    val maxTestCount: Int,
-    val minTimeout: Int,
-    val maxTimeout: Int,
-    val timeoutMultiplier: Int,
-    val minMutationCount: Int,
-    val maxMutationCount: Int,
-    val outputMultiplier: Int,
-    val maxExtraComplexity: Int,
-    val maxDeadCode: Int,
-    val maxExecutionCount: Long,
-    val executionCountMultiplier: Int
-)
 
 @Suppress("LongParameterList")
 @Target(AnnotationTarget.CLASS)
@@ -37,38 +13,23 @@ annotation class Correct(
     val version: String,
     val author: String,
     val path: String = "",
-    val solutionThrows: Boolean = DEFAULT_SOLUTION_THROWS,
-    val focused: Boolean = DEFAULT_FOCUSED,
-    val minTestCount: Int = DEFAULT_MIN_TEST_COUNT,
-    val maxTestCount: Int = DEFAULT_MAX_TEST_COUNT,
-    val minTimeout: Int = DEFAULT_MIN_TIMEOUT,
-    val maxTimeout: Int = DEFAULT_MAX_TIMEOUT,
-    val timeoutMultiplier: Int = DEFAULT_TIMEOUT_MULTIPLIER,
-    val minMutationCount: Int = DEFAULT_MIN_MUTATION_COUNT,
-    val maxMutationCount: Int = DEFAULT_MAX_MUTATION_COUNT,
-    val outputMultiplier: Int = DEFAULT_OUTPUT_MULTIPLIER,
-    val maxExtraComplexity: Int = DEFAULT_MAX_EXTRA_COMPLEXITY,
-    val maxDeadCode: Int = DEFAULT_MAX_DEAD_CODE,
-    val maxExecutionCount: Long = DEFAULT_MAX_EXECUTION_COUNT,
-    val executionCountMultiplier: Int = DEFAULT_EXECUTION_COUNT_MULTIPLIER
-) {
-    companion object {
-        const val DEFAULT_SOLUTION_THROWS = false
-        const val DEFAULT_FOCUSED = false
-        const val DEFAULT_MIN_TEST_COUNT = 128
-        const val DEFAULT_MAX_TEST_COUNT = 1024
-        const val DEFAULT_MIN_TIMEOUT = 128
-        const val DEFAULT_MAX_TIMEOUT = 2048
-        const val DEFAULT_TIMEOUT_MULTIPLIER = 8
-        const val DEFAULT_MIN_MUTATION_COUNT = 0
-        const val DEFAULT_MAX_MUTATION_COUNT = 32
-        const val DEFAULT_OUTPUT_MULTIPLIER = 8
-        const val DEFAULT_MAX_EXTRA_COMPLEXITY = 2
-        const val DEFAULT_MAX_DEAD_CODE = 0
-        const val DEFAULT_MAX_EXECUTION_COUNT = 1024 * 1024 * 1024L
-        const val DEFAULT_EXECUTION_COUNT_MULTIPLIER = 4
-    }
-}
+    val solutionThrows: Boolean = false,
+    val focused: Boolean = false,
+    val minTestCount: Int = -1,
+    val maxTestCount: Int = -1,
+    val minTimeout: Int = -1,
+    val maxTimeout: Int = -1,
+    val timeoutMultiplier: Int = -1,
+    val minMutationCount: Int = -1,
+    val maxMutationCount: Int = -1,
+    val outputMultiplier: Int = -1,
+    val maxExtraComplexity: Int = -1,
+    val maxDeadCode: Int = -1,
+    val maxExecutionCount: Long = -1,
+    val executionCountMultiplier: Int = -1,
+    val minExtraSourceLines: Int = -1,
+    val sourceLinesMultiplier: Double = -1.0
+)
 
 @Target(AnnotationTarget.CLASS, AnnotationTarget.FILE)
 annotation class Incorrect(val reason: String = "test")

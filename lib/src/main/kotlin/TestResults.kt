@@ -95,8 +95,9 @@ data class TestResults(
         val solution: LineCounts,
         val submission: LineCounts,
         val limit: Int,
+        val allowance: Int,
         val increase: Int = submission.source - solution.source,
-        val failed: Boolean = submission.source > limit
+        val failed: Boolean = increase > allowance && submission.source > limit
     )
 
     @JsonClass(generateAdapter = true)
@@ -106,8 +107,7 @@ data class TestResults(
         val missed: List<Int>,
         val limit: Int,
         val increase: Int = submission.missed - solution.missed,
-        val failed: Boolean = increase > limit,
-        val deadLines: Int = (submission.missed - solution.missed).coerceAtLeast(0)
+        val failed: Boolean = increase > limit
     ) {
         @JsonClass(generateAdapter = true)
         data class LineCoverage(val covered: Int, val total: Int, val missed: Int = total - covered) {
@@ -143,6 +143,7 @@ data class TestResults(
         complete.checkstyle = checkstyle
         failedLinting = checkstyle.errors.isNotEmpty()
     }
+
     fun addKtlintResults(ktlint: KtLintResults) {
         completedSteps.add(Step.ktlint)
         complete.ktlint = ktlint
@@ -151,8 +152,10 @@ data class TestResults(
 
     @Suppress("MemberVisibilityCanBePrivate")
     var completed: Boolean = false
+
     @Suppress("MemberVisibilityCanBePrivate")
     var succeeded: Boolean = false
+
     @Suppress("MemberVisibilityCanBePrivate")
     var failureCount: Int? = null
 
@@ -189,32 +192,6 @@ data class TestResults(
             check(succeeded)
             "Passed"
         }
-
-    fun validate(reason: Question.IncorrectFile.Reason, isMutated: Boolean) {
-        when (reason) {
-            Question.IncorrectFile.Reason.COMPILE -> require(failed.compileSubmission != null) {
-                "Expected submission not to compile"
-            }
-            Question.IncorrectFile.Reason.CHECKSTYLE -> require(failed.checkstyle != null) {
-                "Expected submission to fail checkstyle"
-            }
-            Question.IncorrectFile.Reason.DESIGN -> require(failed.checkSubmission != null) {
-                "Expected submission to fail design"
-            }
-            Question.IncorrectFile.Reason.TIMEOUT -> require(timeout || !succeeded) {
-                "Expected submission to timeout"
-            }
-            Question.IncorrectFile.Reason.DEADCODE -> require(complete.coverage?.failed == true) {
-                "Expected submission to contain dead code"
-            }
-            Question.IncorrectFile.Reason.LINECOUNT -> require(complete.executionCount?.failed == true) {
-                "Expected submission to execute too many lines"
-            }
-            else -> require(isMutated || (!timeout && complete.testing?.passed == false)) {
-                "Expected submission to fail tests"
-            }
-        }
-    }
 
     fun toJson(): String = moshi.adapter(TestResults::class.java).toJson(this)
 }

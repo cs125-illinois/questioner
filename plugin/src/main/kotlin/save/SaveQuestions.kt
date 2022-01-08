@@ -414,7 +414,7 @@ fun List<ParsedJavaFile>.findQuestions(
                     myUsedFiles,
                     solution.correct.focused
                 ),
-                Question.TestingControl(solution.correct),
+                solution.correct.control,
                 Question.FlatFile(
                     solution.className,
                     solution.removeImports(importNames).stripPackage(),

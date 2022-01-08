@@ -13,6 +13,8 @@ import edu.illinois.cs.cs125.questioner.lib.moshi.Adapters
 import java.io.File
 import java.lang.reflect.ReflectPermission
 import java.util.Locale
+import kotlin.reflect.full.declaredMemberProperties
+import kotlin.reflect.full.primaryConstructor
 import edu.illinois.cs.cs125.jeed.core.moshi.Adapters as JeedAdapters
 import edu.illinois.cs.cs125.jenisol.core.solution as jenisol
 
@@ -36,7 +38,7 @@ data class Question(
     val type: Type,
     val klass: String,
     val metadata: Metadata,
-    val control: TestingControl,
+    val annotatedControls: TestingControl,
     val question: FlatFile,
     val correct: FlatFile,
     val alternativeSolutions: List<FlatFile>,
@@ -89,13 +91,24 @@ data class Question(
         },
         // TODO: Support Kotlin features
         mutableMapOf(Language.java to correct.features!!),
-        control.maxExtraComplexity
+        annotatedControls.maxExtraComplexity ?: TestingControl.DEFAULT_MAX_EXTRA_COMPLEXITY
     )
 ) {
     @Suppress("EnumNaming", "EnumEntryName")
     enum class Language { java, kotlin }
 
     enum class Type { KLASS, METHOD, SNIPPET }
+
+    @JsonClass(generateAdapter = true)
+    data class CorrectData(
+        val path: String?,
+        val name: String,
+        val version: String,
+        val author: String,
+        val description: String,
+        val focused: Boolean,
+        val control: TestingControl
+    )
 
     @JsonClass(generateAdapter = true)
     data class Published(
@@ -133,36 +146,22 @@ data class Question(
 
     @JsonClass(generateAdapter = true)
     data class TestingControl(
-        val solutionThrows: Boolean,
-        val minTestCount: Int,
-        val maxTestCount: Int,
-        val minTimeout: Int,
-        val maxTimeout: Int,
-        val timeoutMultiplier: Int,
-        val minMutationCount: Int,
-        val maxMutationCount: Int,
-        val outputMultiplier: Int,
-        val maxExtraComplexity: Int,
-        val maxDeadCode: Int,
-        val maxExecutionCount: Long,
-        val executionMultiplier: Int
+        val solutionThrows: Boolean?,
+        val minTestCount: Int?,
+        val maxTestCount: Int?,
+        val minTimeout: Int?,
+        val maxTimeout: Int?,
+        val timeoutMultiplier: Int?,
+        val minMutationCount: Int?,
+        val maxMutationCount: Int?,
+        val outputMultiplier: Int?,
+        val maxExtraComplexity: Int?,
+        val maxDeadCode: Int?,
+        val maxExecutionCount: Long?,
+        val executionMultiplier: Int?,
+        val minExtraSourceLines: Int?,
+        val sourceLinesMultiplier: Double?
     ) {
-        constructor(correct: CorrectData) : this(
-            correct.solutionThrows,
-            correct.minTestCount,
-            correct.maxTestCount,
-            correct.minTimeout,
-            correct.maxTimeout,
-            correct.timeoutMultiplier,
-            correct.minMutationCount,
-            correct.maxMutationCount,
-            correct.outputMultiplier,
-            correct.maxExtraComplexity,
-            correct.maxDeadCode,
-            correct.maxExecutionCount,
-            correct.executionCountMultiplier
-        )
-
         companion object {
             const val DEFAULT_SOLUTION_THROWS = false
             const val DEFAULT_MIN_TEST_COUNT = 128
@@ -177,7 +176,31 @@ data class Question(
             const val DEFAULT_MAX_DEAD_CODE = 0
             const val DEFAULT_MAX_EXECUTION_COUNT = 1024 * 1024 * 1024L
             const val DEFAULT_EXECUTION_COUNT_MULTIPLIER = 4
+            const val DEFAULT_MIN_EXTRA_SOURCE_LINES = 2
+            const val DEFAULT_SOURCE_LINES_MULTIPLIER = 1.5
+
+            val DEFAULTS = TestingControl(
+                DEFAULT_SOLUTION_THROWS,
+                DEFAULT_MIN_TEST_COUNT,
+                DEFAULT_MAX_TEST_COUNT,
+                DEFAULT_MIN_TIMEOUT,
+                DEFAULT_MAX_TIMEOUT,
+                DEFAULT_TIMEOUT_MULTIPLIER,
+                DEFAULT_MIN_MUTATION_COUNT,
+                DEFAULT_MAX_MUTATION_COUNT,
+                DEFAULT_OUTPUT_MULTIPLIER,
+                DEFAULT_MAX_EXTRA_COMPLEXITY,
+                DEFAULT_MAX_DEAD_CODE,
+                DEFAULT_MAX_EXECUTION_COUNT,
+                DEFAULT_EXECUTION_COUNT_MULTIPLIER,
+                DEFAULT_MIN_EXTRA_SOURCE_LINES,
+                DEFAULT_SOURCE_LINES_MULTIPLIER
+            )
         }
+    }
+
+    val control: TestingControl by lazy {
+        TestingControl.DEFAULTS merge annotatedControls
     }
 
     @JsonClass(generateAdapter = true)
@@ -239,6 +262,7 @@ data class Question(
         @Transient
         val mutation: MutatedSource? = null
     ) {
+        @Suppress("SpellCheckingInspection")
         enum class Reason { DESIGN, COMPILE, TEST, CHECKSTYLE, TIMEOUT, DEADCODE, LINECOUNT, TOOLONG }
     }
 
@@ -446,4 +470,15 @@ fun String.toReason() = when (uppercase(Locale.getDefault())) {
     "LINECOUNT" -> Question.IncorrectFile.Reason.LINECOUNT
     "TOOLONG" -> Question.IncorrectFile.Reason.TOOLONG
     else -> error("Invalid incorrect reason: $this")
+}
+
+private inline infix fun <reified T : Any> T.merge(other: T): T {
+    val nameToProperty = T::class.declaredMemberProperties.associateBy { it.name }
+    val primaryConstructor = T::class.primaryConstructor!!
+    val args = primaryConstructor.parameters.associateWith { parameter ->
+        val property = nameToProperty[parameter.name]!!
+
+        (property.get(other) ?: property.get(this))
+    }
+    return primaryConstructor.callBy(args)
 }

@@ -295,7 +295,7 @@ fun Question.computeComplexity(contents: String, language: Question.Language): T
         }
         else -> error("Shouldn't get here")
     }
-    return TestResults.ComplexityComparison(solutionComplexity, submissionComplexity, control.maxExtraComplexity)
+    return TestResults.ComplexityComparison(solutionComplexity, submissionComplexity, control.maxExtraComplexity!!)
 }
 
 fun Question.computeLineCounts(contents: String, language: Question.Language): TestResults.LineCountComparison {
@@ -310,7 +310,12 @@ fun Question.computeLineCounts(contents: String, language: Question.Language): T
         Question.Language.kotlin -> Source.FileType.KOTLIN
     }
     val submissionLineCount = contents.countLines(type)
-    return TestResults.LineCountComparison(solutionLineCount, submissionLineCount, solutionLineCount.source * 2)
+    return TestResults.LineCountComparison(
+        solutionLineCount,
+        submissionLineCount,
+        (solutionLineCount.source * control.sourceLinesMultiplier!!).toInt(),
+        control.minExtraSourceLines!!
+    )
 }
 
 class InvertingClassLoader(private val inversions: Set<String>) : ClassLoader() {

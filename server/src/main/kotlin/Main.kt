@@ -39,11 +39,8 @@ import kotlin.collections.set
 import kotlin.system.exitProcess
 import edu.illinois.cs.cs125.jeed.core.moshi.Adapters as JeedAdapters
 
-private val moshi = Moshi.Builder().apply {
-    JeedAdapters.forEach { add(it) }
-}.build()
+private val moshi = Moshi.Builder().apply { JeedAdapters.forEach { add(it) } }.build()
 private val logger = KotlinLogging.logger {}
-
 private val collection: MongoCollection<BsonDocument> = run {
     require(System.getenv("MONGODB") != null) { "MONGODB environment variable not set" }
     val mongoUri = MongoClientURI(System.getenv("MONGODB")!!)
@@ -51,26 +48,31 @@ private val collection: MongoCollection<BsonDocument> = run {
     MongoClient(mongoUri).getDatabase(database).getCollection("questioner", BsonDocument::class.java)
 }
 
-private fun getQuestion(slug: String) = collection.find(
-    Filters.and(Filters.eq("slug", slug), Filters.eq("latest", true))
-).sort(Sorts.descending("updated")).first()?.let {
-    try {
-        moshi.adapter(Question::class.java).fromJson(it.toJson())
-    } catch (e: Exception) {
-        logger.warn { "Couldn't load question $slug, which might use an old schema" }
-        null
-    }
-}
-
-@Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
-private fun getQuestions() = collection.distinct("slug", String::class.java).map { getQuestion(it) }.filterNotNull()
-
 object Questions {
-    val questions = getQuestions().associateBy { it.slug }.toMutableMap()
+    private fun getQuestion(slug: String) = collection.find(
+        Filters.and(Filters.eq("slug", slug), Filters.eq("latest", true))
+    ).sort(Sorts.descending("updated")).first()?.let {
+        try {
+            moshi.adapter(Question::class.java).fromJson(it.toJson())
+        } catch (e: Exception) {
+            logger.warn { "Couldn't load question $slug, which might use an old schema" }
+            null
+        }
+    }
+
+    @Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
+    val questions = collection.distinct("slug", String::class.java)
+        .map { getQuestion(it) }
+        .filterNotNull()
+        .associateBy { it.slug }
+        .toMutableMap()
 
     fun load(path: String): Question? {
-        questions[path] = getQuestion(path) ?: return null
-        return questions[path]
+        val newQuestion = getQuestion(path) ?: return null
+        if (questions[path]?.metadata?.contentHash != newQuestion.metadata.contentHash) {
+            questions[path] = newQuestion
+        }
+        return newQuestion
     }
 
     suspend fun test(submission: Submission): TestResults {
@@ -97,26 +99,6 @@ data class Submission(
     val language: Question.Language,
 )
 
-@JsonClass(generateAdapter = true)
-data class QuestionStatus(
-    val path: String,
-    val name: String,
-    val version: String,
-    val validated: Boolean,
-    val kotlin: Boolean
-)
-
-@JsonClass(generateAdapter = true)
-data class QuestionDescription(
-    val path: String,
-    val name: String,
-    val version: String,
-    val description: String,
-    val author: String,
-    val packageName: String,
-    val starter: String?
-)
-
 private val serverStarted = Instant.now()
 
 val versionString = run {
@@ -133,20 +115,7 @@ val versionString = run {
 @JsonClass(generateAdapter = true)
 data class Status(
     val started: Instant = serverStarted,
-    var questions: List<QuestionStatus>,
     val version: String = versionString
-)
-
-fun getStatus() = Status(
-    questions = Questions.questions.map { (path, question) ->
-        QuestionStatus(
-            path,
-            question.name,
-            question.metadata.version,
-            question.validated,
-            question.hasKotlin
-        )
-    }
 )
 
 val threadPool = Executors.newFixedThreadPool(System.getenv("QUESTIONER_THREAD_POOL_SIZE")?.toIntOrNull() ?: 8)
@@ -170,7 +139,7 @@ fun Application.questioner() {
     }
     routing {
         get("/") {
-            call.respond(getStatus())
+            call.respond(Status())
         }
         post("/") {
             withContext(threadPool) {
@@ -207,7 +176,7 @@ fun Application.questioner() {
 }
 
 fun main() {
-    logger.debug { getStatus().copy(questions = listOf()).toString() }
+    logger.debug { Status() }
     logger.trace {
         Questions.questions.entries.sortedBy { it.key }.joinToString("\n") { (key, value) ->
             "$key -> ${value.name}"

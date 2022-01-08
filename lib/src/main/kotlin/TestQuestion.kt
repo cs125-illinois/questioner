@@ -150,7 +150,7 @@ suspend fun Question.test(
     results.complete.executionCount = TestResults.ExecutionCountComparison(
         solutionExecutionCount,
         submissionExecutionCount,
-        solutionExecutionCount * control.executionMultiplier
+        solutionExecutionCount * control.executionMultiplier!!
     )
     results.completedSteps.add(TestResults.Step.executioncount)
 
@@ -188,7 +188,7 @@ suspend fun Question.test(
         validationResults?.solutionCoverage ?: settings.solutionCoverage ?: submissionCoverage
 
     results.complete.coverage =
-        TestResults.CoverageComparison(solutionCoverage, submissionCoverage, missed, control.maxDeadCode)
+        TestResults.CoverageComparison(solutionCoverage, submissionCoverage, missed, control.maxDeadCode!!)
     results.completedSteps.add(TestResults.Step.coverage)
 
     return results

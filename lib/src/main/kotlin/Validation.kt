@@ -27,8 +27,13 @@ suspend fun Question.validate(seed: Int): ValidationReport {
         if (failedLinting!!) {
             throw SolutionFailedLinting(file)
         }
-        val solutionThrew = tests()?.firstOrNull { it.jenisol!!.solution.threw != null }
-        if (!control.solutionThrows && solutionThrew != null) {
+        val solutionThrew = tests()?.filter {
+            it.jenisol!!.solution.threw != null
+        }?.find {
+            val exception = it.jenisol!!.solution.threw!!
+            exception !is AssertionError && exception !is IllegalArgumentException && exception !is IllegalStateException
+        }
+        if (!control.solutionThrows!! && solutionThrew != null) {
             throw SolutionThrew(file, solutionThrew.jenisol!!.solution.threw!!, solutionThrew.jenisol.parameters)
         }
         tests()
@@ -71,7 +76,7 @@ suspend fun Question.validate(seed: Int): ValidationReport {
 
         val expectedDeadCode =
             file.expectedDeadCount ?: correct.expectedDeadCount ?: error("Couldn't load dead code count")
-        val deadCodeLimit = control.maxDeadCode + expectedDeadCode
+        val deadCodeLimit = control.maxDeadCode!! + expectedDeadCode
 
         if (complete.coverage!!.submission.missed > deadCodeLimit) {
             throw SolutionDeadCode(
@@ -107,15 +112,16 @@ suspend fun Question.validate(seed: Int): ValidationReport {
         }
         if (!listOf(
                 Question.IncorrectFile.Reason.DEADCODE,
-                Question.IncorrectFile.Reason.LINECOUNT
+                Question.IncorrectFile.Reason.LINECOUNT,
+                Question.IncorrectFile.Reason.TOOLONG
             ).contains(file.reason)
         ) {
             if (succeeded) {
                 throw IncorrectPassed(file, correct)
             }
-            if (tests()?.size?.let { it > control.maxTestCount } == true) {
+            if (tests()?.size?.let { it > control.maxTestCount!! } == true) {
                 val failingInput = tests()!!.find { !it.passed }?.arguments
-                throw IncorrectTooManyTests(file, correct, tests()!!.size, control.maxTestCount, failingInput)
+                throw IncorrectTooManyTests(file, correct, tests()!!.size, control.maxTestCount!!, failingInput)
             }
         }
         try {
@@ -123,8 +129,13 @@ suspend fun Question.validate(seed: Int): ValidationReport {
         } catch (e: Exception) {
             throw IncorrectWrongReason(file, e.message!!, summary)
         }
-        val solutionThrew = tests()?.firstOrNull { it.jenisol?.solution?.threw != null }
-        if (!control.solutionThrows && solutionThrew != null) {
+        val solutionThrew = tests()?.filter {
+            it.jenisol!!.solution.threw != null
+        }?.find {
+            val exception = it.jenisol!!.solution.threw!!
+            exception !is AssertionError && exception !is IllegalArgumentException && exception !is IllegalStateException
+        }
+        if (!control.solutionThrows!! && solutionThrew != null) {
             throw SolutionThrew(correct, solutionThrew.jenisol!!.solution.threw!!, solutionThrew.jenisol.parameters)
         }
         val size = toJson().length
@@ -139,15 +150,15 @@ suspend fun Question.validate(seed: Int): ValidationReport {
     // Sets javaClassWhitelist and kotlinClassWhitelist
     val bootstrapSettings = Question.TestingSettings(
         seed = seed,
-        testCount = control.minTestCount,
-        timeout = control.maxTimeout, // No timeout
+        testCount = control.minTestCount!!,
+        timeout = control.maxTimeout!!, // No timeout
         outputLimit = Question.UNLIMITED_OUTPUT_LINES, // No line limit
         javaWhitelist = null,
         kotlinWhitelist = null,
         shrink = false,
         checkBlacklist = false,
         executionCountLimit = Question.LanguageExecutionCounts(
-            control.maxExecutionCount,
+            control.maxExecutionCount!!,
             control.maxExecutionCount
         ) // No execution count limit
     )
@@ -178,14 +189,14 @@ suspend fun Question.validate(seed: Int): ValidationReport {
     }
 
     val bootstrapSolutionExecutionCount =
-        firstCorrectResults.setExecutionCounts(control.maxTestCount / control.minTestCount.toDouble())
+        firstCorrectResults.setExecutionCounts(control.maxTestCount!! / control.minTestCount!!.toDouble())
 
     val bootstrapLength = Instant.now().toEpochMilli() - bootStrapStart.toEpochMilli()
 
     val mutationStart = Instant.now()
-    val mutations = mutations(seed, control.maxMutationCount).also {
-        if (it.size < control.minMutationCount) {
-            throw TooFewMutations(correct, it.size, control.minMutationCount)
+    val mutations = mutations(seed, control.maxMutationCount!!).also {
+        if (it.size < control.minMutationCount!!) {
+            throw TooFewMutations(correct, it.size, control.minMutationCount!!)
         }
     }
     val allIncorrect = (incorrect + mutations).also { allIncorrect ->
@@ -203,15 +214,15 @@ suspend fun Question.validate(seed: Int): ValidationReport {
     val incorrectStart = Instant.now()
     val incorrectSettings = Question.TestingSettings(
         seed = seed,
-        testCount = control.maxTestCount,
-        timeout = control.maxTimeout,
+        testCount = control.maxTestCount!!,
+        timeout = control.maxTimeout!!,
         outputLimit = Question.UNLIMITED_OUTPUT_LINES,
         javaWhitelist = javaClassWhitelist,
         kotlinWhitelist = kotlinClassWhitelist,
         shrink = false,
         solutionCoverage = bootstrapSolutionCoverage,
         solutionExecutionCount = bootstrapSolutionExecutionCount,
-        executionCountLimit = Question.LanguageExecutionCounts(control.maxExecutionCount, control.maxExecutionCount)
+        executionCountLimit = Question.LanguageExecutionCounts(control.maxExecutionCount!!, control.maxExecutionCount)
     )
     val incorrectResults = allIncorrect.map { wrong ->
         test(
@@ -227,7 +238,7 @@ suspend fun Question.validate(seed: Int): ValidationReport {
 
     val requiredTestCount =
         incorrectResults.mapNotNull { it.results.tests()?.size }.maxOrNull() ?: error("No incorrect results")
-    val testCount = requiredTestCount.coerceAtLeast(control.minTestCount)
+    val testCount = requiredTestCount.coerceAtLeast(control.minTestCount!!)
 
     // Rerun solutions to set timeouts and output limits
     // sets solutionRuntime and solutionOutputLines
@@ -235,12 +246,12 @@ suspend fun Question.validate(seed: Int): ValidationReport {
     val calibrationSettings = Question.TestingSettings(
         seed = seed,
         testCount = testCount,
-        timeout = control.maxTimeout,
+        timeout = control.maxTimeout!!,
         outputLimit = Question.UNLIMITED_OUTPUT_LINES,
         javaWhitelist = javaClassWhitelist,
         kotlinWhitelist = kotlinClassWhitelist,
         shrink = false,
-        executionCountLimit = Question.LanguageExecutionCounts(control.maxExecutionCount, control.maxExecutionCount)
+        executionCountLimit = Question.LanguageExecutionCounts(control.maxExecutionCount!!, control.maxExecutionCount)
     )
     val calibrationResults = (setOf(correct) + alternativeSolutions).map { right ->
         test(
@@ -266,14 +277,14 @@ suspend fun Question.validate(seed: Int): ValidationReport {
     testingSettings = Question.TestingSettings(
         seed = seed,
         testCount = testCount,
-        timeout = (solutionMaxRuntime * control.timeoutMultiplier).coerceAtLeast(control.minTimeout),
-        outputLimit = solutionMaxOutputLines.coerceAtLeast(testCount * control.outputMultiplier),
+        timeout = (solutionMaxRuntime * control.timeoutMultiplier!!).coerceAtLeast(control.minTimeout!!),
+        outputLimit = solutionMaxOutputLines.coerceAtLeast(testCount * control.outputMultiplier!!),
         javaWhitelist = javaClassWhitelist,
         kotlinWhitelist = kotlinClassWhitelist,
         shrink = false,
         executionCountLimit = Question.LanguageExecutionCounts(
-            solutionExecutionCounts.java * control.executionMultiplier,
-            solutionExecutionCounts.kotlin?.times(control.executionMultiplier)
+            solutionExecutionCounts.java * control.executionMultiplier!!,
+            solutionExecutionCounts.kotlin?.times(control.executionMultiplier!!)
         )
     )
     validationResults = Question.ValidationResults(
@@ -297,6 +308,35 @@ suspend fun Question.validate(seed: Int): ValidationReport {
         solutionMaxRuntime,
         hasKotlin
     )
+}
+
+private fun TestResults.validate(reason: Question.IncorrectFile.Reason, isMutated: Boolean) {
+    when (reason) {
+        Question.IncorrectFile.Reason.COMPILE -> require(failed.compileSubmission != null) {
+            "Expected submission not to compile"
+        }
+        Question.IncorrectFile.Reason.CHECKSTYLE -> require(failed.checkstyle != null) {
+            "Expected submission to fail checkstyle"
+        }
+        Question.IncorrectFile.Reason.DESIGN -> require(failed.checkSubmission != null) {
+            "Expected submission to fail design"
+        }
+        Question.IncorrectFile.Reason.TIMEOUT -> require(timeout || !succeeded) {
+            "Expected submission to timeout"
+        }
+        Question.IncorrectFile.Reason.DEADCODE -> require(complete.coverage?.failed == true) {
+            "Expected submission to contain dead code"
+        }
+        Question.IncorrectFile.Reason.LINECOUNT -> require(complete.executionCount?.failed == true) {
+            "Expected submission to execute too many lines"
+        }
+        Question.IncorrectFile.Reason.TOOLONG -> require(complete.lineCount?.failed == true) {
+            "Expected submission to contain too many lines"
+        }
+        else -> require(isMutated || (!timeout && complete.testing?.passed == false)) {
+            "Expected submission to fail tests"
+        }
+    }
 }
 
 data class ValidationReport(
@@ -349,7 +389,7 @@ class SolutionFailedLinting(val solution: Question.FlatFile) : ValidationFailed(
 class SolutionThrew(val solution: Question.FlatFile, val threw: Throwable, val parameters: ParameterGroup) :
     ValidationFailed() {
     override val message = """
-        |Solution was not expected to throw, but threw $threw on parameters $parameters
+        |Solution was not expected to throw an unusual exception, but threw $threw on parameters $parameters
         |${printContents(solution.contents, solution.path)}
         |If it should throw, allow it using @Correct(solutionThrows = true)
         |Otherwise filter the inputs using @FixedParameters, @RandomParameters, or @FilterParameters

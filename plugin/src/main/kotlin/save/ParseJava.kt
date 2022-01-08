@@ -15,7 +15,6 @@ import edu.illinois.cs.cs125.questioner.lib.AlsoCorrect
 import edu.illinois.cs.cs125.questioner.lib.Blacklist
 import edu.illinois.cs.cs125.questioner.lib.Cite
 import edu.illinois.cs.cs125.questioner.lib.Correct
-import edu.illinois.cs.cs125.questioner.lib.CorrectData
 import edu.illinois.cs.cs125.questioner.lib.Incorrect
 import edu.illinois.cs.cs125.questioner.lib.Question
 import edu.illinois.cs.cs125.questioner.lib.Starter
@@ -104,44 +103,43 @@ data class ParsedJavaFile(val path: String, val contents: String) {
                             .removeSurrounding("<body>", "</body>")
                     }
                 }
-                val solutionThrows = parameters["solutionThrows"]?.toBoolean() ?: Correct.DEFAULT_SOLUTION_THROWS
-                val focused = parameters["focused"]?.toBoolean() ?: Correct.DEFAULT_FOCUSED
-                val minTestCount = parameters["minTestCount"]?.toInt() ?: Correct.DEFAULT_MIN_TEST_COUNT
-                val maxTestCount = parameters["maxTestCount"]?.toInt() ?: Correct.DEFAULT_MAX_TEST_COUNT
-                val minTimeout = parameters["minTimeout"]?.toInt() ?: Correct.DEFAULT_MIN_TIMEOUT
-                val maxTimeout = parameters["maxTimeout"]?.toInt() ?: Correct.DEFAULT_MAX_TIMEOUT
-                val timeoutMultiplier = parameters["timeoutMultiplier"]?.toInt() ?: Correct.DEFAULT_TIMEOUT_MULTIPLIER
-                val minMutationCount = parameters["minMutationCount"]?.toInt() ?: Correct.DEFAULT_MIN_MUTATION_COUNT
-                val maxMutationCount = parameters["maxMutationCount"]?.toInt() ?: Correct.DEFAULT_MAX_MUTATION_COUNT
-                val outputMultiplier = parameters["outputMultiplier"]?.toInt() ?: Correct.DEFAULT_OUTPUT_MULTIPLIER
-                val maxExtraComplexity =
-                    parameters["maxExtraComplexity"]?.toInt() ?: Correct.DEFAULT_MAX_EXTRA_COMPLEXITY
-                val maxDeadCode = parameters["maxDeadCode"]?.toInt() ?: Correct.DEFAULT_MAX_DEAD_CODE
-                val maxExecutionCount = parameters["maxExecutionCount"]?.toLong()
-                    ?: Correct.DEFAULT_MAX_EXECUTION_COUNT
-                val executionCountMultiplier = parameters["executionCountMultiplier"]?.toInt()
-                    ?: Correct.DEFAULT_EXECUTION_COUNT_MULTIPLIER
+                val focused = parameters["focused"]?.toBoolean() ?: Question.Metadata.DEFAULT_FOCUSED
 
-                CorrectData(
-                    name,
-                    version,
-                    author,
-                    path,
-                    description,
-                    solutionThrows,
-                    focused,
-                    minTestCount,
-                    maxTestCount,
-                    minTimeout,
-                    maxTimeout,
-                    timeoutMultiplier,
-                    minMutationCount,
-                    maxMutationCount,
-                    outputMultiplier,
-                    maxExtraComplexity,
-                    maxDeadCode,
-                    maxExecutionCount,
-                    executionCountMultiplier
+                val solutionThrows = parameters["solutionThrows"]?.toBoolean()
+                val minTestCount = parameters["minTestCount"]?.toInt()
+                val maxTestCount = parameters["maxTestCount"]?.toInt()
+                val minTimeout = parameters["minTimeout"]?.toInt()
+                val maxTimeout = parameters["maxTimeout"]?.toInt()
+                val timeoutMultiplier = parameters["timeoutMultiplier"]?.toInt()
+                val minMutationCount = parameters["minMutationCount"]?.toInt()
+                val maxMutationCount = parameters["maxMutationCount"]?.toInt()
+                val outputMultiplier = parameters["outputMultiplier"]?.toInt()
+                val maxExtraComplexity = parameters["maxExtraComplexity"]?.toInt()
+                val maxDeadCode = parameters["maxDeadCode"]?.toInt()
+                val maxExecutionCount = parameters["maxExecutionCount"]?.toLong()
+                val executionCountMultiplier = parameters["executionCountMultiplier"]?.toInt()
+                val minExtraSourceLines = parameters["minExtraSourceLines"]?.toInt()
+                val sourceLinesMultiplier = parameters["sourceLinesMultiplier"]?.toDouble()
+
+                Question.CorrectData(
+                    path, name, version, author, description, focused,
+                    Question.TestingControl(
+                        solutionThrows,
+                        minTestCount,
+                        maxTestCount,
+                        minTimeout,
+                        maxTimeout,
+                        timeoutMultiplier,
+                        minMutationCount,
+                        maxMutationCount,
+                        outputMultiplier,
+                        maxExtraComplexity,
+                        maxDeadCode,
+                        maxExecutionCount,
+                        executionCountMultiplier,
+                        minExtraSourceLines,
+                        sourceLinesMultiplier
+                    )
                 )
             }
         } catch (e: Exception) {
