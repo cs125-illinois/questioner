@@ -16,6 +16,7 @@ import edu.illinois.cs.cs125.jeed.core.allFixedMutations
 import edu.illinois.cs.cs125.jeed.core.checkstyle
 import edu.illinois.cs.cs125.jeed.core.compile
 import edu.illinois.cs.cs125.jeed.core.complexity
+import edu.illinois.cs.cs125.jeed.core.countLines
 import edu.illinois.cs.cs125.jeed.core.fromSnippet
 import edu.illinois.cs.cs125.jeed.core.fromTemplates
 import edu.illinois.cs.cs125.jeed.core.kompile
@@ -247,7 +248,7 @@ fun Question.mutations(seed: Int, count: Int) = templateSubmission(
         )
     }
 
-fun Question.computeComplexity(contents: String, language: Question.Language): Question.ComplexityComparison {
+fun Question.computeComplexity(contents: String, language: Question.Language): TestResults.ComplexityComparison {
     val solutionComplexity = if (language == Question.Language.java) {
         correct.complexity
     } else {
@@ -294,7 +295,22 @@ fun Question.computeComplexity(contents: String, language: Question.Language): Q
         }
         else -> error("Shouldn't get here")
     }
-    return Question.ComplexityComparison(solutionComplexity, submissionComplexity, control.maxExtraComplexity)
+    return TestResults.ComplexityComparison(solutionComplexity, submissionComplexity, control.maxExtraComplexity)
+}
+
+fun Question.computeLineCounts(contents: String, language: Question.Language): TestResults.LineCountComparison {
+    val solutionLineCount = if (language == Question.Language.java) {
+        correct.lineCount
+    } else {
+        alternativeSolutions.filter { it.language == language }.mapNotNull { it.lineCount }.minByOrNull { it.source }
+    }
+    check(solutionLineCount != null) { "Solution line count not available" }
+    val type = when (language) {
+        Question.Language.java -> Source.FileType.JAVA
+        Question.Language.kotlin -> Source.FileType.KOTLIN
+    }
+    val submissionLineCount = contents.countLines(type)
+    return TestResults.LineCountComparison(solutionLineCount, submissionLineCount, solutionLineCount.source * 2)
 }
 
 class InvertingClassLoader(private val inversions: Set<String>) : ClassLoader() {

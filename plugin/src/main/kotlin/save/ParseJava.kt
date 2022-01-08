@@ -6,6 +6,7 @@ import edu.illinois.cs.cs125.jeed.core.FeatureName
 import edu.illinois.cs.cs125.jeed.core.Source
 import edu.illinois.cs.cs125.jeed.core.checkstyle
 import edu.illinois.cs.cs125.jeed.core.complexity
+import edu.illinois.cs.cs125.jeed.core.countLines
 import edu.illinois.cs.cs125.jeed.core.features
 import edu.illinois.cs.cs125.jeed.core.fromSnippet
 import edu.illinois.cs.cs125.questioner.antlr.JavaLexer
@@ -20,6 +21,7 @@ import edu.illinois.cs.cs125.questioner.lib.Question
 import edu.illinois.cs.cs125.questioner.lib.Starter
 import edu.illinois.cs.cs125.questioner.lib.Whitelist
 import edu.illinois.cs.cs125.questioner.lib.Wrap
+import edu.illinois.cs.cs125.questioner.lib.toReason
 import org.antlr.v4.runtime.BaseErrorListener
 import org.antlr.v4.runtime.CharStream
 import org.antlr.v4.runtime.CharStreams
@@ -91,6 +93,7 @@ data class ParsedJavaFile(val path: String, val contents: String) {
         @Suppress("TooGenericExceptionCaught")
         try {
             annotation.parameterMap().let { parameters ->
+                val path = parameters["path"]
                 val name = parameters["name"] ?: error("name field not set on @Correct")
                 val version = parameters["version"] ?: error("version field not set on @Correct")
                 val author = parameters["author"] ?: error("author field not set on @Correct")
@@ -101,7 +104,6 @@ data class ParsedJavaFile(val path: String, val contents: String) {
                             .removeSurrounding("<body>", "</body>")
                     }
                 }
-                val path = parameters["path"]
                 val solutionThrows = parameters["solutionThrows"]?.toBoolean() ?: Correct.DEFAULT_SOLUTION_THROWS
                 val focused = parameters["focused"]?.toBoolean() ?: Correct.DEFAULT_FOCUSED
                 val minTestCount = parameters["minTestCount"]?.toInt() ?: Correct.DEFAULT_MIN_TEST_COUNT
@@ -115,6 +117,10 @@ data class ParsedJavaFile(val path: String, val contents: String) {
                 val maxExtraComplexity =
                     parameters["maxExtraComplexity"]?.toInt() ?: Correct.DEFAULT_MAX_EXTRA_COMPLEXITY
                 val maxDeadCode = parameters["maxDeadCode"]?.toInt() ?: Correct.DEFAULT_MAX_DEAD_CODE
+                val maxExecutionCount = parameters["maxExecutionCount"]?.toLong()
+                    ?: Correct.DEFAULT_MAX_EXECUTION_COUNT
+                val executionCountMultiplier = parameters["executionCountMultiplier"]?.toInt()
+                    ?: Correct.DEFAULT_EXECUTION_COUNT_MULTIPLIER
 
                 CorrectData(
                     name,
@@ -133,7 +139,9 @@ data class ParsedJavaFile(val path: String, val contents: String) {
                     maxMutationCount,
                     outputMultiplier,
                     maxExtraComplexity,
-                    maxDeadCode
+                    maxDeadCode,
+                    maxExecutionCount,
+                    executionCountMultiplier
                 )
             }
         } catch (e: Exception) {
@@ -227,6 +235,7 @@ data class ParsedJavaFile(val path: String, val contents: String) {
         }.also {
             check(it > 0) { "Invalid complexity value" }
         }
+        val lineCounts = cleanContent.countLines(Source.FileType.JAVA)
         val features = source.features().let { features ->
             when (questionType) {
                 Question.Type.KLASS -> features.lookup("", "$className.java")
@@ -251,6 +260,7 @@ data class ParsedJavaFile(val path: String, val contents: String) {
                 path,
                 complexity,
                 features,
+                lineCounts,
                 expectedDeadCode
             ),
             questionType
@@ -353,6 +363,7 @@ data class ParsedJavaFile(val path: String, val contents: String) {
         }.also {
             check(it > 0) { "Invalid complexity value" }
         }
+        val lineCounts = cleanContent.countLines(Source.FileType.JAVA)
         val features = source.features().let { features ->
             when (questionType) {
                 Question.Type.KLASS -> features.lookup("", "$className.java")
@@ -376,6 +387,7 @@ data class ParsedJavaFile(val path: String, val contents: String) {
             path,
             complexity,
             features,
+            lineCounts,
             expectedDeadCode
         )
     }

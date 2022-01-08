@@ -3,28 +3,16 @@ package edu.illinois.cs.cs125.questioner.lib
 import com.squareup.moshi.JsonClass
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.Types
-import edu.illinois.cs.cs125.jeed.core.CheckstyleFailed
 import edu.illinois.cs.cs125.jeed.core.CompilationArguments
-import edu.illinois.cs.cs125.jeed.core.CompilationFailed
-import edu.illinois.cs.cs125.jeed.core.ComplexityFailed
-import edu.illinois.cs.cs125.jeed.core.ConfiguredSandboxPlugin
 import edu.illinois.cs.cs125.jeed.core.Features
-import edu.illinois.cs.cs125.jeed.core.Jacoco
-import edu.illinois.cs.cs125.jeed.core.KtLintFailed
-import edu.illinois.cs.cs125.jeed.core.LineTrace
-import edu.illinois.cs.cs125.jeed.core.LineTraceArguments
+import edu.illinois.cs.cs125.jeed.core.LineCounts
 import edu.illinois.cs.cs125.jeed.core.MutatedSource
-import edu.illinois.cs.cs125.jeed.core.Sandbox
 import edu.illinois.cs.cs125.jeed.core.Source
-import edu.illinois.cs.cs125.jeed.core.TemplatingFailed
 import edu.illinois.cs.cs125.jeed.core.compile
-import edu.illinois.cs.cs125.jenisol.core.Settings
-import edu.illinois.cs.cs125.jenisol.core.SubmissionDesignError
 import edu.illinois.cs.cs125.questioner.lib.moshi.Adapters
-import org.jacoco.core.analysis.ICounter
 import java.io.File
-import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.ReflectPermission
+import java.util.Locale
 import edu.illinois.cs.cs125.jeed.core.moshi.Adapters as JeedAdapters
 import edu.illinois.cs.cs125.jenisol.core.solution as jenisol
 
@@ -137,7 +125,11 @@ data class Question(
         val citation: Citation?,
         val usedFiles: List<String> = listOf(),
         val focused: Boolean? = null
-    )
+    ) {
+        companion object {
+            const val DEFAULT_FOCUSED = false
+        }
+    }
 
     @JsonClass(generateAdapter = true)
     data class TestingControl(
@@ -151,7 +143,9 @@ data class Question(
         val maxMutationCount: Int,
         val outputMultiplier: Int,
         val maxExtraComplexity: Int,
-        val maxDeadCode: Int
+        val maxDeadCode: Int,
+        val maxExecutionCount: Long,
+        val executionMultiplier: Int
     ) {
         constructor(correct: CorrectData) : this(
             correct.solutionThrows,
@@ -164,8 +158,26 @@ data class Question(
             correct.maxMutationCount,
             correct.outputMultiplier,
             correct.maxExtraComplexity,
-            correct.maxDeadCode
+            correct.maxDeadCode,
+            correct.maxExecutionCount,
+            correct.executionCountMultiplier
         )
+
+        companion object {
+            const val DEFAULT_SOLUTION_THROWS = false
+            const val DEFAULT_MIN_TEST_COUNT = 128
+            const val DEFAULT_MAX_TEST_COUNT = 1024
+            const val DEFAULT_MIN_TIMEOUT = 128
+            const val DEFAULT_MAX_TIMEOUT = 2048
+            const val DEFAULT_TIMEOUT_MULTIPLIER = 8
+            const val DEFAULT_MIN_MUTATION_COUNT = 0
+            const val DEFAULT_MAX_MUTATION_COUNT = 32
+            const val DEFAULT_OUTPUT_MULTIPLIER = 8
+            const val DEFAULT_MAX_EXTRA_COMPLEXITY = 2
+            const val DEFAULT_MAX_DEAD_CODE = 0
+            const val DEFAULT_MAX_EXECUTION_COUNT = 1024 * 1024 * 1024L
+            const val DEFAULT_EXECUTION_COUNT_MULTIPLIER = 4
+        }
     }
 
     @JsonClass(generateAdapter = true)
@@ -177,8 +189,9 @@ data class Question(
         val javaWhitelist: Set<String>?,
         val kotlinWhitelist: Set<String>?,
         val shrink: Boolean,
-        var solutionCoverage: CoverageComparison.LineCoverage? = null,
-        var solutionExecutionCount: ValidationResults.SolutionExecutionCounts? = null,
+        val executionCountLimit: LanguageExecutionCounts,
+        var solutionCoverage: TestResults.CoverageComparison.LineCoverage? = null,
+        var solutionExecutionCount: LanguageExecutionCounts? = null,
         val checkBlacklist: Boolean = true
     )
 
@@ -192,12 +205,12 @@ data class Question(
         val mutationLength: Long,
         val incorrectLength: Long,
         val calibrationLength: Long,
-        val solutionCoverage: CoverageComparison.LineCoverage,
-        val executionCounts: SolutionExecutionCounts
-    ) {
-        @JsonClass(generateAdapter = true)
-        data class SolutionExecutionCounts(val java: Int, val kotlin: Int? = null)
-    }
+        val solutionCoverage: TestResults.CoverageComparison.LineCoverage,
+        val executionCounts: LanguageExecutionCounts
+    )
+
+    @JsonClass(generateAdapter = true)
+    data class LanguageExecutionCounts(val java: Long, val kotlin: Long? = null)
 
     @JsonClass(generateAdapter = true)
     data class Citation(val source: String, val link: String? = null)
@@ -210,6 +223,7 @@ data class Question(
         val path: String?,
         val complexity: Int? = null,
         val features: Features? = null,
+        val lineCount: LineCounts? = null,
         val expectedDeadCount: Int? = null
     )
 
@@ -225,42 +239,8 @@ data class Question(
         @Transient
         val mutation: MutatedSource? = null
     ) {
-        enum class Reason { DESIGN, COMPILE, TEST, CHECKSTYLE, TIMEOUT, DEADCODE }
+        enum class Reason { DESIGN, COMPILE, TEST, CHECKSTYLE, TIMEOUT, DEADCODE, LINECOUNT, TOOLONG }
     }
-
-    @JsonClass(generateAdapter = true)
-    data class ComplexityComparison(
-        val solution: Int,
-        val submission: Int,
-        val limit: Int,
-        val increase: Int = submission - solution,
-        val failed: Boolean = increase > limit
-    )
-
-    @JsonClass(generateAdapter = true)
-    data class CoverageComparison(
-        val solution: LineCoverage,
-        val submission: LineCoverage,
-        val missed: List<Int>,
-        val limit: Int,
-        val increase: Int = submission.missed - solution.missed,
-        val failed: Boolean = increase > limit
-    ) {
-        @JsonClass(generateAdapter = true)
-        data class LineCoverage(val covered: Int, val total: Int, val missed: Int = total - covered) {
-            init {
-                check(covered <= total) { "Invalid coverage result" }
-            }
-        }
-
-        val deadLines = (submission.missed - solution.missed).coerceAtLeast(0)
-    }
-
-    @JsonClass(generateAdapter = true)
-    data class ExecutionCountComparison(
-        val solution: Int,
-        val submission: Int
-    )
 
     @delegate:Transient
     val compiledCommon by lazy {
@@ -356,172 +336,6 @@ data class Question(
         get() = testingSettings != null
 
     var fauxStatic: Boolean = false
-
-    @Suppress("ReturnCount", "LongMethod", "ComplexMethod", "LongParameterList")
-    suspend fun test(
-        contents: String,
-        language: Language,
-        settings: TestingSettings? = testingSettings
-    ): TestResults {
-        check(settings != null) { "No test settings provided" }
-
-        val results = TestResults(language)
-
-        @Suppress("SwallowedException")
-        val compiledSubmission = try {
-            when (language) {
-                Language.java ->
-                    compileSubmission(
-                        contents,
-                        InvertingClassLoader(setOf(klass)),
-                        results
-                    )
-                Language.kotlin ->
-                    kompileSubmission(
-                        contents,
-                        InvertingClassLoader(setOf(klass, "${klass}Kt")),
-                        results
-                    )
-            }
-        } catch (e: TemplatingFailed) {
-            return results
-        } catch (e: CheckstyleFailed) {
-            return results
-        } catch (e: CompilationFailed) {
-            return results
-        } catch (e: KtLintFailed) {
-            return results
-        }
-
-        val klassName = checkCompiledSubmission(compiledSubmission, contents, results) ?: return results
-
-        try {
-            results.complete.complexity = computeComplexity(contents, language)
-            results.completedSteps.add(TestResults.Step.complexity)
-        } catch (e: ComplexityFailed) {
-            results.failed.complexity = e
-            results.failedSteps.add(TestResults.Step.complexity)
-        }
-
-        val classLoaderConfiguration = when (language) {
-            Language.java -> settings.javaWhitelist
-            Language.kotlin -> settings.kotlinWhitelist
-        }?.let {
-            Sandbox.ClassLoaderConfiguration(isWhiteList = true, whitelistedClasses = it)
-        } ?: Sandbox.ClassLoaderConfiguration()
-
-        val jenisolSettings = Settings(
-            seed = settings.seed,
-            shrink = settings.shrink,
-            overrideTotalCount = settings.testCount,
-            startMultipleCount = (settings.testCount / 2).coerceAtMost(
-                MAX_START_MULTIPLE_COUNT
-            )
-        )
-
-        val executionArguments = Sandbox.ExecutionArguments(
-            timeout = settings.timeout.toLong(),
-            classLoaderConfiguration = classLoaderConfiguration,
-            maxOutputLines = settings.outputLimit,
-            permissions = SAFE_PERMISSIONS,
-            returnTimeout = DEFAULT_RETURN_TIMEOUT
-        )
-        val plugins = listOf(
-            ConfiguredSandboxPlugin(Jacoco, Unit),
-            ConfiguredSandboxPlugin(LineTrace, LineTraceArguments(recordedLineLimit = 0))
-        )
-        /*
-        val plugins = listOf(
-            ConfiguredSandboxPlugin(Jacoco, Unit)
-        )
-         */
-        val taskResults = Sandbox.execute(
-            compiledSubmission.classLoader,
-            executionArguments,
-            configuredPlugins = plugins
-        ) { (classLoader, _) ->
-            try {
-                solution.submission(classLoader.loadClass(klassName)).test(jenisolSettings, ::captureJeedOutput)
-            } catch (e: InvocationTargetException) {
-                throw e.cause ?: e
-            }
-        }
-
-        results.taskResults = taskResults
-        results.timeout = taskResults.timeout
-
-        if (!taskResults.timeout && taskResults.threw != null) {
-            results.failedSteps.add(TestResults.Step.checkSubmission)
-            when (taskResults.threw) {
-                is ClassNotFoundException -> results.failed.checkSubmission =
-                    "Class design error: could not find class $klass"
-                is SubmissionDesignError -> results.failed.checkSubmission =
-                    "Class design error: ${taskResults.threw?.message}"
-                is NoClassDefFoundError -> results.failed.checkSubmission =
-                    "Class design error: attempted to use unavailable class ${taskResults.threw?.message}"
-                else -> {
-                    val actualException = if (taskResults.threw is InvocationTargetException) {
-                        (taskResults.threw as InvocationTargetException).targetException ?: taskResults.threw
-                    } else {
-                        taskResults.threw
-                    }
-                    results.failed.checkSubmission = "Testing generated an unexpected error: $actualException"
-                }
-            }
-            return results
-        }
-
-        if (!checkExecutedSubmission(taskResults, results, language)) {
-            return results
-        }
-
-        if (taskResults.returned == null) {
-            results.failedSteps.add(TestResults.Step.test)
-            return results
-        }
-
-        results.addTestingResults(
-            TestResults.TestingResult(
-                taskResults.returned!!.map { it.asTestResult(compiledSubmission.source) },
-                settings.testCount,
-                taskResults.completed && !taskResults.timeout
-            )
-        )
-
-        val coverage = taskResults.pluginResult(Jacoco).classes.find { it.name == klassName }!!
-        val missed = (coverage.firstLine..coverage.lastLine).toList().filter { line ->
-            coverage.getLine(line).status == ICounter.NOT_COVERED || coverage.getLine(line).status == ICounter.PARTLY_COVERED
-        }.map { line ->
-            line - when (language) {
-                Language.java -> javaTemplateAddsLines
-                Language.kotlin -> kotlinTemplateAddsLines
-            }
-        }
-        val submissionCoverage = CoverageComparison.LineCoverage(
-            coverage.lineCounter.totalCount - missed.size,
-            coverage.lineCounter.totalCount
-        )
-        val solutionCoverage =
-            validationResults?.solutionCoverage ?: settings.solutionCoverage ?: submissionCoverage
-
-        results.complete.coverage =
-            CoverageComparison(solutionCoverage, submissionCoverage, missed, control.maxDeadCode)
-        results.completedSteps.add(TestResults.Step.coverage)
-
-        val submissionExecutionCount = taskResults.pluginResult(LineTrace).linesRun.toInt()
-        val solutionExecutionCount = if (language == Language.java) {
-            validationResults?.executionCounts?.java ?: settings.solutionExecutionCount?.java
-        } else {
-            validationResults?.executionCounts?.kotlin ?: settings.solutionExecutionCount?.kotlin
-        } ?: submissionExecutionCount
-
-        results.complete.executionCount = ExecutionCountComparison(solutionExecutionCount, submissionExecutionCount)
-        results.completedSteps.add(TestResults.Step.executioncount)
-
-        //results.complete.executionCount = ExecutionCountComparison(0, 0)
-        //results.completedSteps.add(TestResults.Step.executioncount)
-        return results
-    }
 
     companion object {
         const val DEFAULT_RETURN_TIMEOUT = 16
@@ -620,3 +434,16 @@ fun File.saveQuestions(questions: Map<String, Question>) =
             )
         ).indent("  ").toJson(questions)
     )
+
+@Suppress("SpellCheckingInspection")
+fun String.toReason() = when (uppercase(Locale.getDefault())) {
+    "DESIGN" -> Question.IncorrectFile.Reason.DESIGN
+    "TEST" -> Question.IncorrectFile.Reason.TEST
+    "COMPILE" -> Question.IncorrectFile.Reason.COMPILE
+    "CHECKSTYLE" -> Question.IncorrectFile.Reason.CHECKSTYLE
+    "TIMEOUT" -> Question.IncorrectFile.Reason.TIMEOUT
+    "DEADCODE" -> Question.IncorrectFile.Reason.DEADCODE
+    "LINECOUNT" -> Question.IncorrectFile.Reason.LINECOUNT
+    "TOOLONG" -> Question.IncorrectFile.Reason.TOOLONG
+    else -> error("Invalid incorrect reason: $this")
+}

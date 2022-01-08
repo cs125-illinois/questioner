@@ -11,6 +11,7 @@ import com.squareup.moshi.Moshi
 import edu.illinois.cs.cs125.questioner.lib.Question
 import edu.illinois.cs.cs125.questioner.lib.TestResults
 import edu.illinois.cs.cs125.questioner.lib.moshi.Adapters
+import edu.illinois.cs.cs125.questioner.lib.test
 import io.ktor.application.Application
 import io.ktor.application.call
 import io.ktor.application.install

@@ -7,6 +7,7 @@ import edu.illinois.cs.cs125.jeed.core.CompilationFailed
 import edu.illinois.cs.cs125.jeed.core.ComplexityFailed
 import edu.illinois.cs.cs125.jeed.core.KtLintFailed
 import edu.illinois.cs.cs125.jeed.core.KtLintResults
+import edu.illinois.cs.cs125.jeed.core.LineCounts
 import edu.illinois.cs.cs125.jeed.core.Sandbox
 import edu.illinois.cs.cs125.jeed.core.Source
 import edu.illinois.cs.cs125.jeed.core.TemplatingFailed
@@ -38,6 +39,7 @@ data class TestResults(
         compileSubmission,
         checkSubmission,
         complexity,
+        lineCount,
         coverage,
         executioncount,
         test,
@@ -50,9 +52,10 @@ data class TestResults(
         var ktlint: KtLintResults? = null,
         var compileTest: CompiledSourceResult? = null,
         var testing: TestingResult? = null,
-        var complexity: Question.ComplexityComparison? = null,
-        var coverage: Question.CoverageComparison? = null,
-        var executionCount: Question.ExecutionCountComparison? = null
+        var complexity: ComplexityComparison? = null,
+        var lineCount: LineCountComparison? = null,
+        var coverage: CoverageComparison? = null,
+        var executionCount: ExecutionCountComparison? = null
     )
 
     @JsonClass(generateAdapter = true)
@@ -77,6 +80,51 @@ data class TestResults(
             val submissionStackTrace: String? = null
         )
     }
+
+    @JsonClass(generateAdapter = true)
+    data class ComplexityComparison(
+        val solution: Int,
+        val submission: Int,
+        val limit: Int,
+        val increase: Int = submission - solution,
+        val failed: Boolean = increase > limit
+    )
+
+    @JsonClass(generateAdapter = true)
+    data class LineCountComparison(
+        val solution: LineCounts,
+        val submission: LineCounts,
+        val limit: Int,
+        val increase: Int = submission.source - solution.source,
+        val failed: Boolean = submission.source > limit
+    )
+
+    @JsonClass(generateAdapter = true)
+    data class CoverageComparison(
+        val solution: LineCoverage,
+        val submission: LineCoverage,
+        val missed: List<Int>,
+        val limit: Int,
+        val increase: Int = submission.missed - solution.missed,
+        val failed: Boolean = increase > limit,
+        val deadLines: Int = (submission.missed - solution.missed).coerceAtLeast(0)
+    ) {
+        @JsonClass(generateAdapter = true)
+        data class LineCoverage(val covered: Int, val total: Int, val missed: Int = total - covered) {
+            init {
+                check(covered <= total) { "Invalid coverage result" }
+            }
+        }
+    }
+
+    @JsonClass(generateAdapter = true)
+    data class ExecutionCountComparison(
+        val solution: Long,
+        val submission: Long,
+        val limit: Long,
+        val increase: Long = submission - solution,
+        val failed: Boolean = submission >= limit
+    )
 
     @JsonClass(generateAdapter = true)
     data class FailedTasks(
@@ -153,11 +201,14 @@ data class TestResults(
             Question.IncorrectFile.Reason.DESIGN -> require(failed.checkSubmission != null) {
                 "Expected submission to fail design"
             }
-            Question.IncorrectFile.Reason.TIMEOUT -> require(timeout || succeeded == false) {
+            Question.IncorrectFile.Reason.TIMEOUT -> require(timeout || !succeeded) {
                 "Expected submission to timeout"
             }
-            Question.IncorrectFile.Reason.DEADCODE -> require(complete.coverage!!.deadLines > 0) {
+            Question.IncorrectFile.Reason.DEADCODE -> require(complete.coverage?.failed == true) {
                 "Expected submission to contain dead code"
+            }
+            Question.IncorrectFile.Reason.LINECOUNT -> require(complete.executionCount?.failed == true) {
+                "Expected submission to execute too many lines"
             }
             else -> require(isMutated || (!timeout && complete.testing?.passed == false)) {
                 "Expected submission to fail tests"

@@ -45,7 +45,6 @@ import java.nio.file.Files
 import java.nio.file.Paths
 import java.security.DigestInputStream
 import java.security.MessageDigest
-import java.util.Locale
 import java.util.regex.Pattern
 import java.util.stream.Collectors
 
@@ -433,7 +432,7 @@ fun List<ParsedJavaFile>.findQuestions(
                 solution.correct.path ?: slugify.slugify(solution.correct.name)
             )
         } catch (e: Exception) {
-            throw Exception("Process ${solution.path} failed", e)
+            throw Exception("Process ${solution.path} failed: $e", e)
         }
     }
     allPaths.filter { !usedFiles.containsKey(it) && !skippedFiles.contains(it) }.forEach {
@@ -514,13 +513,3 @@ internal fun String.stripPackage(): String {
 }
 
 val markdownParser = MarkdownParser(CommonMarkFlavourDescriptor())
-
-fun String.toReason() = when (uppercase(Locale.getDefault())) {
-    "DESIGN" -> Question.IncorrectFile.Reason.DESIGN
-    "TEST" -> Question.IncorrectFile.Reason.TEST
-    "COMPILE" -> Question.IncorrectFile.Reason.COMPILE
-    "CHECKSTYLE" -> Question.IncorrectFile.Reason.CHECKSTYLE
-    "TIMEOUT" -> Question.IncorrectFile.Reason.TIMEOUT
-    "DEADCODE" -> Question.IncorrectFile.Reason.DEADCODE
-    else -> error("Invalid incorrect reason: $this")
-}

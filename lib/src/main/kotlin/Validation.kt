@@ -105,7 +105,11 @@ suspend fun Question.validate(seed: Int): ValidationReport {
         if (!mutated && failedLinting == true) {
             throw IncorrectFailedLinting(file, correct)
         }
-        if (file.reason !== Question.IncorrectFile.Reason.DEADCODE) {
+        if (!listOf(
+                Question.IncorrectFile.Reason.DEADCODE,
+                Question.IncorrectFile.Reason.LINECOUNT
+            ).contains(file.reason)
+        ) {
             if (succeeded) {
                 throw IncorrectPassed(file, correct)
             }
@@ -136,12 +140,16 @@ suspend fun Question.validate(seed: Int): ValidationReport {
     val bootstrapSettings = Question.TestingSettings(
         seed = seed,
         testCount = control.minTestCount,
-        timeout = control.maxTimeout,
-        outputLimit = Question.UNLIMITED_OUTPUT_LINES,
+        timeout = control.maxTimeout, // No timeout
+        outputLimit = Question.UNLIMITED_OUTPUT_LINES, // No line limit
         javaWhitelist = null,
         kotlinWhitelist = null,
         shrink = false,
-        checkBlacklist = false
+        checkBlacklist = false,
+        executionCountLimit = Question.LanguageExecutionCounts(
+            control.maxExecutionCount,
+            control.maxExecutionCount
+        ) // No execution count limit
     )
     val firstCorrectResults = (setOf(correct) + alternativeSolutions).map { right ->
         test(right.contents, right.language, bootstrapSettings).also { testResults ->
@@ -149,24 +157,28 @@ suspend fun Question.validate(seed: Int): ValidationReport {
         }
     }
 
-    val solutionCoverage = firstCorrectResults.mapNotNull { it.complete.coverage }.minByOrNull {
-        it.solution.covered / it.solution.total
-    }!!.solution
-
-    val javaSolutionExecutionCount = firstCorrectResults
-        .filter { it.language == Question.Language.java }
-        .mapNotNull { it.complete.executionCount }
-        .maxByOrNull {
-            it.solution
+    val bootstrapSolutionCoverage = firstCorrectResults
+        .mapNotNull { it.complete.coverage }
+        .minByOrNull {
+            it.solution.covered / it.solution.total
         }!!.solution
-    val kotlinSolutionExecutionCount = firstCorrectResults
-        .filter { it.language == Question.Language.kotlin }
-        .mapNotNull { it.complete.executionCount }
-        .maxByOrNull {
-            it.solution
-        }?.solution
-    val executionCounts =
-        Question.ValidationResults.SolutionExecutionCounts(javaSolutionExecutionCount, kotlinSolutionExecutionCount)
+
+    fun List<TestResults>.setExecutionCounts(multiplier: Double = 1.0): Question.LanguageExecutionCounts {
+        val javaSolutionExecutionCount = filter { it.language == Question.Language.java }
+            .mapNotNull { it.complete.executionCount }
+            .maxByOrNull {
+                it.solution
+            }!!.solution.times(multiplier).toLong()
+        val kotlinSolutionExecutionCount = filter { it.language == Question.Language.kotlin }
+            .mapNotNull { it.complete.executionCount }
+            .maxByOrNull {
+                it.solution
+            }?.solution?.times(multiplier)?.toLong()
+        return Question.LanguageExecutionCounts(javaSolutionExecutionCount, kotlinSolutionExecutionCount)
+    }
+
+    val bootstrapSolutionExecutionCount =
+        firstCorrectResults.setExecutionCounts(control.maxTestCount / control.minTestCount.toDouble())
 
     val bootstrapLength = Instant.now().toEpochMilli() - bootStrapStart.toEpochMilli()
 
@@ -189,7 +201,6 @@ suspend fun Question.validate(seed: Int): ValidationReport {
     // Next step is to figure out how many tests to run using mutations and @Incorrect annotations
     // Sets requiredTestCount
     val incorrectStart = Instant.now()
-
     val incorrectSettings = Question.TestingSettings(
         seed = seed,
         testCount = control.maxTestCount,
@@ -198,8 +209,9 @@ suspend fun Question.validate(seed: Int): ValidationReport {
         javaWhitelist = javaClassWhitelist,
         kotlinWhitelist = kotlinClassWhitelist,
         shrink = false,
-        solutionCoverage = solutionCoverage,
-        solutionExecutionCount = executionCounts
+        solutionCoverage = bootstrapSolutionCoverage,
+        solutionExecutionCount = bootstrapSolutionExecutionCount,
+        executionCountLimit = Question.LanguageExecutionCounts(control.maxExecutionCount, control.maxExecutionCount)
     )
     val incorrectResults = allIncorrect.map { wrong ->
         test(
@@ -219,7 +231,6 @@ suspend fun Question.validate(seed: Int): ValidationReport {
 
     // Rerun solutions to set timeouts and output limits
     // sets solutionRuntime and solutionOutputLines
-
     val calibrationStart = Instant.now()
     val calibrationSettings = Question.TestingSettings(
         seed = seed,
@@ -228,7 +239,8 @@ suspend fun Question.validate(seed: Int): ValidationReport {
         outputLimit = Question.UNLIMITED_OUTPUT_LINES,
         javaWhitelist = javaClassWhitelist,
         kotlinWhitelist = kotlinClassWhitelist,
-        shrink = false
+        shrink = false,
+        executionCountLimit = Question.LanguageExecutionCounts(control.maxExecutionCount, control.maxExecutionCount)
     )
     val calibrationResults = (setOf(correct) + alternativeSolutions).map { right ->
         test(
@@ -244,6 +256,12 @@ suspend fun Question.validate(seed: Int): ValidationReport {
 
     val solutionMaxRuntime = calibrationResults.maxOf { it.results.taskResults!!.interval.length.toInt() }
     val solutionMaxOutputLines = calibrationResults.maxOf { it.results.taskResults!!.outputLines.size }
+    val solutionExecutionCounts = calibrationResults.map { it.results }.setExecutionCounts()
+    val solutionCoverage = calibrationResults
+        .mapNotNull { it.results.complete.coverage }
+        .minByOrNull {
+            it.solution.covered / it.solution.total
+        }!!.solution
 
     testingSettings = Question.TestingSettings(
         seed = seed,
@@ -252,7 +270,11 @@ suspend fun Question.validate(seed: Int): ValidationReport {
         outputLimit = solutionMaxOutputLines.coerceAtLeast(testCount * control.outputMultiplier),
         javaWhitelist = javaClassWhitelist,
         kotlinWhitelist = kotlinClassWhitelist,
-        shrink = false
+        shrink = false,
+        executionCountLimit = Question.LanguageExecutionCounts(
+            solutionExecutionCounts.java * control.executionMultiplier,
+            solutionExecutionCounts.kotlin?.times(control.executionMultiplier)
+        )
     )
     validationResults = Question.ValidationResults(
         seed = seed,
@@ -264,7 +286,7 @@ suspend fun Question.validate(seed: Int): ValidationReport {
         incorrectLength = incorrectLength,
         calibrationLength = calibrationLength,
         solutionCoverage = solutionCoverage,
-        executionCounts = executionCounts
+        executionCounts = solutionExecutionCounts
     )
 
     return ValidationReport(

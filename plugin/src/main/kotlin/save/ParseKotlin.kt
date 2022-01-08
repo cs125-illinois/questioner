@@ -3,6 +3,7 @@ package edu.illinois.cs.cs125.questioner.plugin.save
 import edu.illinois.cs.cs125.jeed.core.SnippetArguments
 import edu.illinois.cs.cs125.jeed.core.Source
 import edu.illinois.cs.cs125.jeed.core.complexity
+import edu.illinois.cs.cs125.jeed.core.countLines
 import edu.illinois.cs.cs125.jeed.core.fromSnippet
 import edu.illinois.cs.cs125.questioner.antlr.KotlinLexer
 import edu.illinois.cs.cs125.questioner.antlr.KotlinParser
@@ -10,6 +11,7 @@ import edu.illinois.cs.cs125.questioner.lib.AlsoCorrect
 import edu.illinois.cs.cs125.questioner.lib.Incorrect
 import edu.illinois.cs.cs125.questioner.lib.Question
 import edu.illinois.cs.cs125.questioner.lib.Starter
+import edu.illinois.cs.cs125.questioner.lib.toReason
 import org.antlr.v4.runtime.BaseErrorListener
 import org.antlr.v4.runtime.CharStream
 import org.antlr.v4.runtime.CharStreams
@@ -106,7 +108,8 @@ data class ParsedKotlinFile(val path: String, val contents: String) {
             // Kotlin class declarations with implicit getters can have zero complexity
             check(it >= 0) { "Invalid complexity value" }
         }
-        return Question.FlatFile(className, solutionContent, Question.Language.kotlin, path, complexity)
+        val lineCounts = solutionContent.countLines(Source.FileType.KOTLIN)
+        return Question.FlatFile(className, solutionContent, Question.Language.kotlin, path, complexity, null, lineCounts)
     }
 
     fun toStarterFile(cleanSpec: CleanSpec): Question.IncorrectFile {
@@ -332,7 +335,7 @@ data class ParsedKotlinFile(val path: String, val contents: String) {
             usedImports = context.preamble().importList().importHeader().map { it.identifier().text }
         }.topLevelObject()
             .filter { it.classDeclaration() != null }.also {
-                require(it.size == 1) { "Kotlin files must only contain a single top-level class declaration: ${it.size}" }
+                require(it.size == 1) { "Kotlin files must only contain a single top-level class declaration: $this" }
             }.first().classDeclaration().let { context ->
                 val start = context.start.line
                 val end = context.stop.line
