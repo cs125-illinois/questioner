@@ -29,6 +29,11 @@ data class TestResults(
     @Transient
     var taskResults: Sandbox.TaskResults<*>? = null
 ) {
+    var completed: Boolean = false
+    var succeeded: Boolean = false
+    var failedLinting: Boolean? = null
+    var failureCount: Int? = null
+
     fun tests() = complete.testing?.tests
 
     @Suppress("EnumNaming", "EnumEntryName")
@@ -47,39 +52,15 @@ data class TestResults(
 
     @JsonClass(generateAdapter = true)
     data class CompletedTasks(
-        var compileSubmission: CompiledSourceResult? = null,
         var checkstyle: CheckstyleResults? = null,
         var ktlint: KtLintResults? = null,
-        var compileTest: CompiledSourceResult? = null,
-        var testing: TestingResult? = null,
+        var compileSubmission: CompiledSourceResult? = null,
         var complexity: ComplexityComparison? = null,
         var lineCount: LineCountComparison? = null,
         var coverage: CoverageComparison? = null,
-        var executionCount: ExecutionCountComparison? = null
+        var executionCount: ExecutionCountComparison? = null,
+        var testing: TestingResult? = null,
     )
-
-    @JsonClass(generateAdapter = true)
-    data class TestingResult(
-        val tests: List<TestResult>,
-        val testCount: Int,
-        val completed: Boolean,
-        val passed: Boolean = completed && tests.none { !it.passed }
-    ) {
-        @JsonClass(generateAdapter = true)
-        data class TestResult(
-            val name: String,
-            val passed: Boolean,
-            val message: String? = null,
-            val arguments: String? = null,
-            val expected: String? = null,
-            val found: String? = null,
-            val explanation: String? = null,
-            val output: String? = null,
-            val complexity: Int? = null,
-            @Transient val jenisol: JenisolTestResult<*, *>? = null,
-            val submissionStackTrace: String? = null
-        )
-    }
 
     @JsonClass(generateAdapter = true)
     data class ComplexityComparison(
@@ -127,17 +108,38 @@ data class TestResults(
     )
 
     @JsonClass(generateAdapter = true)
+    data class TestingResult(
+        val tests: List<TestResult>,
+        val testCount: Int,
+        val completed: Boolean,
+        val passed: Boolean = completed && tests.none { !it.passed }
+    ) {
+        @JsonClass(generateAdapter = true)
+        data class TestResult(
+            val name: String,
+            val passed: Boolean,
+            val message: String? = null,
+            val arguments: String? = null,
+            val expected: String? = null,
+            val found: String? = null,
+            val explanation: String? = null,
+            val output: String? = null,
+            val complexity: Int? = null,
+            @Transient val jenisol: JenisolTestResult<*, *>? = null,
+            val submissionStackTrace: String? = null
+        )
+    }
+
+    @JsonClass(generateAdapter = true)
     data class FailedTasks(
         var templateSubmission: TemplatingFailed? = null,
-        var compileSubmission: CompilationFailed? = null,
         var checkstyle: CheckstyleFailed? = null,
-        var checkSubmission: String? = null,
-        var compileTest: CompilationFailed? = null,
         var ktlint: KtLintFailed? = null,
+        var compileSubmission: CompilationFailed? = null,
+        var checkSubmission: String? = null,
         var complexity: ComplexityFailed? = null
     )
 
-    var failedLinting: Boolean? = null
     fun addCheckstyleResults(checkstyle: CheckstyleResults) {
         completedSteps.add(Step.checkstyle)
         complete.checkstyle = checkstyle
@@ -149,15 +151,6 @@ data class TestResults(
         complete.ktlint = ktlint
         failedLinting = ktlint.errors.isNotEmpty()
     }
-
-    @Suppress("MemberVisibilityCanBePrivate")
-    var completed: Boolean = false
-
-    @Suppress("MemberVisibilityCanBePrivate")
-    var succeeded: Boolean = false
-
-    @Suppress("MemberVisibilityCanBePrivate")
-    var failureCount: Int? = null
 
     fun addTestingResults(testing: TestingResult) {
         completedSteps.add(Step.test)
@@ -180,8 +173,6 @@ data class TestResults(
             "Computing complexity failed: ${failed.complexity!!.message ?: "unknown error"}"
         } else if (failed.checkSubmission != null) {
             "Checking submission failed: ${failed.checkSubmission}"
-        } else if (failed.compileTest != null) {
-            "Compiling test failed: ${failed.compileTest?.message?.let { ": $it" } ?: ""}"
         } else if (timeout) {
             "Testing timed out"
         } else if (complete.testing?.passed == false) {

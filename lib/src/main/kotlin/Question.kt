@@ -84,14 +84,20 @@ data class Question(
             if (hasKotlin) {
                 put(
                     Language.kotlin,
-                    alternativeSolutions.filter { it.language == Language.kotlin }.mapNotNull { it.complexity }
+                    alternativeSolutions
+                        .filter { it.language == Language.kotlin }
+                        .mapNotNull { it.complexity }
                         .minOrNull()!!
                 )
             }
         },
         // TODO: Support Kotlin features
         mutableMapOf(Language.java to correct.features!!),
-        annotatedControls.maxExtraComplexity ?: TestingControl.DEFAULT_MAX_EXTRA_COMPLEXITY
+        mutableMapOf(Language.java to correct.lineCount!!).apply {
+            if (hasKotlin) {
+                put(Language.kotlin, kotlinSolution!!.lineCount!!)
+            }
+        }
     )
 ) {
     @Suppress("EnumNaming", "EnumEntryName")
@@ -124,7 +130,7 @@ data class Question(
         val starters: Map<Language, String>?,
         val complexity: Map<Language, Int>,
         val features: Map<Language, Features>,
-        val maxExtraComplexity: Int
+        val lineCounts: Map<Language, LineCounts>
     )
 
     @JsonClass(generateAdapter = true)
@@ -158,7 +164,8 @@ data class Question(
         val maxExtraComplexity: Int?,
         val maxDeadCode: Int?,
         val maxExecutionCount: Long?,
-        val executionMultiplier: Int?,
+        val executionFailureMultiplier: Int?,
+        val executionTimeoutMultiplier: Int?,
         val minExtraSourceLines: Int?,
         val sourceLinesMultiplier: Double?
     ) {
@@ -175,7 +182,8 @@ data class Question(
             const val DEFAULT_MAX_EXTRA_COMPLEXITY = 2
             const val DEFAULT_MAX_DEAD_CODE = 0
             const val DEFAULT_MAX_EXECUTION_COUNT = 1024 * 1024 * 1024L
-            const val DEFAULT_EXECUTION_COUNT_MULTIPLIER = 4
+            const val DEFAULT_EXECUTION_COUNT_FAILURE_MULTIPLIER = 4
+            const val DEFAULT_EXECUTION_COUNT_TIMEOUT_MULTIPLIER = 16
             const val DEFAULT_MIN_EXTRA_SOURCE_LINES = 2
             const val DEFAULT_SOURCE_LINES_MULTIPLIER = 1.5
 
@@ -192,7 +200,8 @@ data class Question(
                 DEFAULT_MAX_EXTRA_COMPLEXITY,
                 DEFAULT_MAX_DEAD_CODE,
                 DEFAULT_MAX_EXECUTION_COUNT,
-                DEFAULT_EXECUTION_COUNT_MULTIPLIER,
+                DEFAULT_EXECUTION_COUNT_FAILURE_MULTIPLIER,
+                DEFAULT_EXECUTION_COUNT_TIMEOUT_MULTIPLIER,
                 DEFAULT_MIN_EXTRA_SOURCE_LINES,
                 DEFAULT_SOURCE_LINES_MULTIPLIER
             )

@@ -150,7 +150,7 @@ suspend fun Question.test(
     results.complete.executionCount = TestResults.ExecutionCountComparison(
         solutionExecutionCount,
         submissionExecutionCount,
-        solutionExecutionCount * control.executionMultiplier!!
+        solutionExecutionCount * control.executionFailureMultiplier!!
     )
     results.completedSteps.add(TestResults.Step.executioncount)
 

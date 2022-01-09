@@ -26,7 +26,8 @@ annotation class Correct(
     val maxExtraComplexity: Int = -1,
     val maxDeadCode: Int = -1,
     val maxExecutionCount: Long = -1,
-    val executionCountMultiplier: Int = -1,
+    val executionCountFailureMultiplier: Int = -1,
+    val executionCountTimeoutMultiplier: Int = -1,
     val minExtraSourceLines: Int = -1,
     val sourceLinesMultiplier: Double = -1.0
 )

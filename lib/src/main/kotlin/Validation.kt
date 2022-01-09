@@ -283,8 +283,8 @@ suspend fun Question.validate(seed: Int): ValidationReport {
         kotlinWhitelist = kotlinClassWhitelist,
         shrink = false,
         executionCountLimit = Question.LanguageExecutionCounts(
-            solutionExecutionCounts.java * control.executionMultiplier!!,
-            solutionExecutionCounts.kotlin?.times(control.executionMultiplier!!)
+            solutionExecutionCounts.java * control.executionTimeoutMultiplier!!,
+            solutionExecutionCounts.kotlin?.times(control.executionTimeoutMultiplier!!)
         )
     )
     validationResults = Question.ValidationResults(
