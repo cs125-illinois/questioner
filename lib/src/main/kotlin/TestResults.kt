@@ -39,27 +39,49 @@ data class TestResults(
     @Suppress("EnumNaming", "EnumEntryName")
     enum class Step {
         templateSubmission,
+        compileSubmission,
         checkstyle,
         ktlint,
-        compileSubmission,
-        checkSubmission,
+        checkCompiledSubmission,
         complexity,
         lineCount,
-        coverage,
+        // execution
+        checkExecutedSubmission,
         executioncount,
-        test,
+        testing,
+        coverage,
     }
 
     @JsonClass(generateAdapter = true)
     data class CompletedTasks(
+        // templateSubmission doesn't complete
+        var compileSubmission: CompiledSourceResult? = null,
         var checkstyle: CheckstyleResults? = null,
         var ktlint: KtLintResults? = null,
-        var compileSubmission: CompiledSourceResult? = null,
+        // checkCompiledSubmission doesn't complete
         var complexity: ComplexityComparison? = null,
         var lineCount: LineCountComparison? = null,
-        var coverage: CoverageComparison? = null,
+        // execution
+        // checkExecutedSubmission doesn't complete
         var executionCount: ExecutionCountComparison? = null,
         var testing: TestingResult? = null,
+        var coverage: CoverageComparison? = null
+    )
+
+    @JsonClass(generateAdapter = true)
+    data class FailedTasks(
+        var templateSubmission: TemplatingFailed? = null,
+        var compileSubmission: CompilationFailed? = null,
+        var checkstyle: CheckstyleFailed? = null,
+        var ktlint: KtLintFailed? = null,
+        var checkCompiledSubmission: String? = null,
+        var complexity: ComplexityFailed? = null,
+        // lineCount doesn't fail
+        // execution
+        var checkExecutedSubmission: String? = null
+        // executionCount doesn't fail
+        // testing doesn't fail
+        // coverage doesn't fail
     )
 
     @JsonClass(generateAdapter = true)
@@ -118,6 +140,9 @@ data class TestResults(
         data class TestResult(
             val name: String,
             val passed: Boolean,
+            val type: JenisolTestResult.Type,
+            val runnerID: Int,
+            val stepCount: Int,
             val message: String? = null,
             val arguments: String? = null,
             val expected: String? = null,
@@ -125,20 +150,10 @@ data class TestResults(
             val explanation: String? = null,
             val output: String? = null,
             val complexity: Int? = null,
-            @Transient val jenisol: JenisolTestResult<*, *>? = null,
-            val submissionStackTrace: String? = null
+            val submissionStackTrace: String? = null,
+            @Transient val jenisol: JenisolTestResult<*, *>? = null
         )
     }
-
-    @JsonClass(generateAdapter = true)
-    data class FailedTasks(
-        var templateSubmission: TemplatingFailed? = null,
-        var checkstyle: CheckstyleFailed? = null,
-        var ktlint: KtLintFailed? = null,
-        var compileSubmission: CompilationFailed? = null,
-        var checkSubmission: String? = null,
-        var complexity: ComplexityFailed? = null
-    )
 
     fun addCheckstyleResults(checkstyle: CheckstyleResults) {
         completedSteps.add(Step.checkstyle)
@@ -153,7 +168,7 @@ data class TestResults(
     }
 
     fun addTestingResults(testing: TestingResult) {
-        completedSteps.add(Step.test)
+        completedSteps.add(Step.testing)
         complete.testing = testing
         completed = true
         succeeded = !timeout && testing.passed == true && testing.completed == true
@@ -171,8 +186,8 @@ data class TestResults(
             "Ktlint failed:${failed.ktlint?.let { ": $it" } ?: ""}"
         } else if (failed.complexity != null) {
             "Computing complexity failed: ${failed.complexity!!.message ?: "unknown error"}"
-        } else if (failed.checkSubmission != null) {
-            "Checking submission failed: ${failed.checkSubmission}"
+        } else if (failed.checkCompiledSubmission != null) {
+            "Checking submission failed: ${failed.checkCompiledSubmission}"
         } else if (timeout) {
             "Testing timed out"
         } else if (complete.testing?.passed == false) {
@@ -190,6 +205,9 @@ data class TestResults(
 fun TestResult<*, *>.asTestResult(source: Source) = TestResults.TestingResult.TestResult(
     solutionExecutable.name,
     succeeded,
+    this.type,
+    this.runnerID,
+    this.stepCount,
     verifierThrew?.message,
     parameters.toString(),
     @Suppress("TooGenericExceptionCaught")
@@ -202,7 +220,6 @@ fun TestResult<*, *>.asTestResult(source: Source) = TestResults.TestingResult.Te
     },
     submission.stdout,
     complexity,
-    this,
     submission.threw?.getStackTraceForSource(
         source,
         boundaries = listOf(
@@ -210,5 +227,6 @@ fun TestResult<*, *>.asTestResult(source: Source) = TestResults.TestingResult.Te
             "at jdk.internal.reflect.",
             "at java.base"
         )
-    )
+    ),
+    this
 )

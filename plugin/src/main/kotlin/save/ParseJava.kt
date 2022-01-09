@@ -116,7 +116,7 @@ data class ParsedJavaFile(val path: String, val contents: String) {
                 val outputMultiplier = parameters["outputMultiplier"]?.toInt()
                 val maxExtraComplexity = parameters["maxExtraComplexity"]?.toInt()
                 val maxDeadCode = parameters["maxDeadCode"]?.toInt()
-                val maxExecutionCount = parameters["maxExecutionCount"]?.toLong()
+                val maxExecutionCountMultiplier = parameters["maxExecutionCountMultiplier"]?.toLong()
                 val executionCountFailureMultiplier = parameters["executionCountFailureMultiplier"]?.toInt()
                 val executionCountTimeoutMultiplier = parameters["executionCountTimeoutMultiplier"]?.toInt()
                 val minExtraSourceLines = parameters["minExtraSourceLines"]?.toInt()
@@ -136,7 +136,7 @@ data class ParsedJavaFile(val path: String, val contents: String) {
                         outputMultiplier,
                         maxExtraComplexity,
                         maxDeadCode,
-                        maxExecutionCount,
+                        maxExecutionCountMultiplier,
                         executionCountFailureMultiplier,
                         executionCountTimeoutMultiplier,
                         minExtraSourceLines,

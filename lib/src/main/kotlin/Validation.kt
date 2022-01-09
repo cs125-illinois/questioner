@@ -158,8 +158,8 @@ suspend fun Question.validate(seed: Int): ValidationReport {
         shrink = false,
         checkBlacklist = false,
         executionCountLimit = Question.LanguageExecutionCounts(
-            control.maxExecutionCount!!,
-            control.maxExecutionCount
+            control.maxExecutionCountMultiplier!!,
+            control.maxExecutionCountMultiplier
         ) // No execution count limit
     )
     val firstCorrectResults = (setOf(correct) + alternativeSolutions).map { right ->
@@ -222,7 +222,10 @@ suspend fun Question.validate(seed: Int): ValidationReport {
         shrink = false,
         solutionCoverage = bootstrapSolutionCoverage,
         solutionExecutionCount = bootstrapSolutionExecutionCount,
-        executionCountLimit = Question.LanguageExecutionCounts(control.maxExecutionCount!!, control.maxExecutionCount)
+        executionCountLimit = Question.LanguageExecutionCounts(
+            control.maxTestCount!! * control.maxExecutionCountMultiplier!!,
+            control.maxTestCount!! * control.maxExecutionCountMultiplier!!
+        )
     )
     val incorrectResults = allIncorrect.map { wrong ->
         test(
@@ -236,8 +239,10 @@ suspend fun Question.validate(seed: Int): ValidationReport {
     }
     val incorrectLength = Instant.now().toEpochMilli() - incorrectStart.toEpochMilli()
 
-    val requiredTestCount =
-        incorrectResults.mapNotNull { it.results.tests()?.size }.maxOrNull() ?: error("No incorrect results")
+    val requiredTestCount = incorrectResults
+        .filter { !it.results.timeout && !it.results.succeeded }
+        .mapNotNull { it.results.tests()?.size }
+        .maxOrNull() ?: error("No incorrect results")
     val testCount = requiredTestCount.coerceAtLeast(control.minTestCount!!)
 
     // Rerun solutions to set timeouts and output limits
@@ -251,7 +256,10 @@ suspend fun Question.validate(seed: Int): ValidationReport {
         javaWhitelist = javaClassWhitelist,
         kotlinWhitelist = kotlinClassWhitelist,
         shrink = false,
-        executionCountLimit = Question.LanguageExecutionCounts(control.maxExecutionCount!!, control.maxExecutionCount)
+        executionCountLimit = Question.LanguageExecutionCounts(
+            testCount * control.maxExecutionCountMultiplier!!,
+            testCount * control.maxExecutionCountMultiplier!!
+        )
     )
     val calibrationResults = (setOf(correct) + alternativeSolutions).map { right ->
         test(
@@ -318,7 +326,7 @@ private fun TestResults.validate(reason: Question.IncorrectFile.Reason, isMutate
         Question.IncorrectFile.Reason.CHECKSTYLE -> require(failed.checkstyle != null) {
             "Expected submission to fail checkstyle"
         }
-        Question.IncorrectFile.Reason.DESIGN -> require(failed.checkSubmission != null) {
+        Question.IncorrectFile.Reason.DESIGN -> require(failed.checkCompiledSubmission != null || failed.checkExecutedSubmission != null) {
             "Expected submission to fail design"
         }
         Question.IncorrectFile.Reason.TIMEOUT -> require(timeout || !succeeded) {

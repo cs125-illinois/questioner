@@ -26,6 +26,9 @@ suspend fun Question.test(
 
     val results = TestResults(language)
 
+    // templateSubmission
+    // complieSubmission
+    // checkstyle || ktlint
     @Suppress("SwallowedException")
     val compiledSubmission = try {
         when (language) {
@@ -44,16 +47,18 @@ suspend fun Question.test(
         }
     } catch (e: TemplatingFailed) {
         return results
-    } catch (e: CheckstyleFailed) {
-        return results
     } catch (e: CompilationFailed) {
+        return results
+    } catch (e: CheckstyleFailed) {
         return results
     } catch (e: KtLintFailed) {
         return results
     }
 
+    // checkCompiledSubmission
     val klassName = checkCompiledSubmission(compiledSubmission, contents, results) ?: return results
 
+    // complexity
     try {
         results.complete.complexity = computeComplexity(contents, language)
         results.completedSteps.add(TestResults.Step.complexity)
@@ -62,9 +67,11 @@ suspend fun Question.test(
         results.failedSteps.add(TestResults.Step.complexity)
     }
 
+    // linecount
     results.complete.lineCount = computeLineCounts(contents, language)
     results.completedSteps.add(TestResults.Step.lineCount)
 
+    // execution
     val classLoaderConfiguration = when (language) {
         Question.Language.java -> settings.javaWhitelist
         Question.Language.kotlin -> settings.kotlinWhitelist
@@ -120,26 +127,32 @@ suspend fun Question.test(
     results.taskResults = taskResults
     results.timeout = timeout
 
+    // checkExecutedSubmission
     if (!timeout && threw != null) {
-        results.failedSteps.add(TestResults.Step.checkSubmission)
+        results.failedSteps.add(TestResults.Step.checkExecutedSubmission)
         when (threw) {
-            is ClassNotFoundException -> results.failed.checkSubmission =
+            is ClassNotFoundException -> results.failed.checkExecutedSubmission =
                 "Class design error: could not find class $klass"
-            is SubmissionDesignError -> results.failed.checkSubmission =
+            is SubmissionDesignError -> results.failed.checkExecutedSubmission =
                 "Class design error: ${threw.message}"
-            is NoClassDefFoundError -> results.failed.checkSubmission =
+            is NoClassDefFoundError -> results.failed.checkExecutedSubmission =
                 "Class design error: attempted to use unavailable class ${threw.message}"
             else -> {
                 val actualException = when (threw) {
                     is InvocationTargetException -> threw.targetException ?: threw
                     else -> threw
                 }
-                results.failed.checkSubmission = "Testing generated an unexpected error: $actualException"
+                results.failed.checkExecutedSubmission = "Testing generated an unexpected error: $actualException"
             }
         }
         return results
     }
 
+    if (!checkExecutedSubmission(taskResults, results, language)) {
+        return results
+    }
+
+    // executioncount
     val submissionExecutionCount = taskResults.pluginResult(LineTrace).linesRun
     val solutionExecutionCount = if (language == Question.Language.java) {
         validationResults?.executionCounts?.java ?: settings.solutionExecutionCount?.java
@@ -154,12 +167,9 @@ suspend fun Question.test(
     )
     results.completedSteps.add(TestResults.Step.executioncount)
 
-    if (!checkExecutedSubmission(taskResults, results, language)) {
-        return results
-    }
-
+    // testing
     if (taskResults.returned == null) {
-        results.failedSteps.add(TestResults.Step.test)
+        results.failedSteps.add(TestResults.Step.testing)
         return results
     }
 
@@ -171,6 +181,7 @@ suspend fun Question.test(
         )
     )
 
+    // coverage
     val coverage = taskResults.pluginResult(Jacoco).classes.find { it.name == klassName }!!
     val missed = (coverage.firstLine..coverage.lastLine).toList().filter { line ->
         coverage.getLine(line).status == ICounter.NOT_COVERED || coverage.getLine(line).status == ICounter.PARTLY_COVERED

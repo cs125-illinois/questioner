@@ -126,13 +126,13 @@ fun Question.checkCompiledSubmission(
 ): String? = compiledSubmission.classLoader.definedClasses.topLevelClasses().let {
     when {
         it.isEmpty() -> {
-            testResults.failed.checkSubmission = "Submission defined no classes"
-            testResults.failedSteps.add(TestResults.Step.checkSubmission)
+            testResults.failed.checkCompiledSubmission = "Submission defined no classes"
+            testResults.failedSteps.add(TestResults.Step.checkCompiledSubmission)
             return null
         }
         it.size > 1 -> {
-            testResults.failed.checkSubmission = "Submission defined multiple classes"
-            testResults.failedSteps.add(TestResults.Step.checkSubmission)
+            testResults.failed.checkCompiledSubmission = "Submission defined multiple classes"
+            testResults.failedSteps.add(TestResults.Step.checkCompiledSubmission)
             return null
         }
     }
@@ -144,9 +144,9 @@ fun Question.checkCompiledSubmission(
         klass = "${compilationDefinedClass}Kt"
     } else {
         if (klass != compilationDefinedClass) {
-            testResults.failed.checkSubmission =
+            testResults.failed.checkCompiledSubmission =
                 "Submission defines incorrect class: ${it.first()} != $compilationDefinedClass"
-            testResults.failedSteps.add(TestResults.Step.checkSubmission)
+            testResults.failedSteps.add(TestResults.Step.checkCompiledSubmission)
             return null
         }
     }
@@ -154,13 +154,13 @@ fun Question.checkCompiledSubmission(
         try {
             sourceChecker?.invoke(null, contents)
         } catch (e: InvocationTargetException) {
-            testResults.failed.checkSubmission =
+            testResults.failed.checkCompiledSubmission =
                 "Checking source failed" + if (e.cause?.message != null) {
                     ": ${e.cause!!.message}"
                 } else {
                     ""
                 }
-            testResults.failedSteps.add(TestResults.Step.checkSubmission)
+            testResults.failedSteps.add(TestResults.Step.checkCompiledSubmission)
             return null
         }
     }
@@ -208,8 +208,8 @@ fun Question.checkExecutedSubmission(
         }
     }
     return if (message != null) {
-        testResults.failed.checkSubmission = message
-        testResults.failedSteps.add(TestResults.Step.checkSubmission)
+        testResults.failed.checkExecutedSubmission = message
+        testResults.failedSteps.add(TestResults.Step.checkExecutedSubmission)
         false
     } else {
         true

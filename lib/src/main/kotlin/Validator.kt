@@ -10,7 +10,6 @@ class Validator(questionsFile: File, private val sourceDir: String, private val 
     private val questions = loadFromPath(questionsFile, sourceDir).also {
         assert(it.isNotEmpty())
     }
-
     suspend fun validate(name: String, verbose: Boolean = false, force: Boolean = false) {
         val question = if (force) {
             unvalidatedQuestions[name]

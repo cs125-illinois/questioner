@@ -163,7 +163,7 @@ data class Question(
         val outputMultiplier: Int?,
         val maxExtraComplexity: Int?,
         val maxDeadCode: Int?,
-        val maxExecutionCount: Long?,
+        val maxExecutionCountMultiplier: Long?,
         val executionFailureMultiplier: Int?,
         val executionTimeoutMultiplier: Int?,
         val minExtraSourceLines: Int?,
@@ -175,13 +175,13 @@ data class Question(
             const val DEFAULT_MAX_TEST_COUNT = 1024
             const val DEFAULT_MIN_TIMEOUT = 128
             const val DEFAULT_MAX_TIMEOUT = 2048
-            const val DEFAULT_TIMEOUT_MULTIPLIER = 8
+            const val DEFAULT_TIMEOUT_MULTIPLIER = 32
             const val DEFAULT_MIN_MUTATION_COUNT = 0
             const val DEFAULT_MAX_MUTATION_COUNT = 32
             const val DEFAULT_OUTPUT_MULTIPLIER = 8
             const val DEFAULT_MAX_EXTRA_COMPLEXITY = 2
             const val DEFAULT_MAX_DEAD_CODE = 0
-            const val DEFAULT_MAX_EXECUTION_COUNT = 1024 * 1024 * 1024L
+            const val DEFAULT_MAX_EXECUTION_COUNT_MULTIPLIER = 256 * 1024L
             const val DEFAULT_EXECUTION_COUNT_FAILURE_MULTIPLIER = 4
             const val DEFAULT_EXECUTION_COUNT_TIMEOUT_MULTIPLIER = 16
             const val DEFAULT_MIN_EXTRA_SOURCE_LINES = 2
@@ -199,7 +199,7 @@ data class Question(
                 DEFAULT_OUTPUT_MULTIPLIER,
                 DEFAULT_MAX_EXTRA_COMPLEXITY,
                 DEFAULT_MAX_DEAD_CODE,
-                DEFAULT_MAX_EXECUTION_COUNT,
+                DEFAULT_MAX_EXECUTION_COUNT_MULTIPLIER,
                 DEFAULT_EXECUTION_COUNT_FAILURE_MULTIPLIER,
                 DEFAULT_EXECUTION_COUNT_TIMEOUT_MULTIPLIER,
                 DEFAULT_MIN_EXTRA_SOURCE_LINES,
