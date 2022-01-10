@@ -8,6 +8,7 @@ import com.mongodb.client.model.Sorts
 import com.ryanharter.ktor.moshi.moshi
 import com.squareup.moshi.JsonClass
 import com.squareup.moshi.Moshi
+import edu.illinois.cs.cs125.jeed.core.warm
 import edu.illinois.cs.cs125.questioner.lib.Question
 import edu.illinois.cs.cs125.questioner.lib.TestResults
 import edu.illinois.cs.cs125.questioner.lib.moshi.Adapters
@@ -24,7 +25,10 @@ import io.ktor.routing.post
 import io.ktor.routing.routing
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import mu.KotlinLogging
 import org.bson.BsonDocument
@@ -177,6 +181,7 @@ fun Application.questioner() {
 
 fun main() {
     logger.debug { Status() }
+    CoroutineScope(Dispatchers.IO).launch { warm(2, failLint = false) }
     logger.trace {
         Questions.questions.entries.sortedBy { it.key }.joinToString("\n") { (key, value) ->
             "$key -> ${value.name}"

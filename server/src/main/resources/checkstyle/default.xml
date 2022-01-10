@@ -198,6 +198,10 @@
         <!-- JSP: new checks 8-28-2020 -->
         <module name="OneStatementPerLine"/>
         <module name="EmptyStatement"/>
+
+        <!-- JSP: new checks 1-9-2022 -->
+        <module name="ParameterAssignment"/>
+        <module name="StringLiteralEquality"/>
     </module>
 
 </module>
