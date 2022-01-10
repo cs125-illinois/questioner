@@ -143,6 +143,7 @@ data class TestResults(
             val type: JenisolTestResult.Type,
             val runnerID: Int,
             val stepCount: Int,
+            val methodCall: String,
             val message: String? = null,
             val arguments: String? = null,
             val expected: String? = null,
@@ -205,9 +206,10 @@ data class TestResults(
 fun TestResult<*, *>.asTestResult(source: Source) = TestResults.TestingResult.TestResult(
     solutionExecutable.name,
     succeeded,
-    this.type,
-    this.runnerID,
-    this.stepCount,
+    type,
+    runnerID,
+    stepCount,
+    methodCall(),
     verifierThrew?.message,
     parameters.toString(),
     @Suppress("TooGenericExceptionCaught")
