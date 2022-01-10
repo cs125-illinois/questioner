@@ -158,8 +158,8 @@ suspend fun Question.validate(seed: Int): ValidationReport {
         shrink = false,
         checkBlacklist = false,
         executionCountLimit = Question.LanguageExecutionCounts(
-            control.maxExecutionCountMultiplier!!,
-            control.maxExecutionCountMultiplier
+            control.maxExecutionCountMultiplier!! * 1024,
+            control.maxExecutionCountMultiplier!! * 1024
         ) // No execution count limit
     )
     val firstCorrectResults = (setOf(correct) + alternativeSolutions).map { right ->
@@ -223,8 +223,8 @@ suspend fun Question.validate(seed: Int): ValidationReport {
         solutionCoverage = bootstrapSolutionCoverage,
         solutionExecutionCount = bootstrapSolutionExecutionCount,
         executionCountLimit = Question.LanguageExecutionCounts(
-            control.maxTestCount!! * control.maxExecutionCountMultiplier!!,
-            control.maxTestCount!! * control.maxExecutionCountMultiplier!!
+            control.maxTestCount!! * control.maxExecutionCountMultiplier!! * 1024,
+            control.maxTestCount!! * control.maxExecutionCountMultiplier!! * 1024
         )
     )
     val incorrectResults = allIncorrect.map { wrong ->
@@ -257,8 +257,8 @@ suspend fun Question.validate(seed: Int): ValidationReport {
         kotlinWhitelist = kotlinClassWhitelist,
         shrink = false,
         executionCountLimit = Question.LanguageExecutionCounts(
-            testCount * control.maxExecutionCountMultiplier!!,
-            testCount * control.maxExecutionCountMultiplier!!
+            testCount * control.maxExecutionCountMultiplier!! * 1024,
+            testCount * control.maxExecutionCountMultiplier!! * 1024
         )
     )
     val calibrationResults = (setOf(correct) + alternativeSolutions).map { right ->

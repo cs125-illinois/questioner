@@ -14,7 +14,7 @@ dependencies {
     api("com.github.cs125-illinois:jenisol:2022.1.1")
     api("io.kotest:kotest-runner-junit5:4.6.3")
     api("com.google.truth:truth:1.1.3")
-    api("com.github.cs125-illinois:libcs1:2021.12.2")
+    api("com.github.cs125-illinois:libcs1:2022.1.0")
 }
 tasks {
     val sourcesJar by creating(Jar::class) {

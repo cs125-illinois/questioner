@@ -181,7 +181,7 @@ data class Question(
             const val DEFAULT_OUTPUT_MULTIPLIER = 8
             const val DEFAULT_MAX_EXTRA_COMPLEXITY = 2
             const val DEFAULT_MAX_DEAD_CODE = 0
-            const val DEFAULT_MAX_EXECUTION_COUNT_MULTIPLIER = 256 * 1024L
+            const val DEFAULT_MAX_EXECUTION_COUNT_MULTIPLIER = 256L
             const val DEFAULT_EXECUTION_COUNT_FAILURE_MULTIPLIER = 4
             const val DEFAULT_EXECUTION_COUNT_TIMEOUT_MULTIPLIER = 16
             const val DEFAULT_MIN_EXTRA_SOURCE_LINES = 2
