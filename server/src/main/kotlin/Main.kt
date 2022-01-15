@@ -103,6 +103,17 @@ data class Submission(
     val language: Question.Language,
 )
 
+@JsonClass(generateAdapter = true)
+data class QuestionDescription(
+    val path: String,
+    val name: String,
+    val version: String,
+    val description: String,
+    val author: String,
+    val packageName: String,
+    val starter: String?
+)
+
 private val serverStarted = Instant.now()
 
 val versionString = run {
@@ -175,6 +186,39 @@ fun Application.questioner() {
                     call.respond(HttpStatusCode.BadRequest)
                 }
             }
+        }
+        get("/question/java/{path}") {
+            val path = call.parameters["path"] ?: return@get call.respond(HttpStatusCode.BadRequest)
+            val question = Questions.load(path) ?: return@get call.respond(HttpStatusCode.NotFound)
+            call.respond(
+                QuestionDescription(
+                    path,
+                    question.name,
+                    question.metadata.version,
+                    question.metadata.javaDescription,
+                    question.metadata.author,
+                    question.metadata.packageName,
+                    question.detemplatedJavaStarter,
+                )
+            )
+        }
+        get("/question/kotlin/{path}") {
+            val path = call.parameters["path"] ?: return@get call.respond(HttpStatusCode.BadRequest)
+            val question = Questions.load(path) ?: return@get call.respond(HttpStatusCode.NotFound)
+            if (!question.hasKotlin) {
+                return@get call.respond(HttpStatusCode.NotFound)
+            }
+            call.respond(
+                QuestionDescription(
+                    path,
+                    question.name,
+                    question.metadata.version,
+                    question.metadata.kotlinDescription!!,
+                    question.metadata.author,
+                    question.metadata.packageName,
+                    starter = question.detemplatedKotlinStarter
+                )
+            )
         }
     }
 }
