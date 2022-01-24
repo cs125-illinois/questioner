@@ -49,7 +49,7 @@ data class Question(
     val importWhitelist: Set<String>,
     val importBlacklist: Set<String>,
     val slug: String,
-    val kotlinSolution: FlatFile? = alternativeSolutions.find { it.language == Language.kotlin },
+    val kotlinSolution: FlatFile?,
     val detemplatedJavaStarter: String? = incorrect.find { it.language == Language.java && it.starter }?.contents,
     val detemplatedKotlinStarter: String? = incorrect.find { it.language == Language.kotlin && it.starter }?.contents,
     val hasKotlin: Boolean =

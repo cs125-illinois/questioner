@@ -299,11 +299,7 @@ fun Question.computeComplexity(contents: String, language: Question.Language): T
 }
 
 fun Question.computeLineCounts(contents: String, language: Question.Language): TestResults.LineCountComparison {
-    val solutionLineCount = if (language == Question.Language.java) {
-        correct.lineCount
-    } else {
-        alternativeSolutions.filter { it.language == language }.mapNotNull { it.lineCount }.minByOrNull { it.source }
-    }
+    val solutionLineCount = published.lineCounts[language]
     check(solutionLineCount != null) { "Solution line count not available" }
     val type = when (language) {
         Question.Language.java -> Source.FileType.JAVA

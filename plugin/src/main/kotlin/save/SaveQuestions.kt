@@ -429,7 +429,8 @@ fun List<ParsedJavaFile>.findQuestions(
                 kotlinTemplate,
                 solution.whitelist.toSet(),
                 solution.blacklist.toSet(),
-                solution.correct.path ?: slugify.slugify(solution.correct.name)
+                solution.correct.path ?: slugify.slugify(solution.correct.name),
+                kotlinSolution?.toAlternateFile(kotlinCleanSpec)
             )
         } catch (e: Exception) {
             throw Exception("Process ${solution.path} failed: $e", e)
