@@ -311,7 +311,7 @@ data class ParsedJavaFile(val path: String, val contents: String) {
         }
         return (
             correctSolution.substring(0..prefix) +
-                "return$starterReturn;" +
+                "return$starterReturn; // You may need to remove this starter code" +
                 correctSolution.substring(postfix until correctSolution.length)
             ).let {
             Formatter().formatSource(it)
