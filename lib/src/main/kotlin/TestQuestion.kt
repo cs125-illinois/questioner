@@ -10,6 +10,7 @@ import edu.illinois.cs.cs125.jeed.core.LineLimitExceeded
 import edu.illinois.cs.cs125.jeed.core.LineTrace
 import edu.illinois.cs.cs125.jeed.core.LineTraceArguments
 import edu.illinois.cs.cs125.jeed.core.Sandbox
+import edu.illinois.cs.cs125.jeed.core.SnippetTransformationFailed
 import edu.illinois.cs.cs125.jeed.core.TemplatingFailed
 import edu.illinois.cs.cs125.jenisol.core.Settings
 import edu.illinois.cs.cs125.jenisol.core.SubmissionDesignError
@@ -62,6 +63,10 @@ suspend fun Question.test(
     try {
         results.complete.complexity = computeComplexity(contents, language)
         results.completedSteps.add(TestResults.Step.complexity)
+    } catch (e: SnippetTransformationFailed) {
+        // Special case when snippet transformation fails
+        results.failed.checkCompiledSubmission = "Do not use return statements for this problem"
+        results.failedSteps.add(TestResults.Step.checkCompiledSubmission)
     } catch (e: ComplexityFailed) {
         results.failed.complexity = e
         results.failedSteps.add(TestResults.Step.complexity)
