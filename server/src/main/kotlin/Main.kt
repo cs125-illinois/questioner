@@ -182,6 +182,7 @@ fun Application.questioner() {
                     logger.error { e.toString() }
                     exitProcess(-1)
                 } catch (e: Throwable) {
+                    e.printStackTrace()
                     logger.warn { e.toString() }
                     call.respond(HttpStatusCode.BadRequest)
                 }
