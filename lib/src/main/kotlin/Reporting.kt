@@ -166,7 +166,7 @@ fun IncorrectResults.html(index: Int, question: Question): String {
     </table>
     <pre>${results.tests()?.find { !it.passed }?.explanation ?: "No explanation available"}</pre>"""
         } else {
-            """ < div class="alert alert-warning" role = "alert">${results.summary} < / div >"""
+            """<div class="alert alert-warning" role = "alert">${results.summary}</div>"""
         }
     }
         <pre><code class="${
