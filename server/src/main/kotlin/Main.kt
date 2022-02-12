@@ -84,7 +84,8 @@ object Questions {
         check(question.validated) { "Question ${submission.path} is not validated" }
         val start = Instant.now().toEpochMilli()
         val timeout = question.testingSettings!!.timeout * (System.getenv("TIMEOUT_MULTIPLIER")?.toInt() ?: 1)
-        val settings = question.testingSettings!!.copy(timeout = timeout)
+        val settings =
+            question.testingSettings!!.copy(timeout = timeout, disableLineCountLimit = submission.disableLineCountLimit)
         logger.trace { "Testing ${question.name} with settings $settings" }
         return question.test(
             submission.contents,
@@ -101,6 +102,7 @@ data class Submission(
     val path: String,
     val contents: String,
     val language: Question.Language,
+    val disableLineCountLimit: Boolean = false
 )
 
 @JsonClass(generateAdapter = true)

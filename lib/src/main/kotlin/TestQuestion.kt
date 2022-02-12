@@ -28,7 +28,7 @@ suspend fun Question.test(
     val results = TestResults(language)
 
     // templateSubmission
-    // complieSubmission
+    // compileSubmission
     // checkstyle || ktlint
     @Suppress("SwallowedException")
     val compiledSubmission = try {
@@ -103,6 +103,12 @@ suspend fun Question.test(
     val lineCountLimit = when (language) {
         Question.Language.java -> settings.executionCountLimit.java
         Question.Language.kotlin -> settings.executionCountLimit.kotlin!!
+    }.let {
+        if (testingSettings?.disableLineCountLimit == true) {
+            Integer.MAX_VALUE.toLong()
+        } else {
+            it
+        }
     }
     val plugins = listOf(
         ConfiguredSandboxPlugin(Jacoco, Unit),

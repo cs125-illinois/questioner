@@ -224,7 +224,8 @@ data class Question(
         val executionCountLimit: LanguageExecutionCounts,
         var solutionCoverage: TestResults.CoverageComparison.LineCoverage? = null,
         var solutionExecutionCount: LanguageExecutionCounts? = null,
-        val checkBlacklist: Boolean = true
+        val checkBlacklist: Boolean = true,
+        val disableLineCountLimit: Boolean = false
     )
 
     @JsonClass(generateAdapter = true)

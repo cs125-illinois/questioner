@@ -16,7 +16,7 @@ dependencies {
     implementation(gradleApi())
     implementation(project(":lib"))
     implementation("com.squareup.moshi:moshi-kotlin:1.13.0")
-    implementation("org.jetbrains:markdown:0.2.4") {
+    implementation("org.jetbrains:markdown:0.3.1") {
         exclude(module = "kotlin-runtime")
         exclude(module = "kotlin-js")
     }
