@@ -36,10 +36,7 @@ import java.time.Duration
 import java.time.Instant
 import java.util.Properties
 import java.util.concurrent.Executors
-import kotlin.collections.component1
-import kotlin.collections.component2
 import kotlin.collections.forEach
-import kotlin.collections.set
 import kotlin.system.exitProcess
 import edu.illinois.cs.cs125.jeed.core.moshi.Adapters as JeedAdapters
 
@@ -47,40 +44,72 @@ private val moshi = Moshi.Builder().apply { JeedAdapters.forEach { add(it) } }.b
 private val logger = KotlinLogging.logger {}
 private val collection: MongoCollection<BsonDocument> = run {
     require(System.getenv("MONGODB") != null) { "MONGODB environment variable not set" }
+    val collection = System.getenv("MONGODB_COLLECTION") ?: "questioner"
     val mongoUri = MongoClientURI(System.getenv("MONGODB")!!)
     val database = mongoUri.database ?: error { "MONGO must specify database to use" }
-    MongoClient(mongoUri).getDatabase(database).getCollection("questioner", BsonDocument::class.java)
+    MongoClient(mongoUri).getDatabase(database).getCollection(collection, BsonDocument::class.java)
+}
+
+data class QuestionPath(val path: String, val version: String, val author: String) {
+    companion object {
+        fun fromSubmission(submission: Submission) =
+            QuestionPath(submission.path, submission.version!!, submission.author!!)
+    }
 }
 
 object Questions {
-    private fun getQuestion(slug: String) = collection.find(
-        Filters.and(Filters.eq("slug", slug), Filters.eq("latest", true))
-    ).sort(Sorts.descending("updated")).first()?.let {
+    private fun getQuestion(path: String) = collection.find(
+        Filters.and(Filters.eq("published.path", path), Filters.eq("latest", true))
+    ).sort(Sorts.descending("updated")).let {
+        @Suppress("ReplaceSizeZeroCheckWithIsEmpty")
+        if (it.count() == 0) {
+            return null
+        }
+        check(it.count() == 1) { "Found multiple full-path matches" }
         try {
-            moshi.adapter(Question::class.java).fromJson(it.toJson())
+            moshi.adapter(Question::class.java).fromJson(it.first()!!.toJson())
         } catch (e: Exception) {
-            logger.warn { "Couldn't load question $slug, which might use an old schema" }
+            logger.warn { "Couldn't load question $path, which might use an old schema" }
             null
         }
     }
 
-    @Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
-    val questions = collection.distinct("slug", String::class.java)
-        .map { getQuestion(it) }
-        .filterNotNull()
-        .associateBy { it.slug }
-        .toMutableMap()
+    private fun getQuestionByPath(path: QuestionPath) = collection.find(
+        Filters.and(
+            Filters.eq("published.path", path.path),
+            Filters.eq("published.version", path.version),
+            Filters.eq("published.author", path.author),
+            Filters.eq("latest", true)
+        )
+    ).sort(Sorts.descending("updated")).let {
+        @Suppress("ReplaceSizeZeroCheckWithIsEmpty")
+        if (it.count() == 0) {
+            return null
+        }
+        check(it.count() == 1) { "Found multiple full-path matches" }
+        try {
+            moshi.adapter(Question::class.java).fromJson(it.first()!!.toJson())
+        } catch (e: Exception) {
+            logger.warn { "Couldn't load question $path, which might use an old schema" }
+            null
+        }
+    }
 
     fun load(path: String): Question? {
-        val newQuestion = getQuestion(path) ?: return null
-        if (questions[path]?.metadata?.contentHash != newQuestion.metadata.contentHash) {
-            questions[path] = newQuestion
+        return getQuestion(path)
+    }
+
+    fun load(submission: Submission): Question? {
+        return if (submission.version != null && submission.author != null) {
+            getQuestionByPath(QuestionPath.fromSubmission(submission))
+        } else {
+            check(submission.version == null && submission.author == null) { "Bad submission with partial information" }
+            getQuestion(submission.path)
         }
-        return newQuestion
     }
 
     suspend fun test(submission: Submission): TestResults {
-        val question = load(submission.path) ?: error("No question ${submission.path}")
+        val question = load(submission) ?: error("No question ${submission.path}")
         check(question.validated) { "Question ${submission.path} is not validated" }
         val start = Instant.now().toEpochMilli()
         val timeout = question.testingSettings!!.timeout * (System.getenv("TIMEOUT_MULTIPLIER")?.toInt() ?: 1)
@@ -102,7 +131,9 @@ data class Submission(
     val path: String,
     val contents: String,
     val language: Question.Language,
-    val disableLineCountLimit: Boolean = false
+    val disableLineCountLimit: Boolean = false,
+    val version: String?,
+    val author: String?
 )
 
 @JsonClass(generateAdapter = true)
@@ -161,7 +192,7 @@ fun Application.questioner() {
         post("/") {
             withContext(threadPool) {
                 val submission = call.receive<Submission>()
-                Questions.load(submission.path) ?: return@withContext call.respond(HttpStatusCode.NotFound)
+                Questions.load(submission) ?: return@withContext call.respond(HttpStatusCode.NotFound)
                 @Suppress("TooGenericExceptionCaught")
                 try {
                     val startMemory = (runtime.freeMemory().toFloat() / 1024.0 / 1024.0).toInt()
@@ -229,10 +260,5 @@ fun Application.questioner() {
 fun main() {
     logger.debug { Status() }
     CoroutineScope(Dispatchers.IO).launch { warm(2, failLint = false) }
-    logger.trace {
-        Questions.questions.entries.sortedBy { it.key }.joinToString("\n") { (key, value) ->
-            "$key -> ${value.name}"
-        }
-    }
     embeddedServer(Netty, port = 8888, module = Application::questioner).start(wait = true)
 }
