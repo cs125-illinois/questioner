@@ -220,8 +220,8 @@ data class ParsedJavaFile(val path: String, val contents: String) {
             Question.Type.METHOD -> Source(
                 mapOf(
                     "$className.java" to """public class $className {
-                    |$cleanContent
-                    }""".trimMargin()
+$cleanContent
+}"""
                 )
             )
             Question.Type.SNIPPET -> Source.fromSnippet(cleanContent)
