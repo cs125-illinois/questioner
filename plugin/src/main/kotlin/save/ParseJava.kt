@@ -18,6 +18,7 @@ import edu.illinois.cs.cs125.questioner.lib.Correct
 import edu.illinois.cs.cs125.questioner.lib.Incorrect
 import edu.illinois.cs.cs125.questioner.lib.Question
 import edu.illinois.cs.cs125.questioner.lib.Starter
+import edu.illinois.cs.cs125.questioner.lib.TemplateImports
 import edu.illinois.cs.cs125.questioner.lib.Whitelist
 import edu.illinois.cs.cs125.questioner.lib.Wrap
 import edu.illinois.cs.cs125.questioner.lib.toReason
@@ -83,6 +84,28 @@ data class ParsedJavaFile(val path: String, val contents: String) {
                     error("Couldn't parse @Blacklist paths for $path: $e")
                 }.let { names ->
                     names.split(",").map { it.trim() }
+                }
+            }
+        }
+    }
+
+    val templateImports = topLevelClass.getAnnotations(TemplateImports::class.java).let { annotations ->
+        check(annotations.size <= 1) { "Found multiple @TemplateImports annotations" }
+        if (annotations.isEmpty()) {
+            listOf()
+        } else {
+            annotations.first().let { annotation ->
+                @Suppress("TooGenericExceptionCaught")
+                try {
+                    annotation.parameterMap().let { it["paths"] ?: error("path field not set on @TemplateImports") }
+                } catch (e: Exception) {
+                    error("Couldn't parse @Blacklist paths for $path: $e")
+                }.let { names ->
+                    names.split(",").map {
+                        it.trim()
+                        check(!it.endsWith("*")) { "Wildcard imports not allowed in @TemplateImports" }
+                        it
+                    }
                 }
             }
         }

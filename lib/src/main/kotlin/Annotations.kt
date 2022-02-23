@@ -48,6 +48,9 @@ annotation class Whitelist(val paths: String)
 annotation class Blacklist(val paths: String)
 
 @Target(AnnotationTarget.CLASS)
+annotation class TemplateImports(val paths: String)
+
+@Target(AnnotationTarget.CLASS)
 annotation class Wrap(val autoStarter: Boolean = false)
 
 @Target(AnnotationTarget.CLASS)

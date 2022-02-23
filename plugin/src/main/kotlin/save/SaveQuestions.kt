@@ -28,6 +28,7 @@ import edu.illinois.cs.cs125.questioner.lib.Ignore
 import edu.illinois.cs.cs125.questioner.lib.Incorrect
 import edu.illinois.cs.cs125.questioner.lib.Question
 import edu.illinois.cs.cs125.questioner.lib.Starter
+import edu.illinois.cs.cs125.questioner.lib.TemplateImports
 import edu.illinois.cs.cs125.questioner.lib.Whitelist
 import edu.illinois.cs.cs125.questioner.lib.Wrap
 import edu.illinois.cs.cs125.questioner.lib.loadQuestions
@@ -364,24 +365,25 @@ fun List<ParsedJavaFile>.findQuestions(
 
                 javaTemplate = """public class ${solution.wrapWith} {
                 |  {{{ contents }}}
-                |}
-            """.trimMargin()
-                if (solution.usedImports.isNotEmpty()) {
-                    javaTemplate = solution.usedImports.joinToString("\n") { "import $it;" } + "\n\n$javaTemplate"
+                |}""".trimMargin()
+                val javaImports = (solution.usedImports + solution.templateImports).toSet()
+                if (javaImports.isNotEmpty()) {
+                    javaTemplate = javaImports.joinToString("\n") { "import $it;" } + "\n\n$javaTemplate"
                 }
 
-                kotlinTemplate = if (kotlinSolution?.topLevelFile == true) {
-                    "{{{ contents }}}"
-                } else {
-                    """class ${solution.wrapWith} {
+                if (kotlinSolution != null) {
+                    kotlinTemplate = if (kotlinSolution.topLevelFile) {
+                        "{{{ contents }}}"
+                    } else {
+                        """class ${solution.wrapWith} {
                 |  {{{ contents }}}
-                |}
-            """.trimMargin()
-                }
+                |}""".trimMargin()
+                    }
 
-                if (kotlinSolution?.usedImports?.isNotEmpty() == true) {
-                    kotlinTemplate =
-                        kotlinSolution.usedImports.joinToString("\n") { "import $it" } + "\n\n$kotlinTemplate"
+                    val kotlinImports = (kotlinSolution.usedImports + solution.templateImports).toSet()
+                    if (kotlinImports.isNotEmpty()) {
+                        kotlinTemplate = kotlinImports.joinToString("\n") { "import $it" } + "\n\n$kotlinTemplate"
+                    }
                 }
             }
 
@@ -452,6 +454,7 @@ val annotationsToRemove =
         Override::class.java.simpleName,
         Whitelist::class.java.simpleName,
         Blacklist::class.java.simpleName,
+        TemplateImports::class.java.simpleName,
         DesignOnly::class.java.simpleName,
         Wrap::class.java.simpleName,
         AlsoCorrect::class.java.simpleName,
