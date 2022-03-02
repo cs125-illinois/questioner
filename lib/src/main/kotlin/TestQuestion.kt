@@ -104,7 +104,7 @@ suspend fun Question.test(
         Question.Language.java -> settings.executionCountLimit.java
         Question.Language.kotlin -> settings.executionCountLimit.kotlin!!
     }.let {
-        if (testingSettings?.disableLineCountLimit == true) {
+        if (settings.disableLineCountLimit) {
             Integer.MAX_VALUE.toLong()
         } else {
             it
