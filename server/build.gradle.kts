@@ -50,6 +50,8 @@ application {
 docker {
     name = "cs125/questioner"
     files(tasks["shadowJar"].outputs)
+    @Suppress("DEPRECATION")
+    tags("latest")
 }
 kapt {
     includeCompileClasspath = false
