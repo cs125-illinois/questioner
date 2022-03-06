@@ -44,6 +44,12 @@ private val moshi = Moshi.Builder().apply { JeedAdapters.forEach { add(it) } }.b
 private val logger = KotlinLogging.logger {}
 private val collection: MongoCollection<BsonDocument> = run {
     require(System.getenv("MONGODB") != null) { "MONGODB environment variable not set" }
+    val keystore = System.getenv("KEYSTORE_FILE")
+    if (keystore != null) {
+        require(System.getenv("KEYSTORE_PASSWORD") != null) { "Must set KEYSTORE_PASSWORD" }
+        System.setProperty("javax.net.ssl.trustStore", keystore)
+        System.setProperty("javax.net.ssl.trustStorePassword", System.getenv("KEYSTORE_PASSWORD"))
+    }
     val collection = System.getenv("MONGODB_COLLECTION") ?: "questioner"
     val mongoUri = MongoClientURI(System.getenv("MONGODB")!!)
     val database = mongoUri.database ?: error { "MONGO must specify database to use" }
@@ -170,10 +176,7 @@ val threadPool = Executors.newFixedThreadPool(System.getenv("QUESTIONER_THREAD_P
     .asCoroutineDispatcher()
 
 @JsonClass(generateAdapter = true)
-data class ServerResponse(val results: TestResults, val serverStats: ServerStats) {
-    @JsonClass(generateAdapter = true)
-    data class ServerStats(val startMemory: Int, val endMemory: Int)
-}
+data class ServerResponse(val results: TestResults)
 
 val runtime: Runtime = Runtime.getRuntime()
 
@@ -197,10 +200,12 @@ fun Application.questioner() {
                 try {
                     val startMemory = (runtime.freeMemory().toFloat() / 1024.0 / 1024.0).toInt()
                     val results = Questions.test(submission)
-                    System.gc()
-                    System.gc()
                     val endMemory = (runtime.freeMemory().toFloat() / 1024.0 / 1024.0).toInt()
-                    call.respond(ServerResponse(results, ServerResponse.ServerStats(startMemory, endMemory)))
+                    call.respond(ServerResponse(results))
+                    if (System.getenv("ALWAYS_GC") != null) {
+                        System.gc()
+                        System.gc()
+                    }
                     logger.debug { "$startMemory -> $endMemory" }
                     System.getenv("RESTART_THRESHOLD_INTERVAL")?.toLong()?.also {
                         if (endMemory < it) {
