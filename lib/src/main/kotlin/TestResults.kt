@@ -45,6 +45,7 @@ data class TestResults(
         checkCompiledSubmission,
         complexity,
         lineCount,
+
         // execution
         checkExecutedSubmission,
         executioncount,
@@ -189,12 +190,14 @@ data class TestResults(
             "Computing complexity failed: ${failed.complexity!!.message ?: "unknown error"}"
         } else if (failed.checkCompiledSubmission != null) {
             "Checking submission failed: ${failed.checkCompiledSubmission}"
+        } else if (failed.checkExecutedSubmission != null) {
+            "Checking submission failed: ${failed.checkExecutedSubmission}"
         } else if (timeout) {
             "Testing timed out"
         } else if (complete.testing?.passed == false) {
             "Testing failed: ${complete.testing!!.tests.find { !it.passed }!!.explanation}"
         } else if (!completed) {
-            "Didn't complete all required tests"
+            "Didn't complete all required tests: $failedSteps"
         } else {
             check(succeeded)
             "Passed"

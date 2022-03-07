@@ -346,7 +346,14 @@ fun ValidationFailed.report(question: Question): String {
                |</p>
            """.trimMargin()
         }
-        else -> error("Invalid error")
+        is SolutionFailedLinting -> {
+            """
+               |<h2>Solution Failed Linting</h2>
+               |<p>Solution failed linting with this message: $message
+               |</p>
+           """.trimMargin()
+        }
+        else -> error("Invalid error: $this")
     }
     return wrapDocument(question, body)
 }
