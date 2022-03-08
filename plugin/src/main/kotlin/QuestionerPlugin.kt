@@ -13,9 +13,10 @@ import java.io.File
 import java.util.UUID
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-data class QuestionerConfig(val token: String? = null, val publish: Map<String, String>? = mapOf()) {
+data class QuestionerConfig(val endpoints: List<EndPoint> = listOf()) {
+    data class EndPoint(val name: String, val token: String, val url: String)
     init {
-        require(token == null || UUID.fromString(token) != null) { "Invalid UUID: $token" }
+        require(endpoints.all { UUID.fromString(it.token) != null }) { "Invalid UUID in .questioner.yaml" }
     }
 }
 
@@ -30,7 +31,7 @@ fun Project.javaSourceDir(): File =
 class QuestionerPlugin : Plugin<Project> {
     override fun apply(project: Project) {
         val config = project.extensions.create("questioner", QuestionerConfigExtension::class.java)
-        val configuration = project.file("questioner.yaml").let {
+        val configuration = project.file(".questioner.yaml").let {
             if (it.exists()) {
                 try {
                     ObjectMapper(YAMLFactory()).apply { registerKotlinModule() }.readValue(it)
@@ -50,12 +51,12 @@ class QuestionerPlugin : Plugin<Project> {
             project.tasks.getByName("processResources").dependsOn(saveQuestions)
             generateMetatests.seed = config.seed
         }
-        if (configuration.token != null) {
+        if (configuration.endpoints.isNotEmpty()) {
             val publishAll = project.tasks.register("publishQuestions").get()
-            configuration.publish?.entries?.forEach { (name, url) ->
+            configuration.endpoints.forEach { (name, token, url) ->
                 val publishQuestions =
                     project.tasks.register("${name}PublishQuestions", PublishQuestions::class.java).get()
-                publishQuestions.token = configuration.token
+                publishQuestions.token = token
                 publishQuestions.destination = url
                 publishQuestions.dependsOn(saveQuestions)
                 publishAll.dependsOn(publishQuestions)
@@ -75,11 +76,11 @@ class QuestionerPlugin : Plugin<Project> {
         project.tasks.getByName("compileTestKotlin").dependsOn(generateMetatests)
         try {
             project.tasks.getByName("formatKotlinTest").dependsOn(generateMetatests)
-        } catch (e: Exception) {
+        } catch (_: Exception) {
         }
         try {
             project.tasks.getByName("lintKotlinTest").dependsOn(generateMetatests)
-        } catch (e: Exception) {
+        } catch (_: Exception) {
         }
     }
 }

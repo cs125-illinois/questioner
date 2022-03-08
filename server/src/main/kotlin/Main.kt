@@ -200,12 +200,10 @@ fun Application.questioner() {
                 try {
                     val startMemory = (runtime.freeMemory().toFloat() / 1024.0 / 1024.0).toInt()
                     val results = Questions.test(submission)
-                    val endMemory = (runtime.freeMemory().toFloat() / 1024.0 / 1024.0).toInt()
                     call.respond(ServerResponse(results))
-                    if (System.getenv("ALWAYS_GC") != null) {
-                        System.gc()
-                        System.gc()
-                    }
+                    System.gc()
+                    System.gc()
+                    val endMemory = (runtime.freeMemory().toFloat() / 1024.0 / 1024.0).toInt()
                     logger.debug { "$startMemory -> $endMemory" }
                     System.getenv("RESTART_THRESHOLD_INTERVAL")?.toLong()?.also {
                         if (endMemory < it) {
