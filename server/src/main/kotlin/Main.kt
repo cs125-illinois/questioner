@@ -212,6 +212,9 @@ fun Application.questioner() {
                             exitProcess(-1)
                         }
                     }
+                } catch (e: StackOverflowError) {
+                    e.printStackTrace()
+                    call.respond(HttpStatusCode.BadRequest)
                 } catch (e: Error) {
                     e.printStackTrace()
                     logger.debug { submission }
