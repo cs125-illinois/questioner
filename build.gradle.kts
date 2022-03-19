@@ -38,3 +38,6 @@ tasks.dependencyUpdates {
     rejectVersionIf { candidate.version.isNonStable() }
     gradleReleaseChannel = "current"
 }
+task("publishToMavenLocal") {
+    dependsOn(":lib:publishToMavenLocal", ":plugin:publishToMavenLocal")
+}

@@ -27,7 +27,6 @@ private val sharedClassWhitelist = setOf(
     "java.lang.",
     "java.io.PrintStream",
     "kotlin.Metadata",
-    "jdk.internal.reflect.",
     "kotlin.reflect.jvm."
 )
 
