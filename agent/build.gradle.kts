@@ -24,8 +24,14 @@ tasks.withType(Jar::class.java) {
 
 tasks.create("copyClassResource", Copy::class.java) {
     dependsOn(":agentsink:classes")
-    from(rootProject.childProjects["agentsink"]!!.file("build/classes/java/main/java/lang"))
-    into(project.file("src/main/resources"))
+    rootProject.childProjects["agentsink"]!!.file("build/classes/java/main/java/lang").also {
+        inputs.dir(it)
+        from(it)
+    }
+    project.file("src/main/resources").also {
+        outputs.dir(it)
+        into(it)
+    }
 }
 
 publishing {

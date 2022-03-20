@@ -9,10 +9,7 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-reflect:1.6.10")
     implementation("com.squareup.moshi:moshi-kotlin:1.13.0")
     implementation("org.apache.commons:commons-text:1.9")
-
-    // NOTE: The agent project needs to be published manually once (for build speed)
-    // To bootstrap, comment out this dependency
-    implementation("com.github.cs125-illinois.questioner:agent:$version")
+    implementation(project(":agent"))
 
     api("com.github.cs125-illinois.jeed:core:2022.3.2a1")
     api("com.github.cs125-illinois:jenisol:2022.3.1a1")
@@ -30,15 +27,9 @@ tasks {
     }
 }
 tasks.withType(Test::class.java) {
-    jvmArgs("--enable-preview")
-}
-configurations.runtimeClasspath {
-    resolvedConfiguration.resolvedArtifacts.find { it.name == "agent" }?.let { agentArtifact ->
-        val agentJar = agentArtifact.file.absolutePath
-        tasks.withType(Test::class.java) {
-            jvmArgs("-javaagent:$agentJar")
-        }
-    }
+    val agentJarTask = project(":agent").tasks["jar"] as Jar
+    val agentJarPath = agentJarTask.archiveFile.get().asFile.path
+    jvmArgs("--enable-preview", "-javaagent:$agentJarPath")
 }
 publishing {
     publications {
