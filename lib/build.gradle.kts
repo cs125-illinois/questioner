@@ -11,6 +11,7 @@ dependencies {
     implementation("org.apache.commons:commons-text:1.9")
 
     // NOTE: The agent project needs to be published manually once (for build speed)
+    // To bootstrap, comment out this dependency
     implementation("com.github.cs125-illinois.questioner:agent:$version")
 
     api("com.github.cs125-illinois.jeed:core:2022.3.2a1")
@@ -28,11 +29,15 @@ tasks {
         add("archives", sourcesJar)
     }
 }
+tasks.withType(Test::class.java) {
+    jvmArgs("--enable-preview")
+}
 configurations.runtimeClasspath {
-    val agentArtifact = resolvedConfiguration.resolvedArtifacts.find { it.name == "agent" }!!
-    val agentJar = agentArtifact.file.absolutePath
-    tasks.withType(Test::class.java) {
-        jvmArgs("-javaagent:$agentJar", "--enable-preview")
+    resolvedConfiguration.resolvedArtifacts.find { it.name == "agent" }?.let { agentArtifact ->
+        val agentJar = agentArtifact.file.absolutePath
+        tasks.withType(Test::class.java) {
+            jvmArgs("-javaagent:$agentJar")
+        }
     }
 }
 publishing {

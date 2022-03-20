@@ -55,7 +55,7 @@ object Agent {
     }
 
     val lines: Long
-        get() = lineGetHandle?.invoke() as? Long ?: 0
+        get() = if (lineGetHandle != null) { lineGetHandle!!.invoke() as Long } else 0
 
     fun resetLines() {
         lineResetHandle?.invoke()

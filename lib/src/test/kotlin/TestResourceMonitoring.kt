@@ -58,6 +58,54 @@ class TestResourceMonitoring : StringSpec({
         result.threw should beInstanceOf<LineLimitExceeded>()
     }
 
+    "should report submission line counts" {
+        val callLines = mutableListOf<Long>()
+        val result = runJava("""
+            public static void test(int times) {
+                for (int i = 0; i < times; i++) {
+                    System.out.println(i);
+                }
+            }
+        """.trimIndent(), ResourceMonitoringArguments()) { m ->
+            listOf(2, 1, 3).forEach {
+                ResourceMonitoring.beginSubmissionCall()
+                m(null, it)
+                callLines.add(ResourceMonitoring.finishSubmissionCall().submissionLines)
+            }
+        }
+        result.threw should beNull()
+        result.completed shouldBe true
+        callLines[0] shouldBeLessThan 10
+        callLines[0] shouldBeGreaterThan 4
+        callLines[1] shouldBeLessThan callLines[0]
+        callLines[1] shouldBeGreaterThan 2
+        callLines[2] shouldBeGreaterThan callLines[0]
+        callLines[2] shouldBeGreaterThan callLines[1]
+        val resourceResult = result.pluginResult(ResourceMonitoring)
+        resourceResult.submissionLines shouldBe callLines.sum()
+    }
+
+    "should limit submission lines executed" {
+        val result = runJava("""
+            public static int test(int times) {
+                int sum = 0;
+                for (int i = 0; i < times; i++) {
+                    sum += i;
+                }
+                System.out.println(times);
+                return sum;
+            }
+        """.trimIndent(), ResourceMonitoringArguments(submissionLineLimit = 1000)) { m ->
+            unwrap {
+                m(null, 10)
+                m(null, 200)
+                m(null, 1000)
+            }
+        }
+        result.stdout shouldBe "10\n200"
+        result.threw should beInstanceOf<LineLimitExceeded>()
+    }
+
     "should track array allocation" {
         val callAllocs = mutableListOf<Long>()
         val result = runJava("""
@@ -75,7 +123,7 @@ class TestResourceMonitoring : StringSpec({
         callAllocs[1] shouldBeGreaterThan 20
         callAllocs[1] shouldBeLessThan 200
         callAllocs[2] shouldBeGreaterThan 40
-        callAllocs[2] shouldBeLessThan callAllocs[0]
+        callAllocs[2] shouldBeLessThan callAllocs[1]
         callAllocs[3] shouldBeGreaterThan 200
         val resourceResult = result.pluginResult(ResourceMonitoring)
         resourceResult.allocatedMemory shouldBeGreaterThan callAllocs.maxOf { it }
@@ -140,8 +188,8 @@ class TestResourceMonitoring : StringSpec({
         }
         iterativeAllocs[1] shouldBeLessThan 300
         iterativeAllocs[1] shouldBeGreaterThan 20
-        iterativeAllocs[2] shouldBeLessThan 3 * iterativeAllocs[1]
-        iterativeAllocs[3] shouldBeLessThan 3 * iterativeAllocs[2]
+        iterativeAllocs[2] shouldBe iterativeAllocs[1]
+        iterativeAllocs[3] shouldBe iterativeAllocs[1]
         val recursiveAllocs = mutableListOf<Long>()
         runJava("""
             public static long test(long i) {
@@ -184,8 +232,8 @@ class TestResourceMonitoring : StringSpec({
         }
         nonrecursiveCallAllocs[1] shouldBeLessThan 400
         nonrecursiveCallAllocs[1] shouldBeGreaterThan 20
-        nonrecursiveCallAllocs[2] shouldBeLessThan 3 * nonrecursiveCallAllocs[1]
-        nonrecursiveCallAllocs[3] shouldBeLessThan 3 * nonrecursiveCallAllocs[2]
+        nonrecursiveCallAllocs[2] shouldBe nonrecursiveCallAllocs[1]
+        nonrecursiveCallAllocs[3] shouldBe nonrecursiveCallAllocs[1]
     }
 })
 
@@ -195,10 +243,7 @@ private suspend fun runJava(
     test: (Method) -> Unit
 ): Sandbox.TaskResults<*> {
     val compiledSource = Source.fromJava("public class Test {\n$code\n}").compile()
-    val plugins = listOf(
-        ConfiguredSandboxPlugin(ResourceMonitoring, args),
-        ConfiguredSandboxPlugin(LineTrace, LineTraceArguments(recordedLineLimit = 0, coalesceDuplicates = false))
-    )
+    val plugins = listOf(ConfiguredSandboxPlugin(ResourceMonitoring, args))
     return Sandbox.execute(compiledSource.classLoader, configuredPlugins = plugins) { (cl, _) ->
         val method = cl.loadClass("Test").methods.find { it.name == "test" }!!
         test(method)

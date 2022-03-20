@@ -9,6 +9,7 @@ import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.InsnList
 import org.objectweb.asm.tree.LdcInsnNode
+import org.objectweb.asm.tree.LineNumberNode
 import org.objectweb.asm.tree.MethodNode
 import java.lang.management.ManagementFactory
 import kotlin.math.max
@@ -35,7 +36,6 @@ object ResourceMonitoring : SandboxPlugin<ResourceMonitoringArguments, ResourceM
         classLoaderConfiguration: Sandbox.ClassLoaderConfiguration,
         allPlugins: List<ConfiguredSandboxPlugin<*, *>>
     ): Any {
-        require(allPlugins.any { it.plugin == LineTrace }) { "LineTrace plugin is required" }
         return arguments
     }
 
@@ -48,7 +48,7 @@ object ResourceMonitoring : SandboxPlugin<ResourceMonitoringArguments, ResourceM
         if (context != RewritingContext.UNTRUSTED) return bytecode
         val reader = ClassReader(bytecode)
         val classNode = ClassNode(Opcodes.ASM9)
-        reader.accept(classNode, 0)
+        reader.accept(NewLabelSplittingClassVisitor(classNode), 0)
         classNode.methods.forEach { instrumentMethod(it) }
         val writer = ClassWriter(reader, 0)
         classNode.accept(writer)
@@ -68,6 +68,10 @@ object ResourceMonitoring : SandboxPlugin<ResourceMonitoringArguments, ResourceM
                 add(TracingSink::popCallStack.asAsmMethodInsn())
             })
         }
+        method.instructions.filterIsInstance<LineNumberNode>().forEach {
+            val insertionPoint = it.skipToBeforeRealInsnOrLabel()
+            method.instructions.insert(insertionPoint, TracingSink::lineStep.asAsmMethodInsn())
+        }
         method.maxStack++
     }
 
@@ -79,17 +83,6 @@ object ResourceMonitoring : SandboxPlugin<ResourceMonitoringArguments, ResourceM
         return ResourceMonitoringWorkingData(instrumentationData as ResourceMonitoringArguments)
     }
 
-    override fun executionStartedInSandbox() {
-        LineTrace.addLineCallback { _, _ -> lineStep() }
-    }
-
-    private fun lineStep() {
-        val data = threadData.get()
-        data.submissionLines++
-        updateExternalMeasurements(data)
-        checkLimits(data)
-    }
-
     private fun updateExternalMeasurements(data: ResourceMonitoringWorkingData) {
         data.allocatedMemory = mxBean.currentThreadAllocatedBytes - data.baseAllocatedMemory
         data.libraryLines = Agent.lines
@@ -97,6 +90,9 @@ object ResourceMonitoring : SandboxPlugin<ResourceMonitoringArguments, ResourceM
 
     private fun checkLimits(data: ResourceMonitoringWorkingData) {
         val taskSubmissionLines = data.checkpointSubmissionLines + data.submissionLines
+        if (data.arguments.submissionLineLimit != null && data.submissionLines > data.arguments.submissionLineLimit) {
+            throw LineLimitExceeded()
+        }
         val taskTotalLines = taskSubmissionLines + data.checkpointLibraryLines + data.libraryLines
         if (data.arguments.totalLineLimit != null && taskTotalLines > data.arguments.totalLineLimit) {
             throw LineLimitExceeded()
@@ -131,6 +127,14 @@ object ResourceMonitoring : SandboxPlugin<ResourceMonitoringArguments, ResourceM
 
     object TracingSink {
         @JvmStatic
+        fun lineStep() {
+            val data = threadData.get()
+            data.submissionLines++
+            updateExternalMeasurements(data)
+            checkLimits(data)
+        }
+
+        @JvmStatic
         fun pushCallStack(frameSize: Int) {
             val data = threadData.get()
             if (data.pendingClear) {
@@ -152,6 +156,7 @@ object ResourceMonitoring : SandboxPlugin<ResourceMonitoringArguments, ResourceM
 }
 
 data class ResourceMonitoringArguments(
+    val submissionLineLimit: Long? = null,
     val totalLineLimit: Long? = null,
     val allocatedMemoryLimit: Long? = null
 )

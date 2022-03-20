@@ -7,8 +7,6 @@ import edu.illinois.cs.cs125.jeed.core.ConfiguredSandboxPlugin
 import edu.illinois.cs.cs125.jeed.core.Jacoco
 import edu.illinois.cs.cs125.jeed.core.KtLintFailed
 import edu.illinois.cs.cs125.jeed.core.LineLimitExceeded
-import edu.illinois.cs.cs125.jeed.core.LineTrace
-import edu.illinois.cs.cs125.jeed.core.LineTraceArguments
 import edu.illinois.cs.cs125.jeed.core.Sandbox
 import edu.illinois.cs.cs125.jeed.core.SnippetTransformationFailed
 import edu.illinois.cs.cs125.jeed.core.TemplatingFailed
@@ -114,14 +112,8 @@ suspend fun Question.test(
         ConfiguredSandboxPlugin(Jacoco, Unit),
         ConfiguredSandboxPlugin(
             ResourceMonitoring,
-            ResourceMonitoringArguments()
-        ),
-        ConfiguredSandboxPlugin(
-            LineTrace,
-            LineTraceArguments(
-                runLineLimit = lineCountLimit,
-                recordedLineLimit = 0,
-                runLineLimitExceededAction = LineTraceArguments.RunLineLimitAction.THROW_ERROR
+            ResourceMonitoringArguments(
+                submissionLineLimit = lineCountLimit
             )
         )
     )
@@ -168,7 +160,7 @@ suspend fun Question.test(
     }
 
     // executioncount
-    val submissionExecutionCount = taskResults.pluginResult(LineTrace).linesRun
+    val submissionExecutionCount = taskResults.pluginResult(ResourceMonitoring).submissionLines
     val solutionExecutionCount = if (language == Question.Language.java) {
         validationResults?.executionCounts?.java ?: settings.solutionExecutionCount?.java
     } else {
