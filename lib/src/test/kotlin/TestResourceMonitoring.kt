@@ -3,6 +3,7 @@ package edu.illinois.cs.cs125.questioner.lib
 import edu.illinois.cs.cs125.jeed.core.*
 import edu.illinois.cs.cs125.jenisol.core.unwrap
 import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.longs.shouldBeGreaterThan
 import io.kotest.matchers.longs.shouldBeLessThan
 import io.kotest.matchers.nulls.beNull
@@ -234,6 +235,78 @@ class TestResourceMonitoring : StringSpec({
         nonrecursiveCallAllocs[1] shouldBeGreaterThan 20
         nonrecursiveCallAllocs[2] shouldBe nonrecursiveCallAllocs[1]
         nonrecursiveCallAllocs[3] shouldBe nonrecursiveCallAllocs[1]
+    }
+
+    "should identify recursive methods" {
+        val recursiveMethods = mutableSetOf<ResourceMonitoringResults.MethodInfo>()
+        val result = runJava("""
+            public static long test(long i) { return factorial(i); }
+            public static long factorial(long i) {
+                if (i <= 1) {
+                    return i;
+                } else {
+                    return i * factorial(i - 1);
+                }
+            }
+        """.trimIndent(), ResourceMonitoringArguments()) { m ->
+            ResourceMonitoring.beginSubmissionCall()
+            m(null, 2L)
+            recursiveMethods.addAll(ResourceMonitoring.finishSubmissionCall().invokedRecursiveFunctions)
+        }
+        recursiveMethods shouldHaveSize 1
+        recursiveMethods.first().methodName shouldBe "factorial"
+        recursiveMethods.first().descriptor shouldBe "(J)J"
+        result.pluginResult(ResourceMonitoring).invokedRecursiveFunctions shouldHaveSize 1
+    }
+
+    "should not consider property equals recursive" {
+        val recursiveMethods = mutableSetOf<ResourceMonitoringResults.MethodInfo>()
+        runJava("""
+            public static void test() {
+                Item a = new Item();
+                a.name = "A";
+                Item b = new Item();
+                b.name = "B";
+                a.equals(b);
+            }
+            private static class Item {
+                private String name;
+                public boolean equals(Object other) {
+                    if (other instanceof Item i) {
+                        return name.equals(i.name);
+                    } else {
+                        return false;
+                    }
+                }
+            }
+        """.trimIndent(), ResourceMonitoringArguments()) { m ->
+            ResourceMonitoring.beginSubmissionCall()
+            m(null)
+            recursiveMethods.addAll(ResourceMonitoring.finishSubmissionCall().invokedRecursiveFunctions)
+        }
+        recursiveMethods shouldHaveSize 0
+    }
+
+    "should give true negatives on recursion with exceptions" {
+        val recursiveMethods = mutableSetOf<ResourceMonitoringResults.MethodInfo>()
+        val result = runJava("""
+            public static void test() {
+                try {
+                    System.out.println(divide(10, 0));
+                } catch (ArithmeticException e) {
+                    System.out.println(divide(10, 5));
+                }
+            }
+            private static int divide(int a, int b) {
+                return a / b;
+            }
+        """.trimIndent(), ResourceMonitoringArguments()) { m ->
+            ResourceMonitoring.beginSubmissionCall()
+            m(null)
+            recursiveMethods.addAll(ResourceMonitoring.finishSubmissionCall().invokedRecursiveFunctions)
+        }
+        result.stdout shouldBe "2"
+        recursiveMethods shouldHaveSize 0
     }
 })
 

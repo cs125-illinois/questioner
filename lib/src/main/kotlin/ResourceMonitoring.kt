@@ -8,15 +8,17 @@ import org.objectweb.asm.ClassWriter
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.InsnList
-import org.objectweb.asm.tree.LdcInsnNode
+import org.objectweb.asm.tree.IntInsnNode
 import org.objectweb.asm.tree.LineNumberNode
 import org.objectweb.asm.tree.MethodNode
 import java.lang.management.ManagementFactory
+import java.util.Stack
 import kotlin.math.max
 
 object ResourceMonitoring : SandboxPlugin<ResourceMonitoringArguments, ResourceMonitoringResults> {
     private val mxBean = ManagementFactory.getThreadMXBean() as? ThreadMXBean
         ?: error("missing HotSpot-specific extension of ThreadMXBean")
+    private val stackWalker = StackWalker.getInstance()
     private val threadData = ThreadLocal.withInitial {
         Sandbox.CurrentTask.getWorkingData<ResourceMonitoringWorkingData>(ResourceMonitoring)
     }
@@ -36,7 +38,7 @@ object ResourceMonitoring : SandboxPlugin<ResourceMonitoringArguments, ResourceM
         classLoaderConfiguration: Sandbox.ClassLoaderConfiguration,
         allPlugins: List<ConfiguredSandboxPlugin<*, *>>
     ): Any {
-        return arguments
+        return ResourceMonitoringInstrumentationData(arguments)
     }
 
     override fun transformBeforeSandbox(
@@ -46,33 +48,45 @@ object ResourceMonitoring : SandboxPlugin<ResourceMonitoringArguments, ResourceM
         context: RewritingContext
     ): ByteArray {
         if (context != RewritingContext.UNTRUSTED) return bytecode
+        instrumentationData as ResourceMonitoringInstrumentationData
         val reader = ClassReader(bytecode)
         val classNode = ClassNode(Opcodes.ASM9)
         reader.accept(NewLabelSplittingClassVisitor(classNode), 0)
-        classNode.methods.forEach { instrumentMethod(it) }
+        val className = classNode.name.replace('/', '.')
+        instrumentationData.knownClasses.add(className)
+        classNode.methods.forEach { instrumentMethod(instrumentationData, className, it) }
         val writer = ClassWriter(reader, 0)
         classNode.accept(writer)
         return writer.toByteArray()
     }
 
-    private fun instrumentMethod(method: MethodNode) {
+    private fun instrumentMethod(
+        instrumentationData: ResourceMonitoringInstrumentationData,
+        className: String,
+        method: MethodNode
+    ) {
         if (method.instructions.size() == 0) return
+        val methodId = instrumentationData.knownMethods.size
         val frameSize = CONSTITUTIVE_FRAME_SIZE + BYTES_PER_FRAME_ELEMENT * (method.maxStack + method.maxLocals)
         method.instructions.insert(InsnList().apply {
-            add(LdcInsnNode(frameSize))
+            add(IntInsnNode(Opcodes.SIPUSH, methodId))
             add(TracingSink::pushCallStack.asAsmMethodInsn())
         })
         method.instructions.filter { it.opcode in RETURN_OPCODES }.forEach {
-            method.instructions.insertBefore(it, InsnList().apply {
-                add(LdcInsnNode(frameSize))
-                add(TracingSink::popCallStack.asAsmMethodInsn())
-            })
+            method.instructions.insertBefore(it, TracingSink::popCallStack.asAsmMethodInsn())
         }
         method.instructions.filterIsInstance<LineNumberNode>().forEach {
-            val insertionPoint = it.skipToBeforeRealInsnOrLabel()
-            method.instructions.insert(insertionPoint, TracingSink::lineStep.asAsmMethodInsn())
+            method.instructions.insert(it.skipToBeforeRealInsnOrLabel(), TracingSink::lineStep.asAsmMethodInsn())
+        }
+        method.tryCatchBlocks.forEach {
+            method.instructions.insert(
+                it.handler.skipToBeforeRealInsnOrLabel(),
+                TracingSink::adjustCallStackAfterException.asAsmMethodInsn()
+            )
         }
         method.maxStack++
+        val methodInfo = ResourceMonitoringInstrumentationData.MethodInfo(className, method.name, method.desc, frameSize)
+        instrumentationData.knownMethods.add(methodInfo)
     }
 
     override val requiredClasses: Set<Class<*>>
@@ -80,7 +94,7 @@ object ResourceMonitoring : SandboxPlugin<ResourceMonitoringArguments, ResourceM
 
     override fun createInitialData(instrumentationData: Any?, executionArguments: Sandbox.ExecutionArguments): Any {
         require(executionArguments.maxExtraThreads == 0) { "only one thread is supported" }
-        return ResourceMonitoringWorkingData(instrumentationData as ResourceMonitoringArguments)
+        return ResourceMonitoringWorkingData(instrumentationData as ResourceMonitoringInstrumentationData)
     }
 
     private fun updateExternalMeasurements(data: ResourceMonitoringWorkingData) {
@@ -110,8 +124,22 @@ object ResourceMonitoring : SandboxPlugin<ResourceMonitoringArguments, ResourceM
             arguments = workingData.arguments,
             submissionLines = workingData.checkpointSubmissionLines,
             totalLines = workingData.checkpointSubmissionLines + workingData.checkpointLibraryLines,
-            allocatedMemory = workingData.checkpointAllocatedMemory
+            allocatedMemory = workingData.checkpointAllocatedMemory,
+            invokedRecursiveFunctions = workingData.checkpointRecursiveFunctions.map { it.toResult() }.toSet()
         )
+    }
+
+    private inline fun <T> ignoreUsage(data: ResourceMonitoringWorkingData, crossinline block: () -> T): T {
+        val bytesBefore = mxBean.currentThreadAllocatedBytes
+        val countingBefore = Agent.isCounting
+        Agent.isCounting = false
+        return try {
+            block()
+        } finally {
+            Agent.isCounting = countingBefore
+            val bytesAfter = mxBean.currentThreadAllocatedBytes
+            data.baseAllocatedMemory += bytesAfter - bytesBefore
+        }
     }
 
     fun beginSubmissionCall() {
@@ -121,8 +149,10 @@ object ResourceMonitoring : SandboxPlugin<ResourceMonitoringArguments, ResourceM
     fun finishSubmissionCall(): ResourceMonitoringCheckpoint {
         Agent.isCounting = false
         val data = threadData.get()
-        updateExternalMeasurements(data)
-        return data.checkpoint()
+        return ignoreUsage(data) {
+            updateExternalMeasurements(data)
+            data.checkpoint()
+        }
     }
 
     object TracingSink {
@@ -135,22 +165,47 @@ object ResourceMonitoring : SandboxPlugin<ResourceMonitoringArguments, ResourceM
         }
 
         @JvmStatic
-        fun pushCallStack(frameSize: Int) {
+        fun pushCallStack(methodId: Int) {
             val data = threadData.get()
             if (data.pendingClear) {
+                data.callStack.clear()
                 data.baseAllocatedMemory = mxBean.currentThreadAllocatedBytes
                 Agent.isCounting = true
                 Agent.resetLines()
                 data.pendingClear = false
             }
-            data.callStackSize += frameSize
-            data.maxCallStackSize = max(data.maxCallStackSize, data.callStackSize)
+            ignoreUsage(data) {
+                val methodInfo = data.instrumentationData.knownMethods[methodId]
+                val caller = if (data.callStack.isEmpty()) null else data.callStack.peek()
+                if (methodInfo == caller) {
+                    data.recursiveFunctions.add(methodInfo)
+                }
+                data.callStack.push(methodInfo)
+                data.callStackSize += methodInfo.frameSize
+                data.maxCallStackSize = max(data.maxCallStackSize, data.callStackSize)
+            }
         }
 
         @JvmStatic
-        fun popCallStack(frameSize: Int) {
+        fun popCallStack() {
             val data = threadData.get()
-            data.callStackSize -= frameSize
+            ignoreUsage(data) {
+                val methodInfo = data.callStack.pop()
+                data.callStackSize -= methodInfo.frameSize
+            }
+        }
+
+        @JvmStatic
+        fun adjustCallStackAfterException() {
+            val data = threadData.get()
+            ignoreUsage(data) {
+                val currentFrameCount = stackWalker.walk { stream ->
+                    stream.filter { it.className in data.instrumentationData.knownClasses }.count()
+                }
+                while (data.callStack.size > currentFrameCount) {
+                    data.callStackSize -= data.callStack.pop().frameSize
+                }
+            }
         }
     }
 }
@@ -161,8 +216,22 @@ data class ResourceMonitoringArguments(
     val allocatedMemoryLimit: Long? = null
 )
 
-private class ResourceMonitoringWorkingData(
+private class ResourceMonitoringInstrumentationData(
     val arguments: ResourceMonitoringArguments,
+    val knownClasses: MutableSet<String> = mutableSetOf(),
+    val knownMethods: MutableList<MethodInfo> = mutableListOf()
+) {
+    class MethodInfo(val className: String, val name: String, val descriptor: String, val frameSize: Int) {
+        fun toResult(): ResourceMonitoringResults.MethodInfo {
+            return ResourceMonitoringResults.MethodInfo(className, name, descriptor)
+        }
+    }
+}
+
+private class ResourceMonitoringWorkingData(
+    val instrumentationData: ResourceMonitoringInstrumentationData,
+    val arguments: ResourceMonitoringArguments = instrumentationData.arguments,
+    val callStack: Stack<ResourceMonitoringInstrumentationData.MethodInfo> = Stack(),
     var pendingClear: Boolean = true,
     var checkpointSubmissionLines: Long = 0,
     var submissionLines: Long = 0,
@@ -172,20 +241,26 @@ private class ResourceMonitoringWorkingData(
     var checkpointAllocatedMemory: Long = 0,
     var allocatedMemory: Long = 0,
     var callStackSize: Long = 0,
-    var maxCallStackSize: Long = 0
+    var maxCallStackSize: Long = 0,
+    val checkpointRecursiveFunctions: MutableSet<ResourceMonitoringInstrumentationData.MethodInfo> = mutableSetOf(),
+    val recursiveFunctions: MutableSet<ResourceMonitoringInstrumentationData.MethodInfo> = mutableSetOf()
 ) {
     fun checkpoint(): ResourceMonitoringCheckpoint {
         val result = ResourceMonitoringCheckpoint(
             submissionLines = submissionLines,
             totalLines = submissionLines + libraryLines,
-            allocatedMemory = allocatedMemory + maxCallStackSize
+            allocatedMemory = allocatedMemory + maxCallStackSize,
+            invokedRecursiveFunctions = recursiveFunctions.map { it.toResult() }.toSet()
         )
         checkpointSubmissionLines += submissionLines
         checkpointLibraryLines += libraryLines
         checkpointAllocatedMemory += allocatedMemory
+        checkpointRecursiveFunctions.addAll(recursiveFunctions)
         submissionLines = 0
         libraryLines = 0
         allocatedMemory = 0
+        recursiveFunctions.clear()
+        callStack.clear()
         callStackSize = 0
         maxCallStackSize = 0
         return result
@@ -195,14 +270,18 @@ private class ResourceMonitoringWorkingData(
 data class ResourceMonitoringCheckpoint(
     val submissionLines: Long,
     val totalLines: Long,
-    val allocatedMemory: Long
+    val allocatedMemory: Long,
+    val invokedRecursiveFunctions: Set<ResourceMonitoringResults.MethodInfo>
 )
 
 data class ResourceMonitoringResults(
     val arguments: ResourceMonitoringArguments,
     val submissionLines: Long,
     val totalLines: Long,
-    val allocatedMemory: Long
-)
+    val allocatedMemory: Long,
+    val invokedRecursiveFunctions: Set<MethodInfo>
+) {
+    data class MethodInfo(val className: String, val methodName: String, val descriptor: String)
+}
 
 class AllocationLimitExceeded(limit: Long) : Error("allocated too much memory: more than $limit bytes")
