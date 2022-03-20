@@ -113,6 +113,10 @@ suspend fun Question.test(
     val plugins = listOf(
         ConfiguredSandboxPlugin(Jacoco, Unit),
         ConfiguredSandboxPlugin(
+            ResourceMonitoring,
+            ResourceMonitoringArguments()
+        ),
+        ConfiguredSandboxPlugin(
             LineTrace,
             LineTraceArguments(
                 runLineLimit = lineCountLimit,

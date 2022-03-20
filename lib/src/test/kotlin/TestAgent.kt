@@ -12,6 +12,7 @@ class TestAgent : StringSpec({
         Agent.activate()
         Agent.isActivated shouldBe true
     }
+
     "should count lines in libraries" {
         val random = Random(1)
         val bytes = random.nextBytes(100)
@@ -21,12 +22,14 @@ class TestAgent : StringSpec({
         Agent.isCounting = false
         Agent.lines shouldBeGreaterThan 100
     }
+
     "should not count lines while disabled" {
         Agent.isCounting = false
         Agent.resetLines()
         Random(1).nextBytes(100).sort()
         Agent.lines shouldBe 0
     }
+
     "should not count lines outside the standard library" {
         Agent.resetLines()
         Agent.isCounting = true

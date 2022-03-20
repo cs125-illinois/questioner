@@ -144,10 +144,10 @@ private object LineCountTransformer : ClassFileTransformer {
     )
 
     private val EXCLUDED = setOf(
-        "edu/illinois/", // Jeed etc.
         "java/io/", // involved in class loading
         "java/lang/instrument/", // agent
         "java/lang/invoke/", // method handles
+        "java/lang/management/", // JMX
         "java/lang/ref/", // GC-related
         "java/lang/reflect/", // reflection
         "java/lang/Class", // reflection
@@ -170,8 +170,6 @@ private object LineCountTransformer : ClassFileTransformer {
         "kotlin/concurrent/", // application threading
         "kotlin/coroutines/", // application threading
         "kotlin/reflect/", // reflection
-        "org/jetbrains/", // Kotlin compiler
-        "org/objectweb/", // ASM
     )
 
     override fun transform(
