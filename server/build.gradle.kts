@@ -43,9 +43,18 @@ task("createProperties") {
 tasks.processResources {
     dependsOn("createProperties")
 }
+tasks.shadowJar {
+    manifest {
+        attributes["Launcher-Agent-Class"] = "com.beyondgrader.questioner.agent.AgentKt"
+        attributes["Can-Redefine-Classes"] = "true"
+        attributes["Can-Retransform-Classes"] = "true"
+    }
+}
 application {
-    @Suppress("DEPRECATION")
-    mainClassName = "edu.illinois.cs.cs125.questioner.server.MainKt"
+    mainClass.set("edu.illinois.cs.cs125.questioner.server.MainKt")
+    val agentJarTask = project(":agent").tasks["jar"] as Jar
+    val agentJarPath = agentJarTask.archiveFile.get().asFile.path
+    applicationDefaultJvmArgs += listOf("-javaagent:$agentJarPath", "--enable-preview")
 }
 docker {
     name = "cs125/questioner"
@@ -55,11 +64,8 @@ docker {
 }
 kapt {
     includeCompileClasspath = false
-    javacOptions {
-        option("--illegal-access", "permit")
-    }
 }
 kotlin {
-    kotlinDaemonJvmArgs = listOf("-Dfile.encoding=UTF-8", "--illegal-access=permit")
+    kotlinDaemonJvmArgs = listOf("-Dfile.encoding=UTF-8")
 }
 

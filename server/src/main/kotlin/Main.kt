@@ -1,5 +1,6 @@
 package edu.illinois.cs.cs125.questioner.server
 
+import com.beyondgrader.questioner.agent.Agent
 import com.mongodb.MongoClient
 import com.mongodb.MongoClientURI
 import com.mongodb.client.MongoCollection
@@ -52,7 +53,7 @@ private val collection: MongoCollection<BsonDocument> = run {
     }
     val collection = System.getenv("MONGODB_COLLECTION") ?: "questioner"
     val mongoUri = MongoClientURI(System.getenv("MONGODB")!!)
-    val database = mongoUri.database ?: error { "MONGO must specify database to use" }
+    val database = mongoUri.database ?: error("MONGODB must specify database to use")
     MongoClient(mongoUri).getDatabase(database).getCollection(collection, BsonDocument::class.java)
 }
 
@@ -264,6 +265,8 @@ fun Application.questioner() {
 }
 
 fun main() {
+    Agent.activate()
+    check(Agent.isActivated) { "agent should have activated" }
     logger.debug { Status() }
     CoroutineScope(Dispatchers.IO).launch { warm(2, failLint = false) }
     embeddedServer(Netty, port = 8888, module = Application::questioner).start(wait = true)

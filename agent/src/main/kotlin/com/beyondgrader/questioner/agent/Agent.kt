@@ -28,6 +28,11 @@ fun premain(agentArgs: String?, inst: Instrumentation) {
     instrumentation.removeTransformer(BaseLookupGetterTransformer)
 }
 
+fun agentmain(agentArgs: String?, inst: Instrumentation) {
+    // Used when shaded into the server JAR
+    premain(agentArgs, inst)
+}
+
 @Suppress("UNUSED")
 object Agent {
     private var lineGetHandle: MethodHandle? = null
