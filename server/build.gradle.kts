@@ -1,3 +1,4 @@
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import java.io.File
 import java.io.StringWriter
 import java.util.Properties
@@ -58,4 +59,6 @@ docker {
 kotlin {
     kotlinDaemonJvmArgs = listOf("-Dfile.encoding=UTF-8", "--illegal-access=permit")
 }
-
+tasks.withType<ShadowJar> {
+    isZip64 = true
+}
