@@ -10,7 +10,7 @@ plugins {
 dependencies {
     kapt("com.squareup.moshi:moshi-kotlin:1.13.0")
 
-    antlr("org.antlr:antlr4:4.9.3")
+    antlr("org.antlr:antlr4:4.10.1")
 
     implementation("org.jetbrains.kotlin:kotlin-reflect:1.6.10")
     implementation(gradleApi())
@@ -20,7 +20,7 @@ dependencies {
         exclude(module = "kotlin-runtime")
         exclude(module = "kotlin-js")
     }
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.1")
     implementation("com.google.googlejavaformat:google-java-format:1.15.0")
     implementation("com.google.guava:guava:31.1-jre")
     implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.13.2")

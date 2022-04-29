@@ -8,7 +8,7 @@ plugins {
     application
     id("org.jmailen.kotlinter")
     id("com.github.johnrengelman.shadow") version "7.1.2"
-    id("com.palantir.docker") version "0.32.0"
+    id("com.palantir.docker") version "0.33.0"
 }
 dependencies {
     kapt("com.squareup.moshi:moshi-kotlin-codegen:1.13.0")
@@ -20,7 +20,7 @@ dependencies {
     implementation("com.squareup.moshi:moshi-kotlin:1.13.0")
     implementation("com.github.cs125-illinois:ktor-moshi:2021.12.0")
     implementation("com.github.slugify:slugify:2.5")
-    implementation("org.mongodb:mongodb-driver:3.12.10")
+    implementation("org.mongodb:mongodb-driver:3.12.11")
 
     implementation("org.slf4j:slf4j-api:1.7.36")
     implementation("ch.qos.logback:logback-classic:1.2.11")

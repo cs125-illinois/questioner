@@ -129,7 +129,8 @@ fun List<Question>.generateTest(
                 "false"
             }
             })
-               |    }""".trimMargin()
+               |    }
+            """.trimMargin()
         }.let {
             it.ifBlank {
                 isBlank = true
