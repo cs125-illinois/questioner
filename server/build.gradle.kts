@@ -9,9 +9,10 @@ plugins {
     id("org.jmailen.kotlinter")
     id("com.github.johnrengelman.shadow") version "7.1.2"
     id("com.palantir.docker") version "0.33.0"
+    id("com.google.devtools.ksp")
 }
 dependencies {
-    kapt("com.squareup.moshi:moshi-kotlin-codegen:1.13.0")
+    ksp("com.squareup.moshi:moshi-kotlin-codegen:1.13.0")
 
     implementation("org.jetbrains.kotlin:kotlin-reflect:1.6.10")
     implementation(project(":lib"))
@@ -52,12 +53,6 @@ docker {
     files(tasks["shadowJar"].outputs)
     @Suppress("DEPRECATION")
     tags("latest")
-}
-kapt {
-    includeCompileClasspath = false
-    javacOptions {
-        option("--illegal-access", "permit")
-    }
 }
 kotlin {
     kotlinDaemonJvmArgs = listOf("-Dfile.encoding=UTF-8", "--illegal-access=permit")

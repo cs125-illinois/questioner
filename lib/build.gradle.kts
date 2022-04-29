@@ -1,10 +1,10 @@
 plugins {
     kotlin("jvm")
-    kotlin("kapt")
     `maven-publish`
+    id("com.google.devtools.ksp")
 }
 dependencies {
-    kapt("com.squareup.moshi:moshi-kotlin-codegen:1.13.0")
+    ksp("com.squareup.moshi:moshi-kotlin-codegen:1.13.0")
 
     implementation("org.jetbrains.kotlin:kotlin-reflect:1.6.21")
     implementation("com.squareup.moshi:moshi-kotlin:1.13.0")
@@ -30,12 +30,6 @@ publishing {
         create<MavenPublication>("lib") {
             from(components["java"])
         }
-    }
-}
-kapt {
-    includeCompileClasspath = false
-    javacOptions {
-        option("--illegal-access", "permit")
     }
 }
 kotlin {

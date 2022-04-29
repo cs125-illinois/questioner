@@ -2,9 +2,9 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     kotlin("jvm") version "1.6.21" apply false
-    kotlin("kapt") version "1.6.21" apply false
     id("org.jmailen.kotlinter") version "3.10.0" apply false
     id("com.github.ben-manes.versions") version "0.42.0"
+    id("com.google.devtools.ksp").version("1.6.21-1.0.5") apply false
 }
 subprojects {
     group = "com.github.cs125-illinois.questioner"

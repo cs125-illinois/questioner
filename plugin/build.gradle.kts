@@ -1,14 +1,14 @@
 plugins {
     kotlin("jvm")
-    kotlin("kapt")
     antlr
     java
     `java-gradle-plugin`
     `maven-publish`
     id("org.jmailen.kotlinter")
+    id("com.google.devtools.ksp")
 }
 dependencies {
-    kapt("com.squareup.moshi:moshi-kotlin:1.13.0")
+    ksp("com.squareup.moshi:moshi-kotlin:1.13.0")
 
     antlr("org.antlr:antlr4:4.10.1")
 
