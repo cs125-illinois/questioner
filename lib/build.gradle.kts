@@ -12,7 +12,7 @@ dependencies {
 
     api("com.github.cs125-illinois.jeed:core:2022.4.1")
     api("com.github.cs125-illinois:jenisol:2022.4.1")
-    api("io.kotest:kotest-runner-junit5:4.6.3")
+    api("io.kotest:kotest-runner-junit5:5.2.3")
     api("com.google.truth:truth:1.1.3")
     api("com.github.cs125-illinois:libcs1:2022.4.0")
 }

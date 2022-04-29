@@ -27,7 +27,7 @@ dependencies {
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.13.2")
     implementation("com.github.slugify:slugify:2.5")
 
-    testImplementation("io.kotest:kotest-runner-junit5:4.6.3")
+    testImplementation("io.kotest:kotest-runner-junit5:5.2.3")
 }
 tasks.compileKotlin {
     dependsOn(tasks.generateGrammarSource)
