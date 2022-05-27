@@ -10,7 +10,7 @@ dependencies {
     implementation("com.squareup.moshi:moshi-kotlin:1.13.0")
     implementation("org.apache.commons:commons-text:1.9")
 
-    api(project(":agent"))
+    api("com.beyondgrader.resource-agent:agent:2022.5.0")
     api("com.github.cs125-illinois.jeed:core:2022.3.2a1")
     api("com.github.cs125-illinois:jenisol:2022.4.2a1")
     api("io.kotest:kotest-runner-junit5:5.3.0")
@@ -27,8 +27,9 @@ tasks {
     }
 }
 tasks.withType(Test::class.java) {
-    val agentJarTask = project(":agent").tasks["jar"] as Jar
-    val agentJarPath = agentJarTask.archiveFile.get().asFile.path
+    val agentJarPath = configurations["runtimeClasspath"].resolvedConfiguration.resolvedArtifacts.find {
+        it.moduleVersion.id.group == "com.beyondgrader.resource-agent"
+    }!!.file.absolutePath
     jvmArgs("--enable-preview", "-javaagent:$agentJarPath")
 }
 publishing {

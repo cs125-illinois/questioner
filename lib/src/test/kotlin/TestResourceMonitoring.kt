@@ -15,6 +15,7 @@ import io.kotest.matchers.types.beInstanceOf
 import java.lang.reflect.Method
 import kotlin.random.Random
 
+@Suppress("UNUSED")
 class TestResourceMonitoring : StringSpec({
     "should report checkpoints and total line counts" {
         val callLines = mutableListOf<Long>()
@@ -34,7 +35,7 @@ class TestResourceMonitoring : StringSpec({
         }
         result.threw should beNull()
         result.completed shouldBe true
-        callLines[0] shouldBeLessThan 100
+        callLines[0] shouldBeLessThan 600
         callLines[0] shouldBeGreaterThan 20
         callLines[1] shouldBeLessThan callLines[0]
         callLines[1] shouldBeGreaterThan 5

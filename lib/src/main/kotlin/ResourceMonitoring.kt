@@ -1,6 +1,7 @@
 package edu.illinois.cs.cs125.questioner.lib
 
-import com.beyondgrader.questioner.agent.Agent
+import com.beyondgrader.resourceagent.Agent
+import com.beyondgrader.resourceagent.LineCounting
 import com.sun.management.ThreadMXBean
 import edu.illinois.cs.cs125.jeed.core.*
 import org.objectweb.asm.ClassReader
@@ -90,7 +91,7 @@ object ResourceMonitoring : SandboxPlugin<ResourceMonitoringArguments, ResourceM
     }
 
     override val requiredClasses: Set<Class<*>>
-        get() = setOf(TracingSink::class.java)
+        get() = setOf(TracingSink::class.java, javaClass.classLoader.loadClass("java.lang.ResourceUsageSink"))
 
     override fun createInitialData(instrumentationData: Any?, executionArguments: Sandbox.ExecutionArguments): Any {
         require(executionArguments.maxExtraThreads == 0) { "only one thread is supported" }
@@ -99,7 +100,7 @@ object ResourceMonitoring : SandboxPlugin<ResourceMonitoringArguments, ResourceM
 
     private fun updateExternalMeasurements(data: ResourceMonitoringWorkingData) {
         data.allocatedMemory = mxBean.currentThreadAllocatedBytes - data.baseAllocatedMemory
-        data.libraryLines = Agent.lines
+        data.libraryLines = LineCounting.lines
     }
 
     private fun checkLimits(data: ResourceMonitoringWorkingData) {
@@ -131,12 +132,12 @@ object ResourceMonitoring : SandboxPlugin<ResourceMonitoringArguments, ResourceM
 
     private inline fun <T> ignoreUsage(data: ResourceMonitoringWorkingData, crossinline block: () -> T): T {
         val bytesBefore = mxBean.currentThreadAllocatedBytes
-        val countingBefore = Agent.isCounting
-        Agent.isCounting = false
+        val countingBefore = LineCounting.isCounting
+        LineCounting.isCounting = false
         return try {
             block()
         } finally {
-            Agent.isCounting = countingBefore
+            LineCounting.isCounting = countingBefore
             val bytesAfter = mxBean.currentThreadAllocatedBytes
             data.baseAllocatedMemory += bytesAfter - bytesBefore
         }
@@ -147,7 +148,7 @@ object ResourceMonitoring : SandboxPlugin<ResourceMonitoringArguments, ResourceM
     }
 
     fun finishSubmissionCall(): ResourceMonitoringCheckpoint {
-        Agent.isCounting = false
+        LineCounting.isCounting = false
         val data = threadData.get()
         return ignoreUsage(data) {
             updateExternalMeasurements(data)
@@ -170,8 +171,8 @@ object ResourceMonitoring : SandboxPlugin<ResourceMonitoringArguments, ResourceM
             if (data.pendingClear) {
                 data.callStack.clear()
                 data.baseAllocatedMemory = mxBean.currentThreadAllocatedBytes
-                Agent.isCounting = true
-                Agent.resetLines()
+                LineCounting.isCounting = true
+                LineCounting.reset()
                 data.pendingClear = false
             }
             ignoreUsage(data) {
