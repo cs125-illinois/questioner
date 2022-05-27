@@ -27,7 +27,8 @@ private val sharedClassWhitelist = setOf(
     "java.lang.",
     "java.io.PrintStream",
     "kotlin.Metadata",
-    "kotlin.reflect.jvm."
+    "kotlin.reflect.jvm.",
+    "java.util.Iterator",
 )
 
 @Suppress("MemberVisibilityCanBePrivate", "LargeClass", "TooManyFunctions")

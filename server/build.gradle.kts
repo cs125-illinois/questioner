@@ -1,3 +1,4 @@
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import java.io.File
 import java.io.StringWriter
 import java.util.Properties
@@ -8,23 +9,25 @@ plugins {
     application
     id("org.jmailen.kotlinter")
     id("com.github.johnrengelman.shadow") version "7.1.2"
-    id("com.palantir.docker") version "0.32.0"
+    id("com.palantir.docker") version "0.33.0"
+    id("com.google.devtools.ksp")
 }
 dependencies {
-    kapt("com.squareup.moshi:moshi-kotlin-codegen:1.13.0")
+    ksp("com.squareup.moshi:moshi-kotlin-codegen:1.13.0")
 
     implementation("org.jetbrains.kotlin:kotlin-reflect:1.6.10")
     implementation(project(":lib"))
 
-    implementation("io.ktor:ktor-server-netty:1.6.7")
+    implementation("io.ktor:ktor-server-netty:2.0.1")
+    implementation("io.ktor:ktor-server-content-negotiation:2.0.1")
     implementation("com.squareup.moshi:moshi-kotlin:1.13.0")
-    implementation("com.github.cs125-illinois:ktor-moshi:2021.12.0")
+    implementation("com.github.cs125-illinois:ktor-moshi:2022.4.0")
     implementation("com.github.slugify:slugify:2.5")
-    implementation("org.mongodb:mongodb-driver:3.12.10")
+    implementation("org.mongodb:mongodb-driver:3.12.11")
 
     implementation("org.slf4j:slf4j-api:1.7.36")
     implementation("ch.qos.logback:logback-classic:1.2.11")
-    implementation("io.github.microutils:kotlin-logging:2.1.21")
+    implementation("io.github.microutils:kotlin-logging:2.1.23")
 }
 task("createProperties") {
     doLast {
@@ -62,10 +65,9 @@ docker {
     @Suppress("DEPRECATION")
     tags("latest")
 }
-kapt {
-    includeCompileClasspath = false
-}
 kotlin {
     kotlinDaemonJvmArgs = listOf("-Dfile.encoding=UTF-8")
 }
-
+tasks.withType<ShadowJar> {
+    isZip64 = true
+}

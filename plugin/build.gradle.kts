@@ -1,16 +1,16 @@
 plugins {
     kotlin("jvm")
-    kotlin("kapt")
     antlr
     java
     `java-gradle-plugin`
     `maven-publish`
     id("org.jmailen.kotlinter")
+    id("com.google.devtools.ksp")
 }
 dependencies {
-    kapt("com.squareup.moshi:moshi-kotlin:1.13.0")
+    ksp("com.squareup.moshi:moshi-kotlin:1.13.0")
 
-    antlr("org.antlr:antlr4:4.9.3")
+    antlr("org.antlr:antlr4:4.10.1")
 
     implementation("org.jetbrains.kotlin:kotlin-reflect:1.6.10")
     implementation(gradleApi())
@@ -20,14 +20,14 @@ dependencies {
         exclude(module = "kotlin-runtime")
         exclude(module = "kotlin-js")
     }
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.1")
     implementation("com.google.googlejavaformat:google-java-format:1.15.0")
     implementation("com.google.guava:guava:31.1-jre")
-    implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.13.1")
-    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.13.1")
+    implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.13.3")
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.13.3")
     implementation("com.github.slugify:slugify:2.5")
 
-    testImplementation("io.kotest:kotest-runner-junit5:4.6.3")
+    testImplementation("io.kotest:kotest-runner-junit5:5.3.0")
 }
 tasks.compileKotlin {
     dependsOn(tasks.generateGrammarSource)

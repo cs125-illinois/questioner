@@ -365,7 +365,8 @@ fun List<ParsedJavaFile>.findQuestions(
 
                 javaTemplate = """public class ${solution.wrapWith} {
                 |  {{{ contents }}}
-                |}""".trimMargin()
+                |}
+                """.trimMargin()
                 val javaImports = (solution.usedImports + solution.templateImports).toSet()
                 if (javaImports.isNotEmpty()) {
                     javaTemplate = javaImports.joinToString("\n") { "import $it;" } + "\n\n$javaTemplate"
@@ -377,7 +378,8 @@ fun List<ParsedJavaFile>.findQuestions(
                     } else {
                         """class ${solution.wrapWith} {
                 |  {{{ contents }}}
-                |}""".trimMargin()
+                |}
+                        """.trimMargin()
                     }
 
                     val kotlinImports = (kotlinSolution.usedImports + solution.templateImports).toSet()

@@ -80,7 +80,7 @@ fun Question.compileSubmission(
 }
 
 @Suppress("ThrowsCount")
-fun Question.kompileSubmission(
+suspend fun Question.kompileSubmission(
     contents: String,
     parentClassLoader: ClassLoader,
     testResults: TestResults

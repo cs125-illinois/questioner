@@ -372,7 +372,8 @@ $cleanContent
                 mapOf(
                     "$className.java" to """public class $className {
                     |$cleanContent
-                    }""".trimMargin()
+                    }
+                    """.trimMargin()
                 )
             )
             Question.Type.SNIPPET -> Source.fromSnippet(cleanContent)
@@ -691,7 +692,7 @@ fun String.getType(): Question.Type {
     }
     """public class Main {
             |$this
-        """.trimMargin().parseJava().also { parsed ->
+    """.trimMargin().parseJava().also { parsed ->
         parsed.tree
             .typeDeclaration(0)
             ?.classDeclaration()
