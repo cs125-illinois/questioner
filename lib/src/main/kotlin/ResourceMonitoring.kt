@@ -35,6 +35,7 @@ object ResourceMonitoring : SandboxPlugin<ResourceMonitoringArguments, ResourceM
 
     init {
         mxBean.isThreadAllocatedMemoryEnabled = true
+        Sandbox.SandboxedClassLoader::class.java.toString() // Ensure loaded, to be instrumented
         Agent.activate()
         AllocationLimiting.arrayBodySizeValidator = LongFunction(ResourceMonitoring::checkArrayAllocation)
         WarmupWrapping.beforeWarmup = Runnable(ResourceMonitoring::beforeWarmup)
