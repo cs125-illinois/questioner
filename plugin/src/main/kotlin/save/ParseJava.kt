@@ -22,6 +22,7 @@ import edu.illinois.cs.cs125.questioner.lib.TemplateImports
 import edu.illinois.cs.cs125.questioner.lib.Whitelist
 import edu.illinois.cs.cs125.questioner.lib.Wrap
 import edu.illinois.cs.cs125.questioner.lib.toReason
+import io.kotest.common.runBlocking
 import org.antlr.v4.runtime.BaseErrorListener
 import org.antlr.v4.runtime.CharStream
 import org.antlr.v4.runtime.CharStreams
@@ -227,7 +228,7 @@ data class ParsedJavaFile(val path: String, val contents: String) {
         }
     }
 
-    fun toCleanSolution(cleanSpec: CleanSpec): Pair<Question.FlatFile, Question.Type> {
+    fun toCleanSolution(cleanSpec: CleanSpec): Pair<Question.FlatFile, Question.Type> = runBlocking {
         val solutionContent = clean(cleanSpec, false).let { content ->
             Source.fromJava(content).checkstyle(CheckstyleArguments(failOnError = false)).let { results ->
                 val removeLines = results.errors.filter { error ->
@@ -275,7 +276,7 @@ $cleanContent
                 else -> 0
             }
         }
-        return Pair(
+        return@runBlocking Pair(
             Question.FlatFile(
                 className,
                 cleanContent,
@@ -455,7 +456,7 @@ $cleanContent
     }
 
     @Suppress("ComplexMethod")
-    fun clean(cleanSpec: CleanSpec, stripTemplate: Boolean = true): String {
+    fun clean(cleanSpec: CleanSpec, stripTemplate: Boolean = true): String = runBlocking {
         val (template, wrapWith, importNames) = cleanSpec
 
         val toSnip = mutableSetOf<IntRange>()
@@ -513,7 +514,7 @@ $cleanContent
             }
         }
 
-        return contents
+        return@runBlocking contents
             .let { unsnipped ->
                 var snipped = unsnipped
                 var shift = 0

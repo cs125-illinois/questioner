@@ -40,7 +40,7 @@ fun Question.templateSubmission(contents: String, language: Question.Language = 
 }
 
 @Suppress("ThrowsCount")
-fun Question.compileSubmission(
+suspend fun Question.compileSubmission(
     contents: String,
     parentClassLoader: ClassLoader,
     testResults: TestResults

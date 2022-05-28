@@ -20,7 +20,7 @@ dependencies {
         exclude(module = "kotlin-runtime")
         exclude(module = "kotlin-js")
     }
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.2")
     implementation("com.google.googlejavaformat:google-java-format:1.15.0")
     implementation("com.google.guava:guava:31.1-jre")
     implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.13.3")
