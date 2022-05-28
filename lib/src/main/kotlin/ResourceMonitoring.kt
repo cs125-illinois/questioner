@@ -1,6 +1,7 @@
 package edu.illinois.cs.cs125.questioner.lib
 
 import com.beyondgrader.resourceagent.Agent
+import com.beyondgrader.resourceagent.AllocationLimiting
 import com.beyondgrader.resourceagent.LineCounting
 import com.sun.management.ThreadMXBean
 import edu.illinois.cs.cs125.jeed.core.*
@@ -14,6 +15,7 @@ import org.objectweb.asm.tree.LineNumberNode
 import org.objectweb.asm.tree.MethodNode
 import java.lang.management.ManagementFactory
 import java.util.Stack
+import java.util.function.LongFunction
 import kotlin.math.max
 
 object ResourceMonitoring : SandboxPlugin<ResourceMonitoringArguments, ResourceMonitoringResults> {
@@ -28,10 +30,12 @@ object ResourceMonitoring : SandboxPlugin<ResourceMonitoringArguments, ResourceM
     )
     private const val CONSTITUTIVE_FRAME_SIZE = 16
     private const val BYTES_PER_FRAME_ELEMENT = 8
+    private const val MAX_ALWAYS_PERMITTED_ALLOCATION = 512
 
     init {
         mxBean.isThreadAllocatedMemoryEnabled = true
         Agent.activate()
+        AllocationLimiting.arrayBodySizeValidator = LongFunction(ResourceMonitoring::checkArrayAllocation)
     }
 
     override fun createInstrumentationData(
@@ -86,6 +90,7 @@ object ResourceMonitoring : SandboxPlugin<ResourceMonitoringArguments, ResourceM
             )
         }
         method.maxStack++
+        AllocationLimiting.instrumentArrayAllocations(method)
         val methodInfo = ResourceMonitoringInstrumentationData.MethodInfo(className, method.name, method.desc, frameSize)
         instrumentationData.knownMethods.add(methodInfo)
     }
@@ -96,6 +101,10 @@ object ResourceMonitoring : SandboxPlugin<ResourceMonitoringArguments, ResourceM
     override fun createInitialData(instrumentationData: Any?, executionArguments: Sandbox.ExecutionArguments): Any {
         require(executionArguments.maxExtraThreads == 0) { "only one thread is supported" }
         return ResourceMonitoringWorkingData(instrumentationData as ResourceMonitoringInstrumentationData)
+    }
+
+    override fun executionStartedInSandbox() {
+        AllocationLimiting.isCheckingAllocations = true
     }
 
     private fun updateExternalMeasurements(data: ResourceMonitoringWorkingData) {
@@ -154,6 +163,15 @@ object ResourceMonitoring : SandboxPlugin<ResourceMonitoringArguments, ResourceM
             updateExternalMeasurements(data)
             data.checkpoint()
         }
+    }
+
+    @JvmStatic
+    private fun checkArrayAllocation(bytes: Long): Boolean {
+        if (bytes < MAX_ALWAYS_PERMITTED_ALLOCATION) return true // Allow error message construction
+        val data = threadData.get()
+        if (data.arguments.allocatedMemoryLimit == null) return true
+        updateExternalMeasurements(data)
+        return data.checkpointAllocatedMemory + data.allocatedMemory + bytes < data.arguments.allocatedMemoryLimit
     }
 
     object TracingSink {
@@ -285,4 +303,4 @@ data class ResourceMonitoringResults(
     data class MethodInfo(val className: String, val methodName: String, val descriptor: String)
 }
 
-class AllocationLimitExceeded(limit: Long) : Error("allocated too much memory: more than $limit bytes")
+class AllocationLimitExceeded(limit: Long) : OutOfMemoryError("allocated too much memory: more than $limit bytes")

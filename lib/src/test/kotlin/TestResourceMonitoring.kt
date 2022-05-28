@@ -34,6 +34,7 @@ class TestResourceMonitoring : StringSpec({
             }
         }
         result.threw should beNull()
+        result.timeout shouldBe false
         result.completed shouldBe true
         callLines[0] shouldBeLessThan 600
         callLines[0] shouldBeGreaterThan 20
@@ -167,7 +168,35 @@ class TestResourceMonitoring : StringSpec({
         }
         result.stdout shouldStartWith "Start"
         result.stdout shouldContain "\n20\n"
-        result.threw should beInstanceOf<AllocationLimitExceeded>()
+        result.threw should beInstanceOf<OutOfMemoryError>()
+    }
+
+    "should prevent huge direct allocations" {
+        val result = runJava("""
+            public static void test() {
+                System.out.println("Start");
+                int[] huge = new int[500000];
+            }
+        """.trimIndent(), ResourceMonitoringArguments(allocatedMemoryLimit = 500000)) { m ->
+            unwrap { m(null) }
+        }
+        result.stdout shouldStartWith "Start"
+        result.threw should beInstanceOf<OutOfMemoryError>()
+        result.pluginResult(ResourceMonitoring).allocatedMemory shouldBeLessThan 100000
+    }
+
+    "should prevent huge indirect allocations" {
+        val result = runJava("""
+            public static void test() {
+                System.out.println("Start");
+                new java.util.ArrayList<Object>(200000);
+            }
+        """.trimIndent(), ResourceMonitoringArguments(allocatedMemoryLimit = 500000)) { m ->
+            unwrap { m(null) }
+        }
+        result.stdout shouldStartWith "Start"
+        result.threw should beInstanceOf<OutOfMemoryError>()
+        result.pluginResult(ResourceMonitoring).allocatedMemory shouldBeLessThan 100000
     }
 
     "should reflect max stack depth in memory estimate" {
