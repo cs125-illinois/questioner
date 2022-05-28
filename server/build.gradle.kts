@@ -18,8 +18,8 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-reflect:1.6.10")
     implementation(project(":lib"))
 
-    implementation("io.ktor:ktor-server-netty:2.0.1")
-    implementation("io.ktor:ktor-server-content-negotiation:2.0.1")
+    implementation("io.ktor:ktor-server-netty:2.0.2")
+    implementation("io.ktor:ktor-server-content-negotiation:2.0.2")
     implementation("com.squareup.moshi:moshi-kotlin:1.13.0")
     implementation("com.github.cs125-illinois:ktor-moshi:2022.4.0")
     implementation("com.github.slugify:slugify:2.5")
