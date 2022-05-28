@@ -3,6 +3,7 @@ package edu.illinois.cs.cs125.questioner.lib
 import com.beyondgrader.resourceagent.Agent
 import com.beyondgrader.resourceagent.AllocationLimiting
 import com.beyondgrader.resourceagent.LineCounting
+import com.beyondgrader.resourceagent.WarmupWrapping
 import com.sun.management.ThreadMXBean
 import edu.illinois.cs.cs125.jeed.core.*
 import org.objectweb.asm.ClassReader
@@ -36,6 +37,8 @@ object ResourceMonitoring : SandboxPlugin<ResourceMonitoringArguments, ResourceM
         mxBean.isThreadAllocatedMemoryEnabled = true
         Agent.activate()
         AllocationLimiting.arrayBodySizeValidator = LongFunction(ResourceMonitoring::checkArrayAllocation)
+        WarmupWrapping.beforeWarmup = Runnable(ResourceMonitoring::beforeWarmup)
+        WarmupWrapping.afterWarmup = Runnable(ResourceMonitoring::afterWarmup)
     }
 
     override fun createInstrumentationData(
@@ -105,6 +108,7 @@ object ResourceMonitoring : SandboxPlugin<ResourceMonitoringArguments, ResourceM
 
     override fun executionStartedInSandbox() {
         AllocationLimiting.isCheckingAllocations = true
+        WarmupWrapping.isCallbackEnabled = true
     }
 
     private fun updateExternalMeasurements(data: ResourceMonitoringWorkingData) {
@@ -172,6 +176,23 @@ object ResourceMonitoring : SandboxPlugin<ResourceMonitoringArguments, ResourceM
         if (data.arguments.allocatedMemoryLimit == null) return true
         updateExternalMeasurements(data)
         return data.checkpointAllocatedMemory + data.allocatedMemory + bytes < data.arguments.allocatedMemoryLimit
+    }
+
+    @JvmStatic
+    private fun beforeWarmup() {
+        val data = threadData.get()
+        data.preWarmupAllocatedMemory = mxBean.currentThreadAllocatedBytes
+    }
+
+    @JvmStatic
+    private fun afterWarmup() {
+        val data = threadData.get()
+        val warmupAllocatedBytes = mxBean.currentThreadAllocatedBytes - data.preWarmupAllocatedMemory
+        // Charge one-time warmup to the overall task, but not the individual submission call
+        data.baseAllocatedMemory += warmupAllocatedBytes
+        data.checkpointAllocatedMemory += warmupAllocatedBytes
+        data.preWarmupAllocatedMemory = 0
+        data.warmups++
     }
 
     object TracingSink {
@@ -256,11 +277,13 @@ private class ResourceMonitoringWorkingData(
     var submissionLines: Long = 0,
     var checkpointLibraryLines: Long = 0,
     var libraryLines: Long = 0,
+    var preWarmupAllocatedMemory: Long = 0,
     var baseAllocatedMemory: Long = 0,
     var checkpointAllocatedMemory: Long = 0,
     var allocatedMemory: Long = 0,
     var callStackSize: Long = 0,
     var maxCallStackSize: Long = 0,
+    var warmups: Int = 0,
     val checkpointRecursiveFunctions: MutableSet<ResourceMonitoringInstrumentationData.MethodInfo> = mutableSetOf(),
     val recursiveFunctions: MutableSet<ResourceMonitoringInstrumentationData.MethodInfo> = mutableSetOf()
 ) {
@@ -269,7 +292,8 @@ private class ResourceMonitoringWorkingData(
             submissionLines = submissionLines,
             totalLines = submissionLines + libraryLines,
             allocatedMemory = allocatedMemory + maxCallStackSize,
-            invokedRecursiveFunctions = recursiveFunctions.map { it.toResult() }.toSet()
+            invokedRecursiveFunctions = recursiveFunctions.map { it.toResult() }.toSet(),
+            warmups = warmups
         )
         checkpointSubmissionLines += submissionLines
         checkpointLibraryLines += libraryLines
@@ -282,6 +306,7 @@ private class ResourceMonitoringWorkingData(
         callStack.clear()
         callStackSize = 0
         maxCallStackSize = 0
+        warmups = 0
         return result
     }
 }
@@ -290,7 +315,8 @@ data class ResourceMonitoringCheckpoint(
     val submissionLines: Long,
     val totalLines: Long,
     val allocatedMemory: Long,
-    val invokedRecursiveFunctions: Set<ResourceMonitoringResults.MethodInfo>
+    val invokedRecursiveFunctions: Set<ResourceMonitoringResults.MethodInfo>,
+    val warmups: Int
 )
 
 data class ResourceMonitoringResults(

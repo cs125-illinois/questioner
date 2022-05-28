@@ -4,6 +4,7 @@ import edu.illinois.cs.cs125.jeed.core.*
 import edu.illinois.cs.cs125.jenisol.core.unwrap
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.ints.shouldBeGreaterThan
 import io.kotest.matchers.longs.shouldBeGreaterThan
 import io.kotest.matchers.longs.shouldBeLessThan
 import io.kotest.matchers.nulls.beNull
@@ -17,6 +18,10 @@ import kotlin.random.Random
 
 @Suppress("UNUSED")
 class TestResourceMonitoring : StringSpec({
+    "should warm up successfully" {
+        ResourceMonitoring.toString()
+    }
+
     "should report checkpoints and total line counts" {
         val callLines = mutableListOf<Long>()
         val result = runJava("""
@@ -150,6 +155,39 @@ class TestResourceMonitoring : StringSpec({
         callAllocs[1] shouldBeLessThan 200
         callAllocs[2] shouldBeGreaterThan callAllocs[1]
         callAllocs[2] shouldBeLessThan 400
+        callAllocs[3] shouldBeGreaterThan callAllocs[1]
+        callAllocs[3] shouldBeLessThan callAllocs[2]
+    }
+
+    "should reduce the one-time warmup charge to checkpoints" {
+        val callLines = mutableListOf<Long>()
+        val callAllocs = mutableListOf<Long>()
+        val callWarmups = mutableListOf<Int>()
+        val result = runJava("""
+            public static String test(String input) {
+                return input + ", and again: " + input;
+            }
+        """.trimIndent(), ResourceMonitoringArguments()) { m ->
+            listOf("a", "a", "this is a test", "test!").forEach {
+                ResourceMonitoring.beginSubmissionCall()
+                m(null, it)
+                val checkpoint = ResourceMonitoring.finishSubmissionCall()
+                callLines.add(checkpoint.totalLines)
+                callAllocs.add(checkpoint.allocatedMemory)
+                callWarmups.add(checkpoint.warmups)
+            }
+        }
+        result.completed shouldBe true
+        result.threw should beNull()
+        callWarmups[0] shouldBeGreaterThan 0
+        callWarmups[1] shouldBe 0
+        callWarmups[2] shouldBe 0
+        callWarmups[3] shouldBe 0
+        callLines[0] shouldBe callLines[1]
+        callAllocs[0] shouldBeGreaterThan 20
+        callAllocs[0] shouldBeLessThan 1000
+        callAllocs[2] shouldBeGreaterThan callAllocs[1]
+        callAllocs[2] shouldBeLessThan 1000
         callAllocs[3] shouldBeGreaterThan callAllocs[1]
         callAllocs[3] shouldBeLessThan callAllocs[2]
     }
