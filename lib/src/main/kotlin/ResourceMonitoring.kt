@@ -13,6 +13,7 @@ import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.InsnList
 import org.objectweb.asm.tree.IntInsnNode
 import org.objectweb.asm.tree.LineNumberNode
+import org.objectweb.asm.tree.MethodInsnNode
 import org.objectweb.asm.tree.MethodNode
 import java.lang.management.ManagementFactory
 import java.util.Stack
@@ -33,7 +34,7 @@ object ResourceMonitoring : SandboxPlugin<ResourceMonitoringArguments, ResourceM
     private const val BYTES_PER_FRAME_ELEMENT = 8
     private const val MAX_ALWAYS_PERMITTED_ALLOCATION = 512
 
-    val countLibraryLines = System.getenv("QUESTIONER_COUNT_LIBRARY_LINES")?.let { it.toBoolean() } ?: true
+    val countLibraryLines = System.getenv("QUESTIONER_COUNT_LIBRARY_LINES").toBoolean()
 
     init {
         mxBean.isThreadAllocatedMemoryEnabled = true
@@ -65,7 +66,11 @@ object ResourceMonitoring : SandboxPlugin<ResourceMonitoringArguments, ResourceM
         reader.accept(NewLabelSplittingClassVisitor(classNode), 0)
         val className = classNode.name.replace('/', '.')
         instrumentationData.knownClasses.add(className)
-        classNode.methods.forEach { instrumentMethod(instrumentationData, className, it) }
+        classNode.methods.forEach {
+            if (it.name != "\$jacocoInit") {
+                instrumentMethod(instrumentationData, className, it)
+            }
+        }
         val writer = ClassWriter(reader, 0)
         classNode.accept(writer)
         return writer.toByteArray()
@@ -88,6 +93,11 @@ object ResourceMonitoring : SandboxPlugin<ResourceMonitoringArguments, ResourceM
         }
         method.instructions.filterIsInstance<LineNumberNode>().forEach {
             method.instructions.insert(it.skipToBeforeRealInsnOrLabel(), TracingSink::lineStep.asAsmMethodInsn())
+        }
+        method.instructions.filterIsInstance<MethodInsnNode>().filter {
+            it.owner == Agent.SINK_CLASS_INTERNAL_NAME && it.name.contains("Warmup")
+        }.forEach {
+            error("Untrusted code calls forbidden agent method ${it.name}")
         }
         method.tryCatchBlocks.forEach {
             method.instructions.insert(
@@ -213,6 +223,7 @@ object ResourceMonitoring : SandboxPlugin<ResourceMonitoringArguments, ResourceM
             if (data.pendingClear) {
                 data.callStack.clear()
                 data.baseAllocatedMemory = mxBean.currentThreadAllocatedBytes
+                data.warmups = 0
                 LineCounting.isCounting = true
                 LineCounting.reset()
                 data.pendingClear = false

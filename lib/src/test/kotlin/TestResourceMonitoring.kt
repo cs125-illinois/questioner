@@ -161,7 +161,7 @@ class TestResourceMonitoring : StringSpec({
         callAllocs[3] shouldBeLessThan callAllocs[2]
     }
 
-    "should reduce the one-time warmup charge to checkpoints" {
+    suspend fun testWarmupCharge(otherPlugins: List<ConfiguredSandboxPlugin<*, *>>, warmupMemoryLimit: Long) {
         val callLines = mutableListOf<Long>()
         val callAllocs = mutableListOf<Long>()
         val callWarmups = mutableListOf<Int>()
@@ -169,7 +169,7 @@ class TestResourceMonitoring : StringSpec({
             public static String test(String input) {
                 return input + ", and again: " + input;
             }
-        """.trimIndent(), ResourceMonitoringArguments()) { m ->
+        """.trimIndent(), ResourceMonitoringArguments(), otherPlugins) { m ->
             listOf("a", "a", "this is a test", "test!").forEach {
                 ResourceMonitoring.beginSubmissionCall()
                 m(null, it)
@@ -187,11 +187,19 @@ class TestResourceMonitoring : StringSpec({
         callWarmups[3] shouldBe 0
         callLines[0] shouldBe callLines[1]
         callAllocs[0] shouldBeGreaterThan 20
-        callAllocs[0] shouldBeLessThan 1000
+        callAllocs[0] shouldBeLessThan warmupMemoryLimit
         callAllocs[2] shouldBeGreaterThan callAllocs[1]
         callAllocs[2] shouldBeLessThan 1000
         callAllocs[3] shouldBeGreaterThan callAllocs[1]
         callAllocs[3] shouldBeLessThan callAllocs[2]
+    }
+
+    "should reduce the one-time warmup charge to checkpoints" {
+        testWarmupCharge(listOf(), 1000)
+    }
+
+    "should reduce the warmup charge from Jacoco" {
+        testWarmupCharge(listOf(ConfiguredSandboxPlugin(Jacoco, Unit)), 2000)
     }
 
     "should limit allocated memory" {
@@ -388,11 +396,16 @@ class TestResourceMonitoring : StringSpec({
 private suspend fun runJava(
     code: String,
     args: ResourceMonitoringArguments,
+    otherPlugins: List<ConfiguredSandboxPlugin<*, *>> = listOf(),
     test: (Method) -> Unit
 ): Sandbox.TaskResults<*> {
     val compiledSource = Source.fromJava("public class Test {\n$code\n}").compile()
-    val plugins = listOf(ConfiguredSandboxPlugin(ResourceMonitoring, args))
-    return Sandbox.execute(compiledSource.classLoader, configuredPlugins = plugins) { (cl, _) ->
+    val plugins = otherPlugins + listOf(ConfiguredSandboxPlugin(ResourceMonitoring, args))
+    return Sandbox.execute(
+        compiledSource.classLoader,
+        configuredPlugins = plugins,
+        executionArguments = Sandbox.ExecutionArguments(timeout = 120000)
+    ) { (cl, _) ->
         val method = cl.loadClass("Test").methods.find { it.name == "test" }!!
         test(method)
     }
