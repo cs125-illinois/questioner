@@ -15,14 +15,16 @@ import io.kotest.matchers.string.shouldStartWith
 import io.kotest.matchers.types.beInstanceOf
 import java.lang.reflect.Method
 import kotlin.random.Random
+import kotlin.time.ExperimentalTime
 
 @Suppress("UNUSED")
+@ExperimentalTime // for kotest's String.config
 class TestResourceMonitoring : StringSpec({
     "should warm up successfully" {
         ResourceMonitoring.toString()
     }
 
-    "should report checkpoints and total line counts" {
+    "should report checkpoints and total line counts".config(enabled = ResourceMonitoring.countLibraryLines) {
         val callLines = mutableListOf<Long>()
         val result = runJava("""
             public static void test(int times) {
@@ -51,7 +53,7 @@ class TestResourceMonitoring : StringSpec({
         resourceResult.totalLines shouldBe callLines.sum()
     }
 
-    "should limit total lines executed" {
+    "should limit total lines executed".config(enabled = ResourceMonitoring.countLibraryLines) {
         val result = runJava("""
             public static void test(byte[] values) {
                 System.out.println("Start");
@@ -237,8 +239,11 @@ class TestResourceMonitoring : StringSpec({
         result.pluginResult(ResourceMonitoring).allocatedMemory shouldBeLessThan 100000
     }
 
-    "should reflect max stack depth in memory estimate" {
-        val iterativeAllocs = mutableListOf<Long>()
+    "should estimate memory used by max stack depth" {
+        // allocatedMemory includes both call stack size and regular allocations
+        // The latter is "an approximation" due to possible recording delay, so shouldn't compare it exactly
+        // maxCallStackSize is not subject to fluctuations, so it can be compared for equality
+        val iterativeStacks = mutableListOf<Long>()
         runJava("""
             public static long test(long i) {
                 long result = 1;
@@ -252,13 +257,14 @@ class TestResourceMonitoring : StringSpec({
             listOf(0, 1, 5, 15).forEach {
                 ResourceMonitoring.beginSubmissionCall()
                 m(null, it.toLong())
-                iterativeAllocs.add(ResourceMonitoring.finishSubmissionCall().allocatedMemory)
+                iterativeStacks.add(ResourceMonitoring.finishSubmissionCall().maxCallStackSize)
             }
         }
-        iterativeAllocs[1] shouldBeLessThan 300
-        iterativeAllocs[1] shouldBeGreaterThan 20
-        iterativeAllocs[2] shouldBe iterativeAllocs[1]
-        iterativeAllocs[3] shouldBe iterativeAllocs[1]
+        iterativeStacks[1] shouldBeLessThan 300
+        iterativeStacks[1] shouldBeGreaterThan 20
+        iterativeStacks[2] shouldBe iterativeStacks[1]
+        iterativeStacks[3] shouldBe iterativeStacks[1]
+        // Changes in stack depth should be visible in the noise of allocation recording fluctuation
         val recursiveAllocs = mutableListOf<Long>()
         runJava("""
             public static long test(long i) {
@@ -279,7 +285,8 @@ class TestResourceMonitoring : StringSpec({
         recursiveAllocs[1] shouldBeGreaterThan 20
         recursiveAllocs[2] shouldBeGreaterThan 4 * recursiveAllocs[1]
         recursiveAllocs[3] shouldBeGreaterThan 3 * recursiveAllocs[2]
-        val nonrecursiveCallAllocs = mutableListOf<Long>()
+        // Should all be exactly the same stack, compare maxCallStackSize for equality
+        val nonrecursiveCallStacks = mutableListOf<Long>()
         runJava("""
             public static long test(long i) {
                 long result = 1;
@@ -296,13 +303,13 @@ class TestResourceMonitoring : StringSpec({
             listOf(0, 1, 5, 15).forEach {
                 ResourceMonitoring.beginSubmissionCall()
                 m(null, it.toLong())
-                nonrecursiveCallAllocs.add(ResourceMonitoring.finishSubmissionCall().allocatedMemory)
+                nonrecursiveCallStacks.add(ResourceMonitoring.finishSubmissionCall().maxCallStackSize)
             }
         }
-        nonrecursiveCallAllocs[1] shouldBeLessThan 400
-        nonrecursiveCallAllocs[1] shouldBeGreaterThan 20
-        nonrecursiveCallAllocs[2] shouldBe nonrecursiveCallAllocs[1]
-        nonrecursiveCallAllocs[3] shouldBe nonrecursiveCallAllocs[1]
+        nonrecursiveCallStacks[1] shouldBeLessThan 400
+        nonrecursiveCallStacks[1] shouldBeGreaterThan 20
+        nonrecursiveCallStacks[2] shouldBe nonrecursiveCallStacks[1]
+        nonrecursiveCallStacks[3] shouldBe nonrecursiveCallStacks[1]
     }
 
     "should identify recursive methods" {

@@ -33,10 +33,12 @@ object ResourceMonitoring : SandboxPlugin<ResourceMonitoringArguments, ResourceM
     private const val BYTES_PER_FRAME_ELEMENT = 8
     private const val MAX_ALWAYS_PERMITTED_ALLOCATION = 512
 
+    val countLibraryLines = System.getenv("QUESTIONER_COUNT_LIBRARY_LINES")?.let { it.toBoolean() } ?: true
+
     init {
         mxBean.isThreadAllocatedMemoryEnabled = true
         Sandbox.SandboxedClassLoader::class.java.toString() // Ensure loaded, to be instrumented
-        Agent.activate()
+        Agent.activate(countLines = countLibraryLines)
         AllocationLimiting.arrayBodySizeValidator = LongFunction(ResourceMonitoring::checkArrayAllocation)
         WarmupWrapping.beforeWarmup = Runnable(ResourceMonitoring::beforeWarmup)
         WarmupWrapping.afterWarmup = Runnable(ResourceMonitoring::afterWarmup)
@@ -292,6 +294,7 @@ private class ResourceMonitoringWorkingData(
         val result = ResourceMonitoringCheckpoint(
             submissionLines = submissionLines,
             totalLines = submissionLines + libraryLines,
+            maxCallStackSize = maxCallStackSize,
             allocatedMemory = allocatedMemory + maxCallStackSize,
             invokedRecursiveFunctions = recursiveFunctions.map { it.toResult() }.toSet(),
             warmups = warmups
@@ -315,6 +318,7 @@ private class ResourceMonitoringWorkingData(
 data class ResourceMonitoringCheckpoint(
     val submissionLines: Long,
     val totalLines: Long,
+    val maxCallStackSize: Long,
     val allocatedMemory: Long,
     val invokedRecursiveFunctions: Set<ResourceMonitoringResults.MethodInfo>,
     val warmups: Int
