@@ -132,7 +132,7 @@ suspend fun Question.test(
             throw e.cause ?: e
         }
     }
-
+    check(taskResults.killedClassInitializers.isEmpty()) { taskResults.killedClassInitializers.joinToString(", ") }
     val threw = taskResults.returned?.threw ?: taskResults.threw
     val timeout = taskResults.timeout || threw is LineLimitExceeded
     results.taskResults = taskResults
