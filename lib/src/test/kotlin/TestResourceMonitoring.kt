@@ -404,7 +404,7 @@ private suspend fun runJava(
     return Sandbox.execute(
         compiledSource.classLoader,
         configuredPlugins = plugins,
-        executionArguments = Sandbox.ExecutionArguments(timeout = 120000)
+        // executionArguments = Sandbox.ExecutionArguments(timeout = 120000) // For testing
     ) { (cl, _) ->
         val method = cl.loadClass("Test").methods.find { it.name == "test" }!!
         test(method)

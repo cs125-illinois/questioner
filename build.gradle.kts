@@ -39,5 +39,6 @@ tasks.dependencyUpdates {
     gradleReleaseChannel = "current"
 }
 task("publishToMavenLocal") {
+    group = "publishing"
     dependsOn(":lib:publishToMavenLocal", ":plugin:publishToMavenLocal")
 }

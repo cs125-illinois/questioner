@@ -45,6 +45,11 @@ object ResourceMonitoring : SandboxPlugin<ResourceMonitoringArguments, ResourceM
         WarmupWrapping.afterWarmup = Runnable(ResourceMonitoring::afterWarmup)
     }
 
+    fun ensureAgentActivated() {
+        // Called to force the object initializer to run
+        check(Agent.isActivated) { "Agent didn't activate" }
+    }
+
     override fun createInstrumentationData(
         arguments: ResourceMonitoringArguments,
         classLoaderConfiguration: Sandbox.ClassLoaderConfiguration,
@@ -119,11 +124,6 @@ object ResourceMonitoring : SandboxPlugin<ResourceMonitoringArguments, ResourceM
         return ResourceMonitoringWorkingData(instrumentationData as ResourceMonitoringInstrumentationData)
     }
 
-    override fun executionStartedInSandbox() {
-        AllocationLimiting.isCheckingAllocations = true
-        WarmupWrapping.isCallbackEnabled = true
-    }
-
     private fun updateExternalMeasurements(data: ResourceMonitoringWorkingData) {
         data.allocatedMemory = mxBean.currentThreadAllocatedBytes - data.baseAllocatedMemory
         data.libraryLines = LineCounting.lines
@@ -176,7 +176,20 @@ object ResourceMonitoring : SandboxPlugin<ResourceMonitoringArguments, ResourceM
     fun finishSubmissionCall(): ResourceMonitoringCheckpoint {
         LineCounting.isCounting = false
         val data = threadData.get()
+        if (data.pendingClear) {
+            // Never actually called instrumented code, so baseAllocatedMemory &a are inaccurate
+            return ResourceMonitoringCheckpoint(
+                submissionLines = 0,
+                totalLines = 0,
+                maxCallStackSize = 0,
+                allocatedMemory = 0,
+                invokedRecursiveFunctions = setOf(),
+                warmups = 0
+            )
+        }
         return ignoreUsage(data) {
+            AllocationLimiting.isCheckingAllocations = false
+            WarmupWrapping.isCallbackEnabled = false
             updateExternalMeasurements(data)
             data.checkpoint()
         }
@@ -186,6 +199,7 @@ object ResourceMonitoring : SandboxPlugin<ResourceMonitoringArguments, ResourceM
     private fun checkArrayAllocation(bytes: Long): Boolean {
         if (bytes < MAX_ALWAYS_PERMITTED_ALLOCATION) return true // Allow error message construction
         val data = threadData.get()
+        if (data.arguments.individualAllocationLimit != null && bytes > data.arguments.individualAllocationLimit) return false
         if (data.arguments.allocatedMemoryLimit == null) return true
         updateExternalMeasurements(data)
         return data.checkpointAllocatedMemory + data.allocatedMemory + bytes < data.arguments.allocatedMemoryLimit
@@ -224,6 +238,8 @@ object ResourceMonitoring : SandboxPlugin<ResourceMonitoringArguments, ResourceM
                 data.callStack.clear()
                 data.baseAllocatedMemory = mxBean.currentThreadAllocatedBytes
                 data.warmups = 0
+                AllocationLimiting.isCheckingAllocations = true
+                WarmupWrapping.isCallbackEnabled = true
                 LineCounting.isCounting = true
                 LineCounting.reset()
                 data.pendingClear = false
@@ -267,7 +283,8 @@ object ResourceMonitoring : SandboxPlugin<ResourceMonitoringArguments, ResourceM
 data class ResourceMonitoringArguments(
     val submissionLineLimit: Long? = null,
     val totalLineLimit: Long? = null,
-    val allocatedMemoryLimit: Long? = null
+    val allocatedMemoryLimit: Long? = null,
+    val individualAllocationLimit: Long? = null
 )
 
 private class ResourceMonitoringInstrumentationData(

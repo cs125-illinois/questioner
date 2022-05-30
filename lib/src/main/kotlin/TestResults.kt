@@ -49,6 +49,7 @@ data class TestResults(
         // execution
         checkExecutedSubmission,
         executioncount,
+        memoryAllocation,
         testing,
         coverage,
     }
@@ -64,7 +65,8 @@ data class TestResults(
         var lineCount: LineCountComparison? = null,
         // execution
         // checkExecutedSubmission doesn't complete
-        var executionCount: ExecutionCountComparison? = null,
+        var executionCount: ResourceUsageComparison? = null,
+        var memoryAllocation: ResourceUsageComparison? = null,
         var testing: TestingResult? = null,
         var coverage: CoverageComparison? = null
     )
@@ -81,6 +83,7 @@ data class TestResults(
         // execution
         var checkExecutedSubmission: String? = null
         // executionCount doesn't fail
+        // memoryAllocation doesn't fail
         // testing doesn't fail
         // coverage doesn't fail
     )
@@ -122,7 +125,7 @@ data class TestResults(
     }
 
     @JsonClass(generateAdapter = true)
-    data class ExecutionCountComparison(
+    data class ResourceUsageComparison(
         val solution: Long,
         val submission: Long,
         val limit: Long,

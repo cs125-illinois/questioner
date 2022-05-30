@@ -9,6 +9,7 @@ import edu.illinois.cs.cs125.questioner.plugin.save.SaveQuestions
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.plugins.JavaPluginExtension
+import org.gradle.api.tasks.testing.Test
 import java.io.File
 import java.util.UUID
 
@@ -50,6 +51,15 @@ class QuestionerPlugin : Plugin<Project> {
         project.afterEvaluate {
             project.tasks.getByName("processResources").dependsOn(saveQuestions)
             generateMetatests.seed = config.seed
+
+            project.configurations.getByName("runtimeClasspath") { conf ->
+                val agentJarPath = conf.resolvedConfiguration.resolvedArtifacts.find {
+                    it.moduleVersion.id.group == "com.beyondgrader.resource-agent"
+                }!!.file.absolutePath
+                project.tasks.withType(Test::class.java) {
+                    it.jvmArgs("-javaagent:$agentJarPath")
+                }
+            }
         }
         if (configuration.endpoints.isNotEmpty()) {
             val publishAll = project.tasks.register("publishQuestions").get()
