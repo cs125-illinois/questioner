@@ -35,6 +35,9 @@ tasks.compileKotlin {
 tasks.compileTestKotlin {
     dependsOn(tasks.generateGrammarSource)
 }
+tasks.formatKotlinMain {
+    dependsOn(tasks.generateGrammarSource)
+}
 tasks.lintKotlinMain {
     dependsOn(tasks.generateGrammarSource)
 }
@@ -48,6 +51,11 @@ tasks.generateGrammarSource {
             "-lib", "src/main/antlr/edu/illinois/cs/cs125/questioner/antlr/lib/"
         )
     )
+}
+afterEvaluate {
+    tasks.named("kspKotlin") {
+        dependsOn(tasks.generateGrammarSource)
+    }
 }
 configurations {
     all {
