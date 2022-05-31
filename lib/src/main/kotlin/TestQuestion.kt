@@ -17,6 +17,8 @@ import edu.illinois.cs.cs125.jenisol.core.SubmissionDesignError
 import org.jacoco.core.analysis.ICounter
 import java.lang.reflect.InvocationTargetException
 
+class CachePoisonedException(message: String) : RuntimeException(message)
+
 @Suppress("ReturnCount", "LongMethod", "ComplexMethod", "LongParameterList")
 suspend fun Question.test(
     contents: String,
@@ -132,11 +134,18 @@ suspend fun Question.test(
             throw e.cause ?: e
         }
     }
-    check(taskResults.killedClassInitializers.isEmpty()) { taskResults.killedClassInitializers.joinToString(", ") }
+    if (taskResults.killedClassInitializers.isNotEmpty()) {
+        throw CachePoisonedException(taskResults.killedClassInitializers.joinToString(", "))
+    }
+
     val threw = taskResults.returned?.threw ?: taskResults.threw
     val timeout = taskResults.timeout || threw is LineLimitExceeded
     results.taskResults = taskResults
     results.timeout = timeout
+
+    if (!timeout && threw is ThreadDeath) {
+        throw CachePoisonedException("ThreadDeath")
+    }
 
     // checkExecutedSubmission
     if (!timeout && threw != null) {
