@@ -8,7 +8,7 @@ plugins {
 }
 subprojects {
     group = "com.github.cs125-illinois.questioner"
-    version = "2022.5.0"
+    version = "2022.6.0"
     tasks.withType<KotlinCompile> {
         kotlinOptions {
             jvmTarget = JavaVersion.VERSION_16.toString()
