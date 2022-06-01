@@ -12,7 +12,7 @@ dependencies {
 
     antlr("org.antlr:antlr4:4.10.1")
 
-    implementation("org.jetbrains.kotlin:kotlin-reflect:1.6.10")
+    implementation("org.jetbrains.kotlin:kotlin-reflect:1.6.21")
     implementation(gradleApi())
     implementation(project(":lib"))
     implementation("com.squareup.moshi:moshi-kotlin:1.13.0")
