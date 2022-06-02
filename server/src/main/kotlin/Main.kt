@@ -10,6 +10,7 @@ import com.squareup.moshi.JsonClass
 import com.squareup.moshi.Moshi
 import edu.illinois.cs.cs125.jeed.core.warm
 import edu.illinois.cs.cs125.questioner.lib.Question
+import edu.illinois.cs.cs125.questioner.lib.ResourceMonitoring
 import edu.illinois.cs.cs125.questioner.lib.TestResults
 import edu.illinois.cs.cs125.questioner.lib.moshi.Adapters
 import edu.illinois.cs.cs125.questioner.lib.test
@@ -52,7 +53,7 @@ private val collection: MongoCollection<BsonDocument> = run {
     }
     val collection = System.getenv("MONGODB_COLLECTION") ?: "questioner"
     val mongoUri = MongoClientURI(System.getenv("MONGODB")!!)
-    val database = mongoUri.database ?: error { "MONGO must specify database to use" }
+    val database = mongoUri.database ?: error("MONGODB must specify database to use")
     MongoClient(mongoUri).getDatabase(database).getCollection(collection, BsonDocument::class.java)
 }
 
@@ -119,8 +120,11 @@ object Questions {
         check(question.validated) { "Question ${submission.path} is not validated" }
         val start = Instant.now().toEpochMilli()
         val timeout = question.testingSettings!!.timeout * (System.getenv("TIMEOUT_MULTIPLIER")?.toInt() ?: 1)
-        val settings =
-            question.testingSettings!!.copy(timeout = timeout, disableLineCountLimit = submission.disableLineCountLimit)
+        val settings = question.testingSettings!!.copy(
+            timeout = timeout,
+            disableLineCountLimit = submission.disableLineCountLimit,
+            disableAllocationLimit = submission.disableAllocationLimit
+        )
         logger.trace { "Testing ${question.name} with settings $settings" }
         return question.test(
             submission.contents,
@@ -138,6 +142,7 @@ data class Submission(
     val contents: String,
     val language: Question.Language,
     val disableLineCountLimit: Boolean = false,
+    val disableAllocationLimit: Boolean = true, // TODO: Switch to false when ready for allocation limiting
     val version: String?,
     val author: String?
 )
@@ -264,6 +269,7 @@ fun Application.questioner() {
 }
 
 fun main() {
+    ResourceMonitoring.ensureAgentActivated()
     logger.debug { Status() }
     CoroutineScope(Dispatchers.IO).launch { warm(2, failLint = false) }
     embeddedServer(Netty, port = 8888, module = Application::questioner).start(wait = true)

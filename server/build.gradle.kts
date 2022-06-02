@@ -46,9 +46,19 @@ task("createProperties") {
 tasks.processResources {
     dependsOn("createProperties")
 }
+tasks.shadowJar {
+    manifest {
+        attributes["Launcher-Agent-Class"] = "com.beyondgrader.resourceagent.AgentKt"
+        attributes["Can-Redefine-Classes"] = "true"
+        attributes["Can-Retransform-Classes"] = "true"
+    }
+}
 application {
-    @Suppress("DEPRECATION")
-    mainClassName = "edu.illinois.cs.cs125.questioner.server.MainKt"
+    mainClass.set("edu.illinois.cs.cs125.questioner.server.MainKt")
+    val agentJarPath = configurations["runtimeClasspath"].resolvedConfiguration.resolvedArtifacts.find {
+        it.moduleVersion.id.group == "com.beyondgrader.resource-agent"
+    }!!.file.absolutePath
+    applicationDefaultJvmArgs += listOf("-javaagent:$agentJarPath", "--enable-preview")
 }
 docker {
     name = "cs125/questioner"
@@ -57,7 +67,7 @@ docker {
     tags("latest")
 }
 kotlin {
-    kotlinDaemonJvmArgs = listOf("-Dfile.encoding=UTF-8", "--illegal-access=permit")
+    kotlinDaemonJvmArgs = listOf("-Dfile.encoding=UTF-8")
 }
 tasks.withType<ShadowJar> {
     isZip64 = true

@@ -113,7 +113,8 @@ suspend fun Question.validate(seed: Int): ValidationReport {
         if (!listOf(
                 Question.IncorrectFile.Reason.DEADCODE,
                 Question.IncorrectFile.Reason.LINECOUNT,
-                Question.IncorrectFile.Reason.TOOLONG
+                Question.IncorrectFile.Reason.TOOLONG,
+                Question.IncorrectFile.Reason.MEMORYLIMIT
             ).contains(file.reason)
         ) {
             if (succeeded) {
@@ -157,10 +158,11 @@ suspend fun Question.validate(seed: Int): ValidationReport {
         kotlinWhitelist = null,
         shrink = false,
         checkBlacklist = false,
-        executionCountLimit = Question.LanguageExecutionCounts(
+        executionCountLimit = Question.LanguagesResourceUsage(
             control.maxExecutionCountMultiplier!! * 1024,
             control.maxExecutionCountMultiplier!! * 1024
         ) // No execution count limit
+        // No allocation limit
     )
     val firstCorrectResults = (setOf(correct) + alternativeSolutions).map { right ->
         test(right.contents, right.language, bootstrapSettings).also { testResults ->
@@ -174,22 +176,32 @@ suspend fun Question.validate(seed: Int): ValidationReport {
             it.solution.covered / it.solution.total
         }!!.solution
 
-    fun List<TestResults>.setExecutionCounts(multiplier: Double = 1.0): Question.LanguageExecutionCounts {
+    fun List<TestResults>.setResourceUsage(
+        multiplier: Double = 1.0,
+        aspect: (TestResults.CompletedTasks) -> TestResults.ResourceUsageComparison?
+    ): Question.LanguagesResourceUsage {
         val javaSolutionExecutionCount = filter { it.language == Question.Language.java }
-            .mapNotNull { it.complete.executionCount }
+            .mapNotNull { aspect(it.complete) }
             .maxByOrNull {
                 it.solution
             }!!.solution.times(multiplier).toLong()
         val kotlinSolutionExecutionCount = filter { it.language == Question.Language.kotlin }
-            .mapNotNull { it.complete.executionCount }
+            .mapNotNull { aspect(it.complete) }
             .maxByOrNull {
                 it.solution
             }?.solution?.times(multiplier)?.toLong()
-        return Question.LanguageExecutionCounts(javaSolutionExecutionCount, kotlinSolutionExecutionCount)
+        return Question.LanguagesResourceUsage(javaSolutionExecutionCount, kotlinSolutionExecutionCount)
     }
 
     val bootstrapSolutionExecutionCount =
-        firstCorrectResults.setExecutionCounts(control.maxTestCount!! / control.minTestCount!!.toDouble())
+        firstCorrectResults.setResourceUsage(control.maxTestCount!! / control.minTestCount!!.toDouble()) {
+            it.executionCount
+        }
+
+    val bootstrapSolutionAllocation =
+        firstCorrectResults.setResourceUsage(1.0) {
+            it.memoryAllocation
+        }
 
     val bootstrapLength = Instant.now().toEpochMilli() - bootStrapStart.toEpochMilli()
 
@@ -222,10 +234,11 @@ suspend fun Question.validate(seed: Int): ValidationReport {
         shrink = false,
         solutionCoverage = bootstrapSolutionCoverage,
         solutionExecutionCount = bootstrapSolutionExecutionCount,
-        executionCountLimit = Question.LanguageExecutionCounts(
+        executionCountLimit = Question.LanguagesResourceUsage(
             control.maxTestCount!! * control.maxExecutionCountMultiplier!! * 1024,
             control.maxTestCount!! * control.maxExecutionCountMultiplier!! * 1024
-        )
+        ),
+        solutionAllocation = bootstrapSolutionAllocation
     )
     val incorrectResults = allIncorrect.map { wrong ->
         test(
@@ -246,7 +259,7 @@ suspend fun Question.validate(seed: Int): ValidationReport {
     val testCount = requiredTestCount.coerceAtLeast(control.minTestCount!!)
 
     // Rerun solutions to set timeouts and output limits
-    // sets solutionRuntime and solutionOutputLines
+    // sets solution runtime, output lines, executed lines, and allocation
     val calibrationStart = Instant.now()
     val calibrationSettings = Question.TestingSettings(
         seed = seed,
@@ -256,7 +269,7 @@ suspend fun Question.validate(seed: Int): ValidationReport {
         javaWhitelist = javaClassWhitelist,
         kotlinWhitelist = kotlinClassWhitelist,
         shrink = false,
-        executionCountLimit = Question.LanguageExecutionCounts(
+        executionCountLimit = Question.LanguagesResourceUsage(
             testCount * control.maxExecutionCountMultiplier!! * 1024,
             testCount * control.maxExecutionCountMultiplier!! * 1024
         )
@@ -275,7 +288,8 @@ suspend fun Question.validate(seed: Int): ValidationReport {
 
     val solutionMaxRuntime = calibrationResults.maxOf { it.results.taskResults!!.interval.length.toInt() }
     val solutionMaxOutputLines = calibrationResults.maxOf { it.results.taskResults!!.outputLines.size }
-    val solutionExecutionCounts = calibrationResults.map { it.results }.setExecutionCounts()
+    val solutionExecutionCounts = calibrationResults.map { it.results }.setResourceUsage { it.executionCount }
+    val solutionAllocation = calibrationResults.map { it.results }.setResourceUsage { it.memoryAllocation }
     val solutionCoverage = calibrationResults
         .mapNotNull { it.results.complete.coverage }
         .minByOrNull {
@@ -290,9 +304,13 @@ suspend fun Question.validate(seed: Int): ValidationReport {
         javaWhitelist = javaClassWhitelist,
         kotlinWhitelist = kotlinClassWhitelist,
         shrink = false,
-        executionCountLimit = Question.LanguageExecutionCounts(
+        executionCountLimit = Question.LanguagesResourceUsage(
             solutionExecutionCounts.java * control.executionTimeoutMultiplier!!,
             solutionExecutionCounts.kotlin?.times(control.executionTimeoutMultiplier!!)
+        ),
+        allocationLimit = Question.LanguagesResourceUsage(
+            solutionAllocation.java * control.allocationLimitMultiplier!!,
+            solutionAllocation.kotlin?.times(control.allocationLimitMultiplier!!)
         )
     )
     validationResults = Question.ValidationResults(
@@ -305,7 +323,8 @@ suspend fun Question.validate(seed: Int): ValidationReport {
         incorrectLength = incorrectLength,
         calibrationLength = calibrationLength,
         solutionCoverage = solutionCoverage,
-        executionCounts = solutionExecutionCounts
+        executionCounts = solutionExecutionCounts,
+        memoryAllocation = solutionAllocation
     )
 
     return ValidationReport(
@@ -340,6 +359,9 @@ private fun TestResults.validate(reason: Question.IncorrectFile.Reason, isMutate
         }
         Question.IncorrectFile.Reason.TOOLONG -> require(complete.lineCount?.failed == true) {
             "Expected submission to contain too many lines"
+        }
+        Question.IncorrectFile.Reason.MEMORYLIMIT -> require(complete.memoryAllocation?.failed == true) {
+            "Expected submission to allocate too much memory: ${complete.memoryAllocation}"
         }
         else -> require(isMutated || (!timeout && complete.testing?.passed == false)) {
             "Expected submission to fail tests"

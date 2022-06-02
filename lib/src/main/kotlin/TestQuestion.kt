@@ -7,8 +7,6 @@ import edu.illinois.cs.cs125.jeed.core.ConfiguredSandboxPlugin
 import edu.illinois.cs.cs125.jeed.core.Jacoco
 import edu.illinois.cs.cs125.jeed.core.KtLintFailed
 import edu.illinois.cs.cs125.jeed.core.LineLimitExceeded
-import edu.illinois.cs.cs125.jeed.core.LineTrace
-import edu.illinois.cs.cs125.jeed.core.LineTraceArguments
 import edu.illinois.cs.cs125.jeed.core.Sandbox
 import edu.illinois.cs.cs125.jeed.core.SnippetTransformationFailed
 import edu.illinois.cs.cs125.jeed.core.TemplatingFailed
@@ -18,6 +16,9 @@ import org.jacoco.core.analysis.ICounter
 import java.lang.reflect.InvocationTargetException
 
 class CachePoisonedException(message: String) : RuntimeException(message)
+
+private const val MAX_INDIVIDUAL_ALLOCATION_BYTES: Long = 1024 * 1024
+private const val MIN_ALLOCATION_LIMIT_BYTES: Long = 1024 * 1024 // Leave room for string concat in println debugging
 
 @Suppress("ReturnCount", "LongMethod", "ComplexMethod", "LongParameterList")
 suspend fun Question.test(
@@ -105,21 +106,19 @@ suspend fun Question.test(
     val lineCountLimit = when (language) {
         Question.Language.java -> settings.executionCountLimit.java
         Question.Language.kotlin -> settings.executionCountLimit.kotlin!!
-    }.let {
-        if (settings.disableLineCountLimit) {
-            Integer.MAX_VALUE.toLong()
-        } else {
-            it
-        }
-    }
+    }.takeIf { !settings.disableLineCountLimit }
+    val allocationLimit = when (language) {
+        Question.Language.java -> settings.allocationLimit?.java
+        Question.Language.kotlin -> settings.allocationLimit?.kotlin
+    }?.takeIf { !settings.disableAllocationLimit }?.coerceAtLeast(MIN_ALLOCATION_LIMIT_BYTES)
     val plugins = listOf(
         ConfiguredSandboxPlugin(Jacoco, Unit),
         ConfiguredSandboxPlugin(
-            LineTrace,
-            LineTraceArguments(
-                runLineLimit = lineCountLimit,
-                recordedLineLimit = 0,
-                runLineLimitExceededAction = LineTraceArguments.RunLineLimitAction.THROW_ERROR
+            ResourceMonitoring,
+            ResourceMonitoringArguments(
+                submissionLineLimit = lineCountLimit,
+                allocatedMemoryLimit = allocationLimit,
+                individualAllocationLimit = MAX_INDIVIDUAL_ALLOCATION_BYTES
             )
         )
     )
@@ -142,6 +141,7 @@ suspend fun Question.test(
     val timeout = taskResults.timeout || threw is LineLimitExceeded
     results.taskResults = taskResults
     results.timeout = timeout
+    val resourceUsage = taskResults.pluginResult(ResourceMonitoring)
 
     if (!timeout && threw is ThreadDeath) {
         throw CachePoisonedException("ThreadDeath")
@@ -157,6 +157,10 @@ suspend fun Question.test(
                 "Class design error: ${threw.message}"
             is NoClassDefFoundError -> results.failed.checkExecutedSubmission =
                 "Class design error: attempted to use unavailable class ${threw.message}"
+            is OutOfMemoryError -> results.failed.checkExecutedSubmission =
+                "Allocated too much memory: ${threw.message}, already used ${resourceUsage.allocatedMemory} bytes"
+                // TODO: Adjust Jenisol to let OutOfMemoryError escape the testing loop or remove this case
+                // (currently it will never be reached)
             else -> {
                 val actualException = when (threw) {
                     is InvocationTargetException -> threw.targetException ?: threw
@@ -173,19 +177,34 @@ suspend fun Question.test(
     }
 
     // executioncount
-    val submissionExecutionCount = taskResults.pluginResult(LineTrace).linesRun
+    val submissionExecutionCount = resourceUsage.submissionLines
     val solutionExecutionCount = if (language == Question.Language.java) {
         validationResults?.executionCounts?.java ?: settings.solutionExecutionCount?.java
     } else {
         validationResults?.executionCounts?.kotlin ?: settings.solutionExecutionCount?.kotlin
     } ?: submissionExecutionCount
 
-    results.complete.executionCount = TestResults.ExecutionCountComparison(
+    results.complete.executionCount = TestResults.ResourceUsageComparison(
         solutionExecutionCount,
         submissionExecutionCount,
         solutionExecutionCount * control.executionFailureMultiplier!!
     )
     results.completedSteps.add(TestResults.Step.executioncount)
+
+    // memoryAllocation
+    val submissionAllocation = resourceUsage.allocatedMemory
+    val solutionAllocation = if (language == Question.Language.java) {
+        validationResults?.memoryAllocation?.java ?: settings.solutionAllocation?.java
+    } else {
+        validationResults?.memoryAllocation?.kotlin ?: settings.solutionAllocation?.kotlin
+    } ?: submissionAllocation
+
+    results.complete.memoryAllocation = TestResults.ResourceUsageComparison(
+        solutionAllocation,
+        submissionAllocation,
+        solutionAllocation * control.allocationFailureMultiplier!!
+    )
+    results.completedSteps.add(TestResults.Step.memoryAllocation)
 
     // testing
     if (taskResults.returned == null) {

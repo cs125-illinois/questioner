@@ -27,7 +27,6 @@ private val sharedClassWhitelist = setOf(
     "java.lang.",
     "java.io.PrintStream",
     "kotlin.Metadata",
-    "jdk.internal.reflect.",
     "kotlin.reflect.jvm.",
     "java.util.Iterator",
 )
@@ -167,6 +166,8 @@ data class Question(
         val maxExecutionCountMultiplier: Long?,
         val executionFailureMultiplier: Int?,
         val executionTimeoutMultiplier: Int?,
+        val allocationFailureMultiplier: Int?,
+        val allocationLimitMultiplier: Int?,
         val minExtraSourceLines: Int?,
         val sourceLinesMultiplier: Double?
     ) {
@@ -185,6 +186,8 @@ data class Question(
             const val DEFAULT_MAX_EXECUTION_COUNT_MULTIPLIER = 256L
             const val DEFAULT_EXECUTION_COUNT_FAILURE_MULTIPLIER = 4
             const val DEFAULT_EXECUTION_COUNT_TIMEOUT_MULTIPLIER = 16
+            const val DEFAULT_ALLOCATION_FAILURE_MULTIPLIER = 4
+            const val DEFAULT_ALLOCATION_LIMIT_MULTIPLIER = 16
             const val DEFAULT_MIN_EXTRA_SOURCE_LINES = 2
             const val DEFAULT_SOURCE_LINES_MULTIPLIER = 1.5
 
@@ -203,6 +206,8 @@ data class Question(
                 DEFAULT_MAX_EXECUTION_COUNT_MULTIPLIER,
                 DEFAULT_EXECUTION_COUNT_FAILURE_MULTIPLIER,
                 DEFAULT_EXECUTION_COUNT_TIMEOUT_MULTIPLIER,
+                DEFAULT_ALLOCATION_FAILURE_MULTIPLIER,
+                DEFAULT_ALLOCATION_LIMIT_MULTIPLIER,
                 DEFAULT_MIN_EXTRA_SOURCE_LINES,
                 DEFAULT_SOURCE_LINES_MULTIPLIER
             )
@@ -222,11 +227,14 @@ data class Question(
         val javaWhitelist: Set<String>?,
         val kotlinWhitelist: Set<String>?,
         val shrink: Boolean,
-        val executionCountLimit: LanguageExecutionCounts,
+        val executionCountLimit: LanguagesResourceUsage,
+        val allocationLimit: LanguagesResourceUsage? = null,
         var solutionCoverage: TestResults.CoverageComparison.LineCoverage? = null,
-        var solutionExecutionCount: LanguageExecutionCounts? = null,
+        var solutionExecutionCount: LanguagesResourceUsage? = null,
+        var solutionAllocation: LanguagesResourceUsage? = null,
         val checkBlacklist: Boolean = true,
-        val disableLineCountLimit: Boolean = false
+        val disableLineCountLimit: Boolean = false,
+        val disableAllocationLimit: Boolean = false
     )
 
     @JsonClass(generateAdapter = true)
@@ -240,11 +248,12 @@ data class Question(
         val incorrectLength: Long,
         val calibrationLength: Long,
         val solutionCoverage: TestResults.CoverageComparison.LineCoverage,
-        val executionCounts: LanguageExecutionCounts
+        val executionCounts: LanguagesResourceUsage,
+        val memoryAllocation: LanguagesResourceUsage? // TODO: Make non-nullable when ready to require memory calibration
     )
 
     @JsonClass(generateAdapter = true)
-    data class LanguageExecutionCounts(val java: Long, val kotlin: Long? = null)
+    data class LanguagesResourceUsage(val java: Long, val kotlin: Long? = null)
 
     @JsonClass(generateAdapter = true)
     data class Citation(val source: String, val link: String? = null)
@@ -274,7 +283,7 @@ data class Question(
         val mutation: MutatedSource? = null
     ) {
         @Suppress("SpellCheckingInspection")
-        enum class Reason { DESIGN, COMPILE, TEST, CHECKSTYLE, TIMEOUT, DEADCODE, LINECOUNT, TOOLONG }
+        enum class Reason { DESIGN, COMPILE, TEST, CHECKSTYLE, TIMEOUT, DEADCODE, LINECOUNT, TOOLONG, MEMORYLIMIT }
     }
 
     @delegate:Transient
@@ -480,6 +489,7 @@ fun String.toReason() = when (uppercase(Locale.getDefault())) {
     "DEADCODE" -> Question.IncorrectFile.Reason.DEADCODE
     "LINECOUNT" -> Question.IncorrectFile.Reason.LINECOUNT
     "TOOLONG" -> Question.IncorrectFile.Reason.TOOLONG
+    "MEMORYLIMIT" -> Question.IncorrectFile.Reason.MEMORYLIMIT
     else -> error("Invalid incorrect reason: $this")
 }
 

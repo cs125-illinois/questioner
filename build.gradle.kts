@@ -16,7 +16,16 @@ subprojects {
     }
     tasks.withType<Test> {
         useJUnitPlatform()
-        jvmArgs("-ea", "-Xmx1G", "-Xss256k")
+        jvmArgs(
+            "-ea", "-Xmx1G", "-Xss256k",
+            "-Dfile.encoding=UTF-8",
+            "--add-exports", "jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED",
+            "--add-exports", "jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED",
+            "--add-exports", "jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED",
+            "--add-exports", "jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED",
+            "--add-exports", "jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED",
+            "--add-exports", "java.management/sun.management=ALL-UNNAMED"
+        )
     }
 }
 allprojects {
@@ -37,4 +46,8 @@ tasks.dependencyUpdates {
         )
     rejectVersionIf { candidate.version.isNonStable() }
     gradleReleaseChannel = "current"
+}
+task("publishToMavenLocal") {
+    group = "publishing"
+    dependsOn(":lib:publishToMavenLocal", ":plugin:publishToMavenLocal")
 }

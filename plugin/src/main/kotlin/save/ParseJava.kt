@@ -143,6 +143,8 @@ data class ParsedJavaFile(val path: String, val contents: String) {
                 val maxExecutionCountMultiplier = parameters["maxExecutionCountMultiplier"]?.toLong()
                 val executionCountFailureMultiplier = parameters["executionCountFailureMultiplier"]?.toInt()
                 val executionCountTimeoutMultiplier = parameters["executionCountTimeoutMultiplier"]?.toInt()
+                val allocationFailureMultiplier = parameters["allocationFailureMultiplier"]?.toInt()
+                val allocationLimitMultiplier = parameters["allocationLimitMultiplier"]?.toInt()
                 val minExtraSourceLines = parameters["minExtraSourceLines"]?.toInt()
                 val sourceLinesMultiplier = parameters["sourceLinesMultiplier"]?.toDouble()
 
@@ -163,6 +165,8 @@ data class ParsedJavaFile(val path: String, val contents: String) {
                         maxExecutionCountMultiplier,
                         executionCountFailureMultiplier,
                         executionCountTimeoutMultiplier,
+                        allocationFailureMultiplier,
+                        allocationLimitMultiplier,
                         minExtraSourceLines,
                         sourceLinesMultiplier
                     )
