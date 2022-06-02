@@ -170,13 +170,17 @@ object ResourceMonitoring : SandboxPlugin<ResourceMonitoringArguments, ResourceM
         }
     }
 
-    fun beginSubmissionCall() {
-        threadData.get().pendingClear = true
+    fun beginSubmissionCall(checkpointOnEmptyStack: Boolean = true) {
+        val data = threadData.get()
+        data.pendingClear = true
+        data.pendingCheckpoint = checkpointOnEmptyStack
+        data.cachedCheckpoint = null
     }
 
     fun finishSubmissionCall(): ResourceMonitoringCheckpoint {
         LineCounting.isCounting = false
         val data = threadData.get()
+        data.cachedCheckpoint?.let { return it }
         if (data.pendingClear) {
             // Never actually called instrumented code, so baseAllocatedMemory &a are inaccurate
             return ResourceMonitoringCheckpoint(
@@ -192,7 +196,7 @@ object ResourceMonitoring : SandboxPlugin<ResourceMonitoringArguments, ResourceM
             AllocationLimiting.isCheckingAllocations = false
             WarmupWrapping.isCallbackEnabled = false
             updateExternalMeasurements(data)
-            data.checkpoint()
+            data.checkpoint().also { data.cachedCheckpoint = it }
         }
     }
 
@@ -262,6 +266,10 @@ object ResourceMonitoring : SandboxPlugin<ResourceMonitoringArguments, ResourceM
             ignoreUsage(data) {
                 val methodInfo = data.callStack.pop()
                 data.callStackSize -= methodInfo.frameSize
+                if (data.pendingCheckpoint && data.callStack.isEmpty()) {
+                    data.pendingCheckpoint = false
+                    finishSubmissionCall()
+                }
             }
         }
 
@@ -304,6 +312,8 @@ private class ResourceMonitoringWorkingData(
     val arguments: ResourceMonitoringArguments = instrumentationData.arguments,
     val callStack: Stack<ResourceMonitoringInstrumentationData.MethodInfo> = Stack(),
     var pendingClear: Boolean = true,
+    var pendingCheckpoint: Boolean = false,
+    var cachedCheckpoint: ResourceMonitoringCheckpoint? = null,
     var checkpointSubmissionLines: Long = 0,
     var submissionLines: Long = 0,
     var checkpointLibraryLines: Long = 0,
