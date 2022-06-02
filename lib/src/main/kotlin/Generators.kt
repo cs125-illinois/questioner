@@ -5,7 +5,7 @@ package edu.illinois.cs.cs125.questioner.lib
 
 import java.util.Random
 
-private fun Random.nextInt(min: Int, max: Int) = let {
+private fun Random.nextIntBounded(min: Int, max: Int) = let {
     require(min < max)
     nextInt(max - min) + min
 }
