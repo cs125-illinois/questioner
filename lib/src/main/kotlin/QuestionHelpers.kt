@@ -334,8 +334,14 @@ class InvertingClassLoader(private val inversions: Set<String>) : ClassLoader() 
 }
 
 fun captureJeedOutput(run: () -> Any?): CapturedResult {
-    ResourceMonitoring.beginSubmissionCall()
-    val jeedOutput = Sandbox.redirectOutput(run)
-    val resourceUsage = ResourceMonitoring.finishSubmissionCall()
+    var resourceUsage: ResourceMonitoringCheckpoint? = null
+    val jeedOutput = Sandbox.redirectOutput {
+        ResourceMonitoring.beginSubmissionCall()
+        try {
+            run()
+        } finally {
+            resourceUsage = ResourceMonitoring.finishSubmissionCall()
+        }
+    }
     return CapturedResult(jeedOutput.returned, jeedOutput.threw, jeedOutput.stdout, jeedOutput.stderr, resourceUsage)
 }
