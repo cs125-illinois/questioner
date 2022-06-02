@@ -8,15 +8,15 @@ plugins {
 }
 subprojects {
     group = "com.github.cs125-illinois.questioner"
-    version = "2022.6.0"
+    version = "2022.6.1"
     tasks.withType<KotlinCompile> {
         kotlinOptions {
-            jvmTarget = JavaVersion.VERSION_16.toString()
+            jvmTarget = JavaVersion.VERSION_17.toString()
         }
     }
     tasks.withType<Test> {
         useJUnitPlatform()
-        jvmArgs("-ea", "-Xmx1G", "-Xss256k", "--illegal-access=permit")
+        jvmArgs("-ea", "-Xmx1G", "-Xss256k")
     }
 }
 allprojects {
