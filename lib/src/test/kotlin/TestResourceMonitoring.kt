@@ -247,6 +247,24 @@ class TestResourceMonitoring : StringSpec({
         result.pluginResult(ResourceMonitoring).allocatedMemory shouldBeLessThan 100000
     }
 
+    "should exclude memory allocated post-submission if asked" {
+        var allocatedMemory = 0L
+        val result = runJava("""
+            public static void test() {
+                System.out.println("Test");
+            }
+        """.trimIndent(), ResourceMonitoringArguments(allocatedMemoryLimit = 500000)) { m ->
+            ResourceMonitoring.beginSubmissionCall(true)
+            m(null)
+            IntArray(1000)
+            allocatedMemory = ResourceMonitoring.finishSubmissionCall().allocatedMemory
+            IntArray(1000)
+        }
+        result.stdout shouldStartWith "Test"
+        allocatedMemory shouldBeLessThan 1000
+        result.pluginResult(ResourceMonitoring).allocatedMemory shouldBeLessThan 1000
+    }
+
     "should estimate memory used by max stack depth" {
         // allocatedMemory includes both call stack size and regular allocations
         // The latter is "an approximation" due to possible recording delay, so shouldn't compare it exactly

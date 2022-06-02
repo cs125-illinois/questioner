@@ -152,6 +152,7 @@ object ResourceMonitoring : SandboxPlugin<ResourceMonitoringArguments, ResourceM
             submissionLines = workingData.checkpointSubmissionLines,
             totalLines = workingData.checkpointSubmissionLines + workingData.checkpointLibraryLines,
             allocatedMemory = workingData.checkpointAllocatedMemory,
+            allAllocatedMemory = workingData.checkpointAllocatedMemory + workingData.checkpointWarmupMemory,
             invokedRecursiveFunctions = workingData.checkpointRecursiveFunctions.map { it.toResult() }.toSet()
         )
     }
@@ -169,13 +170,17 @@ object ResourceMonitoring : SandboxPlugin<ResourceMonitoringArguments, ResourceM
         }
     }
 
-    fun beginSubmissionCall() {
-        threadData.get().pendingClear = true
+    fun beginSubmissionCall(checkpointOnEmptyStack: Boolean = true) {
+        val data = threadData.get()
+        data.pendingClear = true
+        data.pendingCheckpoint = checkpointOnEmptyStack
+        data.cachedCheckpoint = null
     }
 
     fun finishSubmissionCall(): ResourceMonitoringCheckpoint {
         LineCounting.isCounting = false
         val data = threadData.get()
+        data.cachedCheckpoint?.let { return it }
         if (data.pendingClear) {
             // Never actually called instrumented code, so baseAllocatedMemory &a are inaccurate
             return ResourceMonitoringCheckpoint(
@@ -191,7 +196,7 @@ object ResourceMonitoring : SandboxPlugin<ResourceMonitoringArguments, ResourceM
             AllocationLimiting.isCheckingAllocations = false
             WarmupWrapping.isCallbackEnabled = false
             updateExternalMeasurements(data)
-            data.checkpoint()
+            data.checkpoint().also { data.cachedCheckpoint = it }
         }
     }
 
@@ -215,9 +220,8 @@ object ResourceMonitoring : SandboxPlugin<ResourceMonitoringArguments, ResourceM
     private fun afterWarmup() {
         val data = threadData.get()
         val warmupAllocatedBytes = mxBean.currentThreadAllocatedBytes - data.preWarmupAllocatedMemory
-        // Charge one-time warmup to the overall task, but not the individual submission call
         data.baseAllocatedMemory += warmupAllocatedBytes
-        data.checkpointAllocatedMemory += warmupAllocatedBytes
+        data.checkpointWarmupMemory += warmupAllocatedBytes
         data.preWarmupAllocatedMemory = 0
         data.warmups++
     }
@@ -262,6 +266,10 @@ object ResourceMonitoring : SandboxPlugin<ResourceMonitoringArguments, ResourceM
             ignoreUsage(data) {
                 val methodInfo = data.callStack.pop()
                 data.callStackSize -= methodInfo.frameSize
+                if (data.pendingCheckpoint && data.callStack.isEmpty()) {
+                    data.pendingCheckpoint = false
+                    finishSubmissionCall()
+                }
             }
         }
 
@@ -304,6 +312,8 @@ private class ResourceMonitoringWorkingData(
     val arguments: ResourceMonitoringArguments = instrumentationData.arguments,
     val callStack: Stack<ResourceMonitoringInstrumentationData.MethodInfo> = Stack(),
     var pendingClear: Boolean = true,
+    var pendingCheckpoint: Boolean = false,
+    var cachedCheckpoint: ResourceMonitoringCheckpoint? = null,
     var checkpointSubmissionLines: Long = 0,
     var submissionLines: Long = 0,
     var checkpointLibraryLines: Long = 0,
@@ -311,6 +321,7 @@ private class ResourceMonitoringWorkingData(
     var preWarmupAllocatedMemory: Long = 0,
     var baseAllocatedMemory: Long = 0,
     var checkpointAllocatedMemory: Long = 0,
+    var checkpointWarmupMemory: Long = 0,
     var allocatedMemory: Long = 0,
     var callStackSize: Long = 0,
     var maxCallStackSize: Long = 0,
@@ -357,6 +368,7 @@ data class ResourceMonitoringResults(
     val submissionLines: Long,
     val totalLines: Long,
     val allocatedMemory: Long,
+    val allAllocatedMemory: Long, // Includes warmups
     val invokedRecursiveFunctions: Set<MethodInfo>
 ) {
     data class MethodInfo(val className: String, val methodName: String, val descriptor: String)
