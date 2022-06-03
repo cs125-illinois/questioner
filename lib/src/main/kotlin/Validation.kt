@@ -254,10 +254,16 @@ suspend fun Question.validate(seed: Int): ValidationReport {
         solutionAllocation = bootstrapSolutionAllocation
     )
     val incorrectResults = allIncorrect.map { wrong ->
+        val specificIncorrectSettings = if (wrong.reason == Question.IncorrectFile.Reason.MEMORYLIMIT) {
+            // Fair comparison of total memory usage to bootstrap
+            incorrectSettings.copy(testCount = bootstrapSettings.testCount)
+        } else {
+            incorrectSettings
+        }
         test(
             wrong.contents,
             wrong.language,
-            incorrectSettings
+            specificIncorrectSettings
         ).let {
             println(it.complete.memoryAllocation?.submission)
             println(it.complete.testing?.tests?.map { it.runnerID }?.distinct()?.size)
