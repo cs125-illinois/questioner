@@ -4,6 +4,7 @@ import edu.illinois.cs.cs125.jeed.core.*
 import edu.illinois.cs.cs125.jenisol.core.unwrap
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.doubles.shouldBeLessThan
 import io.kotest.matchers.ints.shouldBeGreaterThan
 import io.kotest.matchers.longs.shouldBeGreaterThan
 import io.kotest.matchers.longs.shouldBeLessThan
@@ -179,6 +180,7 @@ class TestResourceMonitoring : StringSpec({
                 callWarmups.add(checkpoint.warmups)
             }
         }
+        result.timeout shouldBe false
         result.completed shouldBe true
         result.threw should beNull()
         callWarmups[0] shouldBeGreaterThan 0
@@ -187,7 +189,7 @@ class TestResourceMonitoring : StringSpec({
         callWarmups[3] shouldBe 0
         callLines[0] shouldBe callLines[1]
         callAllocs[0] shouldBeGreaterThan 20
-        callAllocs[0] shouldBeLessThan warmupMemoryLimit
+        callAllocs[0] shouldBeLessThan warmupMemoryLimit // Can't bound tightly because of unpredictable JIT allocations
         callAllocs[2] shouldBeGreaterThan callAllocs[1]
         callAllocs[2] shouldBeLessThan 1000
         callAllocs[3] shouldBeGreaterThan callAllocs[1]
@@ -214,6 +216,7 @@ class TestResourceMonitoring : StringSpec({
         """.trimIndent(), ResourceMonitoringArguments(allocatedMemoryLimit = 500000)) { m ->
             unwrap { m(null) }
         }
+        result.timeout shouldBe false
         result.stdout shouldStartWith "Start"
         result.stdout shouldContain "\n20\n"
         result.threw should beInstanceOf<OutOfMemoryError>()
@@ -265,9 +268,34 @@ class TestResourceMonitoring : StringSpec({
         result.pluginResult(ResourceMonitoring).allocatedMemory shouldBeLessThan 1000
     }
 
+    "should report allocations semi-consistently" {
+        val random = Random(124)
+        val allocations = mutableListOf<Long>()
+        val result = runJava("""
+            public static int test(int number) {
+                return number + 1;
+            }
+        """.trimIndent(), ResourceMonitoringArguments()) { m ->
+            repeat(5000) {
+                val number = random.nextInt()
+                ResourceMonitoring.beginSubmissionCall()
+                m(null, number)
+                val checkpoint = ResourceMonitoring.finishSubmissionCall()
+                allocations.add(checkpoint.allocatedMemory)
+            }
+        }
+        result.timeout shouldBe false
+        result.completed shouldBe true
+        allocations.minOrNull()!! shouldBeGreaterThan 16
+        allocations.maxOrNull()!! shouldBeLessThan 1500 // Not exact due to JIT
+        allocations.average() shouldBeLessThan 200.0
+        result.pluginResult(ResourceMonitoring).allocatedMemory shouldBeLessThan 3000
+    }
+
     "should estimate memory used by max stack depth" {
         // allocatedMemory includes both call stack size and regular allocations
         // The latter is "an approximation" due to possible recording delay, so shouldn't compare it exactly
+        // In practice it seems the JIT compiler nondeterministically performs native allocations we can't measure
         // maxCallStackSize is not subject to fluctuations, so it can be compared for equality
         val iterativeStacks = mutableListOf<Long>()
         runJava("""
@@ -408,25 +436,6 @@ class TestResourceMonitoring : StringSpec({
         }
         result.stdout shouldBe "2"
         recursiveMethods shouldHaveSize 0
-    }
-
-    "!scratch" {
-        val random = Random(124)
-        val allocations = mutableListOf<Long>()
-        val result = runJava("""
-            public static int test(int number) {
-                return number + 1;
-            }
-        """.trimIndent(), ResourceMonitoringArguments()) { m ->
-            repeat(129) {
-                val number = random.nextInt()
-                ResourceMonitoring.beginSubmissionCall(false)
-                m(null, number)
-                allocations.add(ResourceMonitoring.finishSubmissionCall().allocatedMemory)
-            }
-        }
-        result.completed shouldBe true
-        println(allocations.sortedDescending())
     }
 })
 

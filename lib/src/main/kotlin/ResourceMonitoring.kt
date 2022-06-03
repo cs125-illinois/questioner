@@ -157,15 +157,16 @@ object ResourceMonitoring : SandboxPlugin<ResourceMonitoringArguments, ResourceM
     }
 
     private inline fun <T> ignoreUsage(data: ResourceMonitoringWorkingData, crossinline block: () -> T): T {
-        val bytesBefore = mxBean.currentThreadAllocatedBytes
         val countingBefore = LineCounting.isCounting
         LineCounting.isCounting = false
+        val bytesBefore = mxBean.currentThreadAllocatedBytes
         return try {
+            // DANGER! Must not do anything that could trigger a warmup, including invoking a MethodHandle!
             block()
         } finally {
-            LineCounting.isCounting = countingBefore
             val bytesAfter = mxBean.currentThreadAllocatedBytes
             data.baseAllocatedMemory += bytesAfter - bytesBefore
+            LineCounting.isCounting = countingBefore
         }
     }
 
@@ -193,8 +194,8 @@ object ResourceMonitoring : SandboxPlugin<ResourceMonitoringArguments, ResourceM
                 warmups = 0
             )
         }
+        updateExternalMeasurements(data)
         return ignoreUsage(data) {
-            updateExternalMeasurements(data)
             data.checkpoint().also { data.cachedCheckpoint = it }
         }
     }
@@ -226,6 +227,12 @@ object ResourceMonitoring : SandboxPlugin<ResourceMonitoringArguments, ResourceM
     }
 
     object TracingSink {
+        init {
+            stackWalker.walk { stream ->
+                stream.filter { it.className == "Warming the StackWalker and stream systems" }.count()
+            }
+        }
+
         @JvmStatic
         fun lineStep() {
             val data = threadData.get()
@@ -266,13 +273,14 @@ object ResourceMonitoring : SandboxPlugin<ResourceMonitoringArguments, ResourceM
         @JvmStatic
         fun popCallStack() {
             val data = threadData.get()
-            ignoreUsage(data) {
+            val shouldFinish = ignoreUsage(data) {
                 val methodInfo = data.callStack.pop()
                 data.callStackSize -= methodInfo.frameSize
-                if (data.pendingCheckpoint && data.callStack.isEmpty()) {
-                    data.pendingCheckpoint = false
-                    finishSubmissionCall()
-                }
+                data.pendingCheckpoint && data.callStack.isEmpty()
+            }
+            if (shouldFinish) {
+                data.pendingCheckpoint = false
+                finishSubmissionCall()
             }
         }
 

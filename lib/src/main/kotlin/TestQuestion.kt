@@ -18,6 +18,7 @@ import java.lang.reflect.InvocationTargetException
 class CachePoisonedException(message: String) : RuntimeException(message)
 
 private const val MAX_INDIVIDUAL_ALLOCATION_BYTES: Long = 1024 * 1024
+private const val MIN_ALLOCATION_FAILURE_BYTES: Long = 2 * 1024 // Account for nondeterminism due to JIT
 private const val MIN_ALLOCATION_LIMIT_BYTES: Long = 1024 * 1024 // Leave room for string concat in println debugging
 
 @Suppress("ReturnCount", "LongMethod", "ComplexMethod", "LongParameterList")
@@ -202,7 +203,7 @@ suspend fun Question.test(
     results.complete.memoryAllocation = TestResults.ResourceUsageComparison(
         solutionAllocation,
         submissionAllocation,
-        solutionAllocation * control.allocationFailureMultiplier!!
+        (solutionAllocation * control.allocationFailureMultiplier!!).coerceAtLeast(MIN_ALLOCATION_FAILURE_BYTES)
     )
     results.completedSteps.add(TestResults.Step.memoryAllocation)
 
