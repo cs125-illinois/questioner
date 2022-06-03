@@ -140,9 +140,11 @@ fun IncorrectResults.html(index: Int, question: Question): String {
             val alert = if (results.succeeded && incorrect.reason == Question.IncorrectFile.Reason.DEADCODE) {
                 """<div class="alert alert-success" role="alert">Testing succeeded, but found ${results.complete.coverage!!.increase - results.complete.coverage!!.limit} too many lines of dead code as expected.</div>"""
             } else if (results.succeeded && incorrect.reason == Question.IncorrectFile.Reason.LINECOUNT) {
-                """<div class="alert alert-success" role="alert">Testing succeeded, but submission ran for ${results.complete.executionCount!!.increase - results.complete.executionCount!!.limit} too many line counts as expected.</div>"""
+                """<div class="alert alert-success" role="alert">Testing succeeded, but submission ran for ${results.complete.executionCount!!.submission - results.complete.executionCount!!.limit} too many line counts as expected.</div>"""
             } else if (results.succeeded && incorrect.reason == Question.IncorrectFile.Reason.TOOLONG) {
                 """<div class="alert alert-success" role="alert">Testing succeeded, but submission contained ${results.complete.lineCount!!.increase - results.complete.lineCount!!.limit} too many lines of code as expected.</div>"""
+            } else if (results.succeeded && incorrect.reason == Question.IncorrectFile.Reason.MEMORYLIMIT) {
+                """<div class="alert alert-success" role="alert">Testing succeeded, but submission allocated ${results.complete.memoryAllocation!!.submission - results.complete.memoryAllocation!!.limit} too many bytes as expected.</div>"""
             } else if (results.tests()!!.size > question.control.minTestCount!!) {
                 """<div class="alert alert-warning" role="alert">Slowly found a failing test. Consider adding this input to @FixedParameters.</div>"""
             } else {
