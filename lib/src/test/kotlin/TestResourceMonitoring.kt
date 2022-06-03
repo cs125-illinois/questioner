@@ -409,6 +409,25 @@ class TestResourceMonitoring : StringSpec({
         result.stdout shouldBe "2"
         recursiveMethods shouldHaveSize 0
     }
+
+    "!scratch" {
+        val random = Random(124)
+        val allocations = mutableListOf<Long>()
+        val result = runJava("""
+            public static int test(int number) {
+                return number + 1;
+            }
+        """.trimIndent(), ResourceMonitoringArguments()) { m ->
+            repeat(129) {
+                val number = random.nextInt()
+                ResourceMonitoring.beginSubmissionCall(false)
+                m(null, number)
+                allocations.add(ResourceMonitoring.finishSubmissionCall().allocatedMemory)
+            }
+        }
+        result.completed shouldBe true
+        println(allocations.sortedDescending())
+    }
 })
 
 private suspend fun runJava(

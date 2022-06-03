@@ -18,7 +18,6 @@ import org.objectweb.asm.tree.MethodNode
 import java.lang.management.ManagementFactory
 import java.util.Stack
 import java.util.function.LongFunction
-import kotlin.math.max
 
 object ResourceMonitoring : SandboxPlugin<ResourceMonitoringArguments, ResourceMonitoringResults> {
     private val mxBean = ManagementFactory.getThreadMXBean() as? ThreadMXBean
@@ -179,6 +178,8 @@ object ResourceMonitoring : SandboxPlugin<ResourceMonitoringArguments, ResourceM
 
     fun finishSubmissionCall(): ResourceMonitoringCheckpoint {
         LineCounting.isCounting = false
+        AllocationLimiting.isCheckingAllocations = false
+        WarmupWrapping.isCallbackEnabled = false
         val data = threadData.get()
         data.cachedCheckpoint?.let { return it }
         if (data.pendingClear) {
@@ -193,8 +194,6 @@ object ResourceMonitoring : SandboxPlugin<ResourceMonitoringArguments, ResourceM
             )
         }
         return ignoreUsage(data) {
-            AllocationLimiting.isCheckingAllocations = false
-            WarmupWrapping.isCallbackEnabled = false
             updateExternalMeasurements(data)
             data.checkpoint().also { data.cachedCheckpoint = it }
         }
@@ -239,13 +238,14 @@ object ResourceMonitoring : SandboxPlugin<ResourceMonitoringArguments, ResourceM
         fun pushCallStack(methodId: Int) {
             val data = threadData.get()
             if (data.pendingClear) {
+                Unit.hashCode() // Load and link to avoid beforeWarmup call at a bad time
                 data.callStack.clear()
-                data.baseAllocatedMemory = mxBean.currentThreadAllocatedBytes
                 data.warmups = 0
                 AllocationLimiting.isCheckingAllocations = true
-                WarmupWrapping.isCallbackEnabled = true
                 LineCounting.isCounting = true
                 LineCounting.reset()
+                WarmupWrapping.isCallbackEnabled = true
+                data.baseAllocatedMemory = mxBean.currentThreadAllocatedBytes
                 data.pendingClear = false
             }
             ignoreUsage(data) {
@@ -256,7 +256,10 @@ object ResourceMonitoring : SandboxPlugin<ResourceMonitoringArguments, ResourceM
                 }
                 data.callStack.push(methodInfo)
                 data.callStackSize += methodInfo.frameSize
-                data.maxCallStackSize = max(data.maxCallStackSize, data.callStackSize)
+                if (data.callStackSize > data.maxCallStackSize) {
+                    // Can't use Math.max - would trigger checkPackageAccess and beforeWarmup
+                    data.maxCallStackSize = data.callStackSize
+                }
             }
         }
 
