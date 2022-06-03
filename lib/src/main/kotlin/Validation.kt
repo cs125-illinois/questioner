@@ -168,20 +168,11 @@ suspend fun Question.validate(seed: Int): ValidationReport {
         ) // No execution count limit
         // No allocation limit
     )
-    // Warm up allocation tracking for submission
-    listOf(correct).first().also { right ->
-        test(right.contents, right.language, bootstrapSettings).also { testResults ->
-            testResults.checkCorrect(right)
-        }
-    }
     val firstCorrectResults = (setOf(correct) + alternativeSolutions).map { right ->
         test(right.contents, right.language, bootstrapSettings).also { testResults ->
-            println(right.contents)
-            println(testResults.complete.memoryAllocation?.submission)
             testResults.checkCorrect(right)
         }
     }
-    println(firstCorrectResults.first().complete.testing?.tests?.map { it.runnerID }?.distinct()?.size)
 
     val bootstrapSolutionCoverage = firstCorrectResults
         .mapNotNull { it.complete.coverage }
@@ -265,8 +256,6 @@ suspend fun Question.validate(seed: Int): ValidationReport {
             wrong.language,
             specificIncorrectSettings
         ).let {
-            println(it.complete.memoryAllocation?.submission)
-            println(it.complete.testing?.tests?.map { it.runnerID }?.distinct()?.size)
             it.checkIncorrect(wrong, wrong.mutation != null)
             IncorrectResults(wrong, it)
         }
