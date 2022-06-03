@@ -33,7 +33,7 @@ tasks.compileKotlin {
     dependsOn(tasks.generateGrammarSource)
 }
 tasks.compileTestKotlin {
-    dependsOn(tasks.generateGrammarSource)
+    dependsOn(tasks.generateTestGrammarSource)
 }
 tasks.formatKotlinMain {
     dependsOn(tasks.generateGrammarSource)

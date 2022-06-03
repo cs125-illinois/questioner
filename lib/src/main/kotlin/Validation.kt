@@ -128,7 +128,11 @@ suspend fun Question.validate(seed: Int): ValidationReport {
         try {
             validate(file.reason, mutated)
         } catch (e: Exception) {
-            throw IncorrectWrongReason(file, e.message!!, summary)
+            throw if (succeeded) {
+                WrongReasonPassed(file, e.message!!)
+            } else {
+                IncorrectWrongReason(file, e.message!!, summary)
+            }
         }
         val solutionThrew = tests()?.filter {
             it.jenisol!!.solution.threw != null
@@ -164,11 +168,20 @@ suspend fun Question.validate(seed: Int): ValidationReport {
         ) // No execution count limit
         // No allocation limit
     )
-    val firstCorrectResults = (setOf(correct) + alternativeSolutions).map { right ->
+    // Warm up allocation tracking for submission
+    listOf(correct).first().also { right ->
         test(right.contents, right.language, bootstrapSettings).also { testResults ->
             testResults.checkCorrect(right)
         }
     }
+    val firstCorrectResults = (setOf(correct) + alternativeSolutions).map { right ->
+        test(right.contents, right.language, bootstrapSettings).also { testResults ->
+            println(right.contents)
+            println(testResults.complete.memoryAllocation?.submission)
+            testResults.checkCorrect(right)
+        }
+    }
+    println(firstCorrectResults.first().complete.testing?.tests?.map { it.runnerID }?.distinct()?.size)
 
     val bootstrapSolutionCoverage = firstCorrectResults
         .mapNotNull { it.complete.coverage }
@@ -246,6 +259,8 @@ suspend fun Question.validate(seed: Int): ValidationReport {
             wrong.language,
             incorrectSettings
         ).let {
+            println(it.complete.memoryAllocation?.submission)
+            println(it.complete.testing?.tests?.map { it.runnerID }?.distinct()?.size)
             it.checkIncorrect(wrong, wrong.mutation != null)
             IncorrectResults(wrong, it)
         }
@@ -562,6 +577,20 @@ class IncorrectWrongReason(val incorrect: Question.IncorrectFile, val expected: 
         |Incorrect code failed but not for the reason we expected :
         |Expected: $expected
         |But Found : $explanation
+        |${printContents(incorrect.contents, incorrect.path)}
+        |Maybe check the argument to @Incorrect(reason = "reason")
+        """.trimMargin()
+        }
+}
+
+class WrongReasonPassed(val incorrect: Question.IncorrectFile, val expected: String) :
+    ValidationFailed() {
+    override val message: String
+        get() {
+            check(incorrect.mutation == null) { "Mutated sources failed for the wrong reason" }
+            return """
+        |Code expected to fail passed the test suite:
+        |Expected: $expected
         |${printContents(incorrect.contents, incorrect.path)}
         |Maybe check the argument to @Incorrect(reason = "reason")
         """.trimMargin()
