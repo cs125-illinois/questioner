@@ -253,17 +253,16 @@ class TestResourceMonitoring : StringSpec({
     "should exclude memory allocated post-submission if asked" {
         var allocatedMemory = 0L
         val result = runJava("""
-            public static void test() {
-                System.out.println("Test");
+            public static int test() {
+                return 255;
             }
         """.trimIndent(), ResourceMonitoringArguments(allocatedMemoryLimit = 500000)) { m ->
             ResourceMonitoring.beginSubmissionCall(true)
             m(null)
-            IntArray(1000)
+            IntArray(2000)
             allocatedMemory = ResourceMonitoring.finishSubmissionCall().allocatedMemory
-            IntArray(1000)
+            IntArray(3000)
         }
-        result.stdout shouldStartWith "Test"
         allocatedMemory shouldBeLessThan 1000
         result.pluginResult(ResourceMonitoring).allocatedMemory shouldBeLessThan 1000
     }
