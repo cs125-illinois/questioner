@@ -249,7 +249,7 @@ data class Question(
         val calibrationLength: Long,
         val solutionCoverage: TestResults.CoverageComparison.LineCoverage,
         val executionCounts: LanguagesResourceUsage,
-        val memoryAllocation: LanguagesResourceUsage? // TODO: Make non-nullable when ready to require memory calibration
+        val memoryAllocation: LanguagesResourceUsage
     )
 
     @JsonClass(generateAdapter = true)

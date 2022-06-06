@@ -33,7 +33,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import mu.KotlinLogging
 import org.bson.BsonDocument
-import java.time.Duration
 import java.time.Instant
 import java.util.Properties
 import java.util.concurrent.Executors
@@ -206,17 +205,8 @@ fun Application.questioner() {
                     val startMemory = (runtime.freeMemory().toFloat() / 1024.0 / 1024.0).toInt()
                     val results = Questions.test(submission)
                     call.respond(ServerResponse(results))
-                    System.gc()
-                    System.gc()
                     val endMemory = (runtime.freeMemory().toFloat() / 1024.0 / 1024.0).toInt()
                     logger.debug { "$startMemory -> $endMemory" }
-                    System.getenv("RESTART_THRESHOLD_INTERVAL")?.toLong()?.also {
-                        if (endMemory < it) {
-                            val duration = Duration.between(serverStarted, Instant.now())
-                            logger.debug { "Restarting after $duration" }
-                            exitProcess(-1)
-                        }
-                    }
                 } catch (e: StackOverflowError) {
                     e.printStackTrace()
                     call.respond(HttpStatusCode.BadRequest)

@@ -14,7 +14,7 @@ dependencies {
     api("com.github.cs125-illinois:jenisol:2022.6.2")
     api("io.kotest:kotest-runner-junit5:5.3.0")
     api("com.google.truth:truth:1.1.3")
-    api("com.github.cs125-illinois:libcs1:2022.4.0")
+    api("com.github.cs125-illinois:libcs1:2022.6.1")
 }
 tasks {
     val sourcesJar by creating(Jar::class) {
@@ -29,7 +29,19 @@ tasks.withType(Test::class.java) {
     val agentJarPath = configurations["runtimeClasspath"].resolvedConfiguration.resolvedArtifacts.find {
         it.moduleVersion.id.group == "com.beyondgrader.resource-agent"
     }!!.file.absolutePath
-    jvmArgs("--enable-preview", "-javaagent:$agentJarPath", "-XX:+UseZGC")
+    jvmArgs(
+        "-ea", "--enable-preview", "-javaagent:$agentJarPath",
+        "-Dfile.encoding=UTF-8",
+        "-Xms512m", "-Xmx1G", "-Xss256k", "-XX:+UseZGC", "-XX:ZCollectionInterval=8",
+        "--add-opens", "java.base/java.lang=ALL-UNNAMED",
+        "--add-opens", "java.base/java.util=ALL-UNNAMED",
+        "--add-exports", "jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED",
+        "--add-exports", "jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED",
+        "--add-exports", "jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED",
+        "--add-exports", "jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED",
+        "--add-exports", "jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED",
+        "--add-exports", "java.management/sun.management=ALL-UNNAMED"
+    )
 }
 publishing {
     publications {

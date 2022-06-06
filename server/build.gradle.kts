@@ -55,10 +55,6 @@ tasks.shadowJar {
 }
 application {
     mainClass.set("edu.illinois.cs.cs125.questioner.server.MainKt")
-    val agentJarPath = configurations["runtimeClasspath"].resolvedConfiguration.resolvedArtifacts.find {
-        it.moduleVersion.id.group == "com.beyondgrader.resource-agent"
-    }!!.file.absolutePath
-    applicationDefaultJvmArgs += listOf("-javaagent:$agentJarPath", "--enable-preview")
 }
 docker {
     name = "cs125/questioner"
