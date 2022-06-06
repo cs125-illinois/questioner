@@ -22,18 +22,18 @@
     "runtypes": ">= 6"
   },
   "devDependencies": {
-    "@cs124/jeed-types": "2022.1.1",
-    "@typescript-eslint/eslint-plugin": "5.10.0",
-    "@typescript-eslint/parser": "5.10.0",
+    "@cs124/jeed-types": "2022.2.1",
+    "@typescript-eslint/eslint-plugin": "5.27.1",
+    "@typescript-eslint/parser": "5.27.1",
     "depcheck": "1.4.3",
-    "eslint": "8.7.0",
-    "eslint-config-prettier": "8.3.0",
-    "npm-check-updates": "12.2.1",
-    "prettier": "2.5.1",
-    "prettier-package-json": "2.6.0",
+    "eslint": "8.17.0",
+    "eslint-config-prettier": "8.5.0",
+    "npm-check-updates": "13.1.1",
+    "prettier": "2.6.2",
+    "prettier-package-json": "2.6.3",
     "prettier-plugin-organize-imports": "2.3.4",
     "rimraf": "3.0.2",
-    "runtypes": "6.5.0",
-    "typescript": "4.5.5"
+    "runtypes": "6.5.1",
+    "typescript": "4.7.3"
   }
 }
