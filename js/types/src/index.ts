@@ -115,6 +115,15 @@ export const TestingResult = Record({
 })
 export type TestingResult = Static<typeof TestingResult>
 
+export const MemoryAllocationComparison = Record({
+  solution: Number,
+  submission: Number,
+  limit: Number,
+  increase: Number,
+  failed: Boolean,
+})
+export type MemoryAllocationComparison = Static<typeof MemoryAllocationComparison>
+
 export const ExecutionCountComparison = Record({
   solution: Number,
   submission: Number,
@@ -171,6 +180,7 @@ export const CompletedTasks = Partial({
   // execution
   // checkExecutedSubmission doesn't complete
   executionCount: ExecutionCountComparison,
+  memoryAllocation: MemoryAllocationComparison,
   testing: TestingResult,
   coverage: CoverageComparison,
 })
@@ -187,6 +197,7 @@ export const FailedTasks = Partial({
   // execution
   checkExecutedSubmission: String,
   // executionCount doesn't fail
+  // memoryAllocation doesn't fail
   // testing doesn't fail
   // coverage doesn't fail
 })
@@ -203,6 +214,7 @@ export const Step = Union(
   // execution
   Literal("checkExecutedSubmission"),
   Literal("executioncount"),
+  Literal("memoryAllocation"),
   Literal("testing"),
   Literal("coverage")
 )
@@ -219,6 +231,7 @@ export const TestingOrder: Array<Step> = [
   // execution
   "checkExecutedSubmission",
   "executioncount",
+  "memoryAllocation",
   "testing",
   "coverage",
 ]
