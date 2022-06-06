@@ -139,7 +139,7 @@ suspend fun Question.test(
     }
 
     val threw = taskResults.returned?.threw ?: taskResults.threw
-    val timeout = taskResults.timeout || threw is LineLimitExceeded
+    val timeout = taskResults.timeout
     results.taskResults = taskResults
     results.timeout = timeout
     val resourceUsage = taskResults.pluginResult(ResourceMonitoring)
