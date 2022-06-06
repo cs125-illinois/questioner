@@ -33,7 +33,7 @@ allprojects {
         mavenLocal()
         mavenCentral()
         maven("https://jitpack.io")
-        maven("https://dl.bintray.com/jetbrains/markdown")
+        maven("https://maven.codeawakening.com")
     }
     tasks.withType<Test> {
         enableAssertions = true
