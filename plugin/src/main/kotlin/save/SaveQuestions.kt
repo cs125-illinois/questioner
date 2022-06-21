@@ -3,8 +3,6 @@
 package edu.illinois.cs.cs125.questioner.plugin.save
 
 import com.github.slugify.Slugify
-import com.squareup.moshi.JsonClass
-import com.squareup.moshi.Moshi
 import edu.illinois.cs.cs125.jenisol.core.Both
 import edu.illinois.cs.cs125.jenisol.core.Compare
 import edu.illinois.cs.cs125.jenisol.core.Configure
@@ -50,10 +48,6 @@ import java.util.regex.Pattern
 import java.util.stream.Collectors
 
 private val slugify = Slugify()
-private val moshi = Moshi.Builder().build()
-
-@JsonClass(generateAdapter = true)
-data class PathFile(val path: String, val contents: String)
 
 @Suppress("unused")
 abstract class SaveQuestions : DefaultTask() {

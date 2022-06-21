@@ -8,14 +8,11 @@ plugins {
     id("com.google.devtools.ksp")
 }
 dependencies {
-    ksp("com.squareup.moshi:moshi-kotlin:1.13.0")
-
     antlr("org.antlr:antlr4:4.10.1")
 
-    implementation("org.jetbrains.kotlin:kotlin-reflect:1.6.21")
+    implementation("org.jetbrains.kotlin:kotlin-reflect:1.7.0")
     implementation(gradleApi())
     implementation(project(":lib"))
-    implementation("com.squareup.moshi:moshi-kotlin:1.13.0")
     implementation("org.jetbrains:markdown:0.3.1") {
         exclude(module = "kotlin-runtime")
         exclude(module = "kotlin-js")
@@ -27,7 +24,7 @@ dependencies {
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.13.3")
     implementation("com.github.slugify:slugify:2.5")
 
-    testImplementation("io.kotest:kotest-runner-junit5:5.3.0")
+    testImplementation("io.kotest:kotest-runner-junit5:5.3.1")
 }
 tasks.compileKotlin {
     dependsOn(tasks.generateGrammarSource)
@@ -51,11 +48,6 @@ tasks.generateGrammarSource {
             "-lib", "src/main/antlr/edu/illinois/cs/cs125/questioner/antlr/lib/"
         )
     )
-}
-afterEvaluate {
-    tasks.named("kspKotlin") {
-        dependsOn(tasks.generateGrammarSource)
-    }
 }
 configurations {
     all {
