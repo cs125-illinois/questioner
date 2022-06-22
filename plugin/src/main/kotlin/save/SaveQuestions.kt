@@ -47,7 +47,7 @@ import java.security.MessageDigest
 import java.util.regex.Pattern
 import java.util.stream.Collectors
 
-private val slugify = Slugify()
+private val slugify = Slugify.builder().build()
 
 @Suppress("unused")
 abstract class SaveQuestions : DefaultTask() {

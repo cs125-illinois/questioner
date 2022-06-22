@@ -22,7 +22,7 @@ dependencies {
     implementation("com.google.guava:guava:31.1-jre")
     implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.13.3")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.13.3")
-    implementation("com.github.slugify:slugify:2.5")
+    implementation("com.github.slugify:slugify:3.0.1")
     implementation("io.github.java-diff-utils:java-diff-utils:4.11")
 
     testImplementation("io.kotest:kotest-runner-junit5:5.3.1")
