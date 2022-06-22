@@ -286,6 +286,11 @@ data class Question(
         enum class Reason { DESIGN, COMPILE, TEST, CHECKSTYLE, TIMEOUT, DEADCODE, LINECOUNT, TOOLONG, MEMORYLIMIT }
     }
 
+    @JsonClass(generateAdapter = true)
+    data class ValidationMutation(
+        val diff: String
+    )
+
     @delegate:Transient
     val compiledCommon by lazy {
         if (common?.isNotEmpty() == true) {
@@ -380,6 +385,8 @@ data class Question(
         get() = testingSettings != null
 
     var fauxStatic: Boolean = false
+
+    var validationMutations: List<ValidationMutation>? = null
 
     companion object {
         const val DEFAULT_RETURN_TIMEOUT = 16

@@ -262,6 +262,9 @@ suspend fun Question.validate(seed: Int): ValidationReport {
     }
     val incorrectLength = Instant.now().toEpochMilli() - incorrectStart.toEpochMilli()
 
+    validationMutations = incorrectResults.map {
+        Question.ValidationMutation(it.incorrect.contents)
+    }
     val requiredTestCount = incorrectResults
         .filter { !it.results.timeout && !it.results.succeeded }
         .mapNotNull { it.results.tests()?.size }
