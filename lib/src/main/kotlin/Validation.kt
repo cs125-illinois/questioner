@@ -2,6 +2,8 @@
 
 package edu.illinois.cs.cs125.questioner.lib
 
+import com.github.difflib.DiffUtils
+import com.github.difflib.UnifiedDiffUtils
 import edu.illinois.cs.cs125.jeed.core.suppressionComment
 import edu.illinois.cs.cs125.jenisol.core.ParameterGroup
 import edu.illinois.cs.cs125.jenisol.core.fullName
@@ -262,8 +264,31 @@ suspend fun Question.validate(seed: Int): ValidationReport {
     }
     val incorrectLength = Instant.now().toEpochMilli() - incorrectStart.toEpochMilli()
 
-    validationMutations = incorrectResults.map {
-        Question.ValidationMutation(it.incorrect.contents)
+    val javaCorrect = correct.contents
+    val kotlinCorrect = alternativeSolutions.find { it.language == Question.Language.kotlin }?.contents
+
+    validationSubmissions = incorrectResults.mapIndexed { i, result ->
+        val correct = when (result.incorrect.language) {
+            Question.Language.java -> javaCorrect
+            Question.Language.kotlin -> kotlinCorrect!!
+        }.lines()
+        val extension = when (result.incorrect.language) {
+            Question.Language.java -> ".java"
+            Question.Language.kotlin -> ".kt"
+        }
+        val diffs = DiffUtils.diff(correct, result.incorrect.contents.lines())
+        val unifiedDiffs =
+            UnifiedDiffUtils.generateUnifiedDiff("Correct$extension", "Incorrect$extension", correct, diffs, 0)
+        val incorrectIndex = if (allIncorrect[i] in incorrect) {
+            i
+        } else {
+            null
+        }
+        Question.ValidationSubmission(
+            unifiedDiffs,
+            incorrectIndex,
+            allIncorrect[i].mutation?.mutations?.first()?.mutation?.mutationType
+        )
     }
     val requiredTestCount = incorrectResults
         .filter { !it.results.timeout && !it.results.succeeded }

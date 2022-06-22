@@ -3,12 +3,7 @@ package edu.illinois.cs.cs125.questioner.lib
 import com.squareup.moshi.JsonClass
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.Types
-import edu.illinois.cs.cs125.jeed.core.CompilationArguments
-import edu.illinois.cs.cs125.jeed.core.Features
-import edu.illinois.cs.cs125.jeed.core.LineCounts
-import edu.illinois.cs.cs125.jeed.core.MutatedSource
-import edu.illinois.cs.cs125.jeed.core.Source
-import edu.illinois.cs.cs125.jeed.core.compile
+import edu.illinois.cs.cs125.jeed.core.*
 import edu.illinois.cs.cs125.questioner.lib.moshi.Adapters
 import java.io.File
 import java.lang.reflect.ReflectPermission
@@ -287,8 +282,8 @@ data class Question(
     }
 
     @JsonClass(generateAdapter = true)
-    data class ValidationMutation(
-        val diff: String
+    data class ValidationSubmission(
+        val deltas: List<String>, val incorrectIndex: Int?, val mutation: Mutation.Type?
     )
 
     @delegate:Transient
@@ -386,7 +381,7 @@ data class Question(
 
     var fauxStatic: Boolean = false
 
-    var validationMutations: List<ValidationMutation>? = null
+    var validationSubmissions: List<ValidationSubmission>? = null
 
     companion object {
         const val DEFAULT_RETURN_TIMEOUT = 16

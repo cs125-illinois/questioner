@@ -8,6 +8,7 @@ dependencies {
 
     implementation("com.squareup.moshi:moshi-kotlin:1.13.0")
     implementation("org.apache.commons:commons-text:1.9")
+    implementation("io.github.java-diff-utils:java-diff-utils:4.11")
 
     api("com.beyondgrader.resource-agent:agent:2022.6.5")
     api("com.github.cs125-illinois.jeed:core:2022.6.5")
