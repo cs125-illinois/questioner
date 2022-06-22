@@ -23,6 +23,7 @@ dependencies {
     implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.13.3")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.13.3")
     implementation("com.github.slugify:slugify:3.0.1")
+    implementation("org.apache.httpcomponents.client5:httpclient5-fluent:5.1.3")
 
     testImplementation("io.kotest:kotest-runner-junit5:5.3.1")
 }
