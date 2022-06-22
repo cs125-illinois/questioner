@@ -22,7 +22,6 @@ dependencies {
     implementation("io.ktor:ktor-server-content-negotiation:2.0.2")
     implementation("com.squareup.moshi:moshi-kotlin:1.13.0")
     implementation("com.github.cs125-illinois:ktor-moshi:2022.4.0")
-    implementation("com.github.slugify:slugify:2.5")
     implementation("org.mongodb:mongodb-driver:3.12.11")
 
     implementation("org.slf4j:slf4j-api:1.7.36")
