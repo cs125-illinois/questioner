@@ -1,5 +1,7 @@
 package edu.illinois.cs.cs125.questioner.lib
 
+import com.github.difflib.DiffUtils
+import com.github.difflib.UnifiedDiffUtils
 import com.squareup.moshi.JsonClass
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.Types
@@ -95,6 +97,13 @@ data class Question(
         }
     )
 ) {
+    @Transient
+    val correctByLanguage = mutableMapOf(Language.java to correct.contents).apply {
+        if (hasKotlin) {
+            put(Language.kotlin, alternativeSolutions.find { it.language == Language.kotlin }!!.contents)
+        }
+    }
+
     @Suppress("EnumNaming", "EnumEntryName")
     enum class Language { java, kotlin }
 
@@ -283,8 +292,50 @@ data class Question(
 
     @JsonClass(generateAdapter = true)
     data class ValidationSubmission(
-        val deltas: List<String>, val incorrectIndex: Int?, val mutation: Mutation.Type?
-    )
+        val deltas: List<String>,
+        val language: Language,
+        val incorrectIndex: Int?,
+        val mutation: Mutation.Type?,
+        val testCount: Int
+    ) {
+        @Transient
+        private var _contents: String? = null
+        fun contents(question: Question): String {
+            if (_contents != null) {
+                return _contents!!
+            }
+            return question.correctByLanguage[language]!!.let {
+                DiffUtils.patch(it.lines(), UnifiedDiffUtils.parseUnifiedDiff(deltas))
+            }.joinToString("\n").also {
+                _contents = it
+            }
+        }
+
+        @Transient
+        private var _compiled: CompiledSource? = null
+        suspend fun compiled(question: Question): CompiledSource {
+            if (_compiled != null) {
+                return _compiled!!
+            }
+            val results = TestResults(language)
+            return when (language) {
+                Language.java ->
+                    question.compileSubmission(
+                        contents(question),
+                        InvertingClassLoader(setOf(question.klass)),
+                        results
+                    )
+                Language.kotlin ->
+                    question.kompileSubmission(
+                        contents(question),
+                        InvertingClassLoader(setOf(question.klass, "${question.klass}Kt")),
+                        results
+                    )
+            }.also {
+                _compiled = it
+            }
+        }
+    }
 
     @delegate:Transient
     val compiledCommon by lazy {
@@ -340,8 +391,6 @@ data class Question(
         }
     }
 
-    fun toJson(): String = moshi.adapter(Question::class.java).toJson(this)
-
     fun getTemplate(language: Language) = when (language) {
         Language.java -> javaTemplate
         Language.kotlin -> kotlinTemplate
@@ -382,6 +431,9 @@ data class Question(
     var fauxStatic: Boolean = false
 
     var validationSubmissions: List<ValidationSubmission>? = null
+    suspend fun compileAllValidatedSubmissions() = validationSubmissions!!.forEach {
+        it.compiled(this)
+    }
 
     companion object {
         const val DEFAULT_RETURN_TIMEOUT = 16

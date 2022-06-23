@@ -314,7 +314,10 @@ fun Question.computeLineCounts(contents: String, language: Question.Language): T
     )
 }
 
-class InvertingClassLoader(private val inversions: Set<String>) : ClassLoader() {
+class InvertingClassLoader(
+    private val inversions: Set<String>,
+    parent: ClassLoader = getSystemClassLoader()
+) : ClassLoader(parent) {
     // Invert the usual delegation strategy for classes in this package to avoid using the system ClassLoader
     override fun loadClass(name: String): Class<*> {
         return if (name in inversions) {

@@ -1,0 +1,1175 @@
+{
+  "Equals 88": {
+    "name": "Equals 88",
+    "type": "METHOD",
+    "klass": "Question",
+    "metadata": {
+      "contentHash": "55b5f11ac1ba1ce7231dc090b270c8f7",
+      "packageName": "com.examples.equals88",
+      "version": "2021.6.0",
+      "author": "challen@illinois.edu",
+      "javaDescription": "<p>Write a method named <code>equals88</code> that returns <code>true</code> if its <code>int</code> argument is equal to 88, our magic number.</p>",
+      "usedFiles": [],
+      "focused": false
+    },
+    "annotatedControls": {},
+    "question": {
+      "klass": "Question",
+      "contents": "import edu.illinois.cs.cs125.jenisol.core.FixedParameters;\nimport edu.illinois.cs.cs125.jenisol.core.RandomParameters;\nimport edu.illinois.cs.cs125.questioner.lib.Correct;\nimport edu.illinois.cs.cs125.questioner.lib.Wrap;\nimport java.util.Arrays;\nimport java.util.List;\nimport java.util.Random;\n\n/*\n * Write a method named `equals88` that returns `true` if its `int` argument is equal to 88, our magic number.\n */\n\n@Correct(name = \"Equals 88\", author = \"challen@illinois.edu\", version = \"2021.6.0\")\n@Wrap\npublic class Question {\n  boolean equals88(int value) {\n    return value == 88;\n  }\n\n  @FixedParameters private static final List<Integer> FIXED = Arrays.asList(88, 188, 888, 8);\n\n  @RandomParameters\n  private static int randomInts(Random random) {\n    if (random.nextBoolean()) {\n      return 88;\n    } else {\n      return random.nextInt();\n    }\n  }\n}",
+      "language": "java",
+      "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/equals88/Question.java"
+    },
+    "correct": {
+      "klass": "Question",
+      "contents": "boolean equals88(int value) {\n  return value == 88;\n}",
+      "language": "java",
+      "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/equals88/Question.java",
+      "complexity": 1,
+      "features": {
+        "featureMap": {
+          "COMPARISON_OPERATORS": 1,
+          "METHOD": 1,
+          "RETURN": 1
+        },
+        "importList": [],
+        "typeList": [
+          "boolean",
+          "int"
+        ],
+        "identifierList": []
+      },
+      "lineCount": {
+        "source": 3,
+        "comment": 0,
+        "blank": 0
+      },
+      "expectedDeadCount": 1
+    },
+    "alternativeSolutions": [],
+    "incorrect": [],
+    "common": [],
+    "javaTemplate": "public class Question {\n  {{{ contents }}}\n}",
+    "importWhitelist": [],
+    "importBlacklist": [],
+    "slug": "equals-88",
+    "hasKotlin": false,
+    "published": {
+      "name": "Equals 88",
+      "type": "METHOD",
+      "path": "equals-88",
+      "author": "challen@illinois.edu",
+      "version": "2021.6.0",
+      "packageName": "com.examples.equals88",
+      "languages": [
+        "java"
+      ],
+      "descriptions": {
+        "java": "<p>Write a method named <code>equals88</code> that returns <code>true</code> if its <code>int</code> argument is equal to 88, our magic number.</p>"
+      },
+      "complexity": {
+        "java": 1
+      },
+      "features": {
+        "java": {
+          "featureMap": {
+            "COMPARISON_OPERATORS": 1,
+            "METHOD": 1,
+            "RETURN": 1
+          },
+          "importList": [],
+          "typeList": [
+            "boolean",
+            "int"
+          ],
+          "identifierList": []
+        }
+      },
+      "lineCounts": {
+        "java": {
+          "source": 3,
+          "comment": 0,
+          "blank": 0
+        }
+      }
+    },
+    "fauxStatic": false
+  },
+  "Counter": {
+    "name": "Counter",
+    "type": "KLASS",
+    "klass": "Counter",
+    "metadata": {
+      "contentHash": "5312a2ea51ecb88e10e87262480b68ea",
+      "packageName": "com.examples.counterobject",
+      "version": "2021.6.0",
+      "author": "challen@illinois.edu",
+      "javaDescription": "<p>Define and implement a <code>public</code> class <code>Counter</code>.\n<code>Counter</code> should provide a single public constructor that accepts an <code>int</code> parameter.\nIt should also provide <code>increment</code> and <code>decrement</code> methods, both taking no parameters and returning <code>void</code>.\n<code>increment</code> should increase the stored count, while <code>decrement</code> should decrease it.\nFinally, provide a <code>getValue</code> method that returns the stored value.</p>",
+      "kotlinDescription": "<p>Define and implement a class <code>Counter</code>.\n<code>Counter</code> should provide primary constructor that accepts an <code>Int</code> parameter.\nIt should also provide <code>increment</code> and <code>decrement</code> methods, both taking no parameters and returning <code>Unit</code>.\n<code>increment</code> should increase the stored count, while <code>decrement</code> should decrease it.\nFinally, provide a <code>getValue</code> method that returns the stored value.</p>",
+      "usedFiles": [
+        "/Users/challen/code/questioner-problems/src/main/java/com/examples/counterobject/correct/kotlin/Counter.kt"
+      ],
+      "focused": false
+    },
+    "annotatedControls": {},
+    "question": {
+      "klass": "Counter",
+      "contents": "import edu.illinois.cs.cs125.questioner.lib.Correct;\n\n/*\n * Define and implement a `public` class `Counter`.\n * `Counter` should provide a single public constructor that accepts an `int` parameter.\n * It should also provide `increment` and `decrement` methods, both taking no parameters and returning `void`.\n * `increment` should increase the stored count, while `decrement` should decrease it.\n * Finally, provide a `getValue` method that returns the stored value.\n */\n\n@Correct(name = \"Counter\", author = \"challen@illinois.edu\", version = \"2021.6.0\")\npublic class Counter {\n  private int value;\n\n  public Counter(int setValue) {\n    value = setValue;\n  }\n\n  public void increment() {\n    value++;\n  }\n\n  public void decrement() {\n    value--;\n  }\n\n  public int getValue() {\n    return value;\n  }\n}",
+      "language": "java",
+      "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/counterobject/Counter.java"
+    },
+    "correct": {
+      "klass": "Counter",
+      "contents": "public class Counter {\n  private int value;\n\n  public Counter(int setValue) {\n    value = setValue;\n  }\n\n  public void increment() {\n    value++;\n  }\n\n  public void decrement() {\n    value--;\n  }\n\n  public int getValue() {\n    return value;\n  }\n}\n",
+      "language": "java",
+      "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/counterobject/Counter.java",
+      "complexity": 4,
+      "features": {
+        "featureMap": {
+          "VARIABLE_REASSIGNMENTS": 3,
+          "UNARY_OPERATORS": 2,
+          "METHOD": 3,
+          "RETURN": 1,
+          "CONSTRUCTOR": 1,
+          "GETTER": 1,
+          "CLASS": 1,
+          "VISIBILITY_MODIFIERS": 6
+        },
+        "importList": [],
+        "typeList": [
+          "int"
+        ],
+        "identifierList": []
+      },
+      "lineCount": {
+        "source": 15,
+        "comment": 0,
+        "blank": 5
+      },
+      "expectedDeadCount": 0
+    },
+    "alternativeSolutions": [
+      {
+        "klass": "Counter",
+        "contents": "class Counter(setValue: Int) {\n  var value = setValue\n    private set\n  fun increment() {\n    value++\n  }\n  fun decrement() {\n    value--\n  }\n}",
+        "language": "kotlin",
+        "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/counterobject/correct/kotlin/Counter.kt",
+        "complexity": 3,
+        "lineCount": {
+          "source": 10,
+          "comment": 0,
+          "blank": 0
+        }
+      }
+    ],
+    "incorrect": [],
+    "common": [],
+    "importWhitelist": [],
+    "importBlacklist": [],
+    "slug": "counter",
+    "kotlinSolution": {
+      "klass": "Counter",
+      "contents": "class Counter(setValue: Int) {\n  var value = setValue\n    private set\n  fun increment() {\n    value++\n  }\n  fun decrement() {\n    value--\n  }\n}",
+      "language": "kotlin",
+      "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/counterobject/correct/kotlin/Counter.kt",
+      "complexity": 3,
+      "lineCount": {
+        "source": 10,
+        "comment": 0,
+        "blank": 0
+      }
+    },
+    "hasKotlin": true,
+    "published": {
+      "name": "Counter",
+      "type": "KLASS",
+      "path": "counter",
+      "author": "challen@illinois.edu",
+      "version": "2021.6.0",
+      "packageName": "com.examples.counterobject",
+      "languages": [
+        "java",
+        "kotlin"
+      ],
+      "descriptions": {
+        "java": "<p>Define and implement a <code>public</code> class <code>Counter</code>.\n<code>Counter</code> should provide a single public constructor that accepts an <code>int</code> parameter.\nIt should also provide <code>increment</code> and <code>decrement</code> methods, both taking no parameters and returning <code>void</code>.\n<code>increment</code> should increase the stored count, while <code>decrement</code> should decrease it.\nFinally, provide a <code>getValue</code> method that returns the stored value.</p>",
+        "kotlin": "<p>Define and implement a class <code>Counter</code>.\n<code>Counter</code> should provide primary constructor that accepts an <code>Int</code> parameter.\nIt should also provide <code>increment</code> and <code>decrement</code> methods, both taking no parameters and returning <code>Unit</code>.\n<code>increment</code> should increase the stored count, while <code>decrement</code> should decrease it.\nFinally, provide a <code>getValue</code> method that returns the stored value.</p>"
+      },
+      "complexity": {
+        "java": 4,
+        "kotlin": 3
+      },
+      "features": {
+        "java": {
+          "featureMap": {
+            "VARIABLE_REASSIGNMENTS": 3,
+            "UNARY_OPERATORS": 2,
+            "METHOD": 3,
+            "RETURN": 1,
+            "CONSTRUCTOR": 1,
+            "GETTER": 1,
+            "CLASS": 1,
+            "VISIBILITY_MODIFIERS": 6
+          },
+          "importList": [],
+          "typeList": [
+            "int"
+          ],
+          "identifierList": []
+        }
+      },
+      "lineCounts": {
+        "java": {
+          "source": 15,
+          "comment": 0,
+          "blank": 5
+        },
+        "kotlin": {
+          "source": 10,
+          "comment": 0,
+          "blank": 0
+        }
+      }
+    },
+    "fauxStatic": false
+  },
+  "Print Sum": {
+    "name": "Print Sum",
+    "type": "SNIPPET",
+    "klass": "Question",
+    "metadata": {
+      "contentHash": "de5b693d7edf480453cf1db502b7bd87",
+      "packageName": "com.examples.printsum",
+      "version": "2021.6.0",
+      "author": "challen@illinois.edu",
+      "javaDescription": "<p>Given two <code>int</code> variables <code>first</code> and <code>second</code> that are already declared and initialized, print their sum.</p>",
+      "usedFiles": [],
+      "focused": false
+    },
+    "annotatedControls": {},
+    "question": {
+      "klass": "Question",
+      "contents": "import edu.illinois.cs.cs125.questioner.lib.Correct;\n\n/*\n * Given two `int` variables `first` and `second` that are already declared and initialized, print their sum.\n */\n\n@Correct(name = \"Print Sum\", author = \"challen@illinois.edu\", version = \"2021.6.0\")\npublic class Question {\n  public static void printSum(int first, int second) {\n    // TEMPLATE_START\n    System.out.println(first + second);\n    // TEMPLATE_END\n  }\n}",
+      "language": "java",
+      "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/printsum/Question.java"
+    },
+    "correct": {
+      "klass": "Question",
+      "contents": "System.out.println(first + second);",
+      "language": "java",
+      "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/printsum/Question.java",
+      "complexity": 1,
+      "features": {
+        "featureMap": {
+          "ARITHMETIC_OPERATORS": 1,
+          "PRINT_STATEMENTS": 1
+        },
+        "importList": [],
+        "typeList": [],
+        "identifierList": []
+      },
+      "lineCount": {
+        "source": 1,
+        "comment": 0,
+        "blank": 0
+      },
+      "expectedDeadCount": 1
+    },
+    "alternativeSolutions": [],
+    "incorrect": [],
+    "common": [],
+    "javaTemplate": "public class Question {\n  public static void printSum(int first, int second) {\n    {{{ contents }}}\n  }\n}\n",
+    "importWhitelist": [],
+    "importBlacklist": [],
+    "slug": "print-sum",
+    "hasKotlin": false,
+    "published": {
+      "name": "Print Sum",
+      "type": "SNIPPET",
+      "path": "print-sum",
+      "author": "challen@illinois.edu",
+      "version": "2021.6.0",
+      "packageName": "com.examples.printsum",
+      "languages": [
+        "java"
+      ],
+      "descriptions": {
+        "java": "<p>Given two <code>int</code> variables <code>first</code> and <code>second</code> that are already declared and initialized, print their sum.</p>"
+      },
+      "complexity": {
+        "java": 1
+      },
+      "features": {
+        "java": {
+          "featureMap": {
+            "ARITHMETIC_OPERATORS": 1,
+            "PRINT_STATEMENTS": 1
+          },
+          "importList": [],
+          "typeList": [],
+          "identifierList": []
+        }
+      },
+      "lineCounts": {
+        "java": {
+          "source": 1,
+          "comment": 0,
+          "blank": 0
+        }
+      }
+    },
+    "fauxStatic": false
+  },
+  "Larger of Two": {
+    "name": "Larger of Two",
+    "type": "METHOD",
+    "klass": "Question",
+    "metadata": {
+      "contentHash": "e3119b708194eb9e63336280c63c7a84",
+      "packageName": "com.examples.largestoftwo",
+      "version": "2021.6.0",
+      "author": "challen@illinois.edu",
+      "javaDescription": "<p>Write a method <code>larger</code> that returns the larger of two <code>int</code> arguments.</p>",
+      "usedFiles": [],
+      "focused": false
+    },
+    "annotatedControls": {},
+    "question": {
+      "klass": "Question",
+      "contents": "import edu.illinois.cs.cs125.questioner.lib.Correct;\nimport edu.illinois.cs.cs125.questioner.lib.Wrap;\n\n/*\n * Write a method `larger` that returns the larger of two `int` arguments.\n */\n@SuppressWarnings(\"ManualMinMaxCalculation\")\n@Correct(name = \"Larger of Two\", author = \"challen@illinois.edu\", version = \"2021.6.0\")\n@Wrap\npublic class Question {\n  int larger(int first, int second) {\n    if (first > second) { // mutate-disable-conditional-boundary\n      return first;\n    } else {\n      return second;\n    }\n  }\n}",
+      "language": "java",
+      "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/largestoftwo/Question.java"
+    },
+    "correct": {
+      "klass": "Question",
+      "contents": "int larger(int first, int second) {\n  if (first > second) { // mutate-disable-conditional-boundary\n    return first;\n  } else {\n    return second;\n  }\n}",
+      "language": "java",
+      "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/largestoftwo/Question.java",
+      "complexity": 2,
+      "features": {
+        "featureMap": {
+          "COMPARISON_OPERATORS": 1,
+          "IF_STATEMENTS": 1,
+          "ELSE_STATEMENTS": 1,
+          "METHOD": 1,
+          "RETURN": 2
+        },
+        "importList": [],
+        "typeList": [
+          "int"
+        ],
+        "identifierList": []
+      },
+      "lineCount": {
+        "source": 7,
+        "comment": 0,
+        "blank": 0
+      },
+      "expectedDeadCount": 1
+    },
+    "alternativeSolutions": [],
+    "incorrect": [],
+    "common": [],
+    "javaTemplate": "public class Question {\n  {{{ contents }}}\n}",
+    "importWhitelist": [],
+    "importBlacklist": [],
+    "slug": "larger-of-two",
+    "hasKotlin": false,
+    "published": {
+      "name": "Larger of Two",
+      "type": "METHOD",
+      "path": "larger-of-two",
+      "author": "challen@illinois.edu",
+      "version": "2021.6.0",
+      "packageName": "com.examples.largestoftwo",
+      "languages": [
+        "java"
+      ],
+      "descriptions": {
+        "java": "<p>Write a method <code>larger</code> that returns the larger of two <code>int</code> arguments.</p>"
+      },
+      "complexity": {
+        "java": 2
+      },
+      "features": {
+        "java": {
+          "featureMap": {
+            "COMPARISON_OPERATORS": 1,
+            "IF_STATEMENTS": 1,
+            "ELSE_STATEMENTS": 1,
+            "METHOD": 1,
+            "RETURN": 2
+          },
+          "importList": [],
+          "typeList": [
+            "int"
+          ],
+          "identifierList": []
+        }
+      },
+      "lineCounts": {
+        "java": {
+          "source": 7,
+          "comment": 0,
+          "blank": 0
+        }
+      }
+    },
+    "fauxStatic": false
+  },
+  "Combine Minus Two": {
+    "name": "Combine Minus Two",
+    "type": "METHOD",
+    "klass": "Question",
+    "metadata": {
+      "contentHash": "20cdf15b91970109fdef324f27e1cacf",
+      "packageName": "com.examples.combineminustwo",
+      "version": "2021.6.0",
+      "author": "challen@illinois.edu",
+      "javaDescription": "<p>Write a function <code>combine</code> that, given two <code>String</code> arguments, returns the second appended to the first.\nExcept you should omit the first two characters of each <code>String</code>.\nFor example, given <code>Java</code> and <code>Kotlin</code>, you would return <code>vatlin</code>.\nYou can assume that each <code>String</code> is of length at least two.</p>",
+      "usedFiles": [],
+      "focused": false
+    },
+    "annotatedControls": {},
+    "question": {
+      "klass": "Question",
+      "contents": "import edu.illinois.cs.cs125.jenisol.core.FixedParameters;\nimport edu.illinois.cs.cs125.jenisol.core.RandomParameters;\nimport edu.illinois.cs.cs125.jenisol.core.Two;\nimport edu.illinois.cs.cs125.questioner.lib.Correct;\nimport edu.illinois.cs.cs125.questioner.lib.Generators;\nimport edu.illinois.cs.cs125.questioner.lib.Wrap;\nimport java.util.Arrays;\nimport java.util.List;\nimport java.util.Random;\n\n/*\n * Write a function `combine` that, given two `String` arguments, returns the second appended to the first.\n * Except you should omit the first two characters of each `String`.\n * For example, given `Java` and `Kotlin`, you would return `vatlin`.\n * You can assume that each `String` is of length at least two.\n */\n\n@Correct(name = \"Combine Minus Two\", author = \"challen@illinois.edu\", version = \"2021.6.0\")\n@Wrap\npublic class Question {\n  String combine(String first, String second) {\n    return first.substring(2) + second.substring(2);\n  }\n\n  @FixedParameters\n  private static final List<Two<String, String>> FIXED =\n      Arrays.asList(new Two<>(\"Java\", \"Kotlin\"), new Two<>(\"CS125\", \"CS124\"));\n\n  @RandomParameters\n  private static Two<String, String> randomStrings(Random random) {\n    String first = Generators.randomAlphanumericStringWithLength(random, random.nextInt(32) + 2);\n    String second = Generators.randomAlphanumericStringWithLength(random, random.nextInt(32) + 2);\n    return new Two<>(first, second);\n  }\n}",
+      "language": "java",
+      "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/combineminustwo/Question.java"
+    },
+    "correct": {
+      "klass": "Question",
+      "contents": "String combine(String first, String second) {\n  return first.substring(2) + second.substring(2);\n}",
+      "language": "java",
+      "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/combineminustwo/Question.java",
+      "complexity": 1,
+      "features": {
+        "featureMap": {
+          "ARITHMETIC_OPERATORS": 1,
+          "METHOD": 1,
+          "RETURN": 1,
+          "STRING": 3,
+          "DOT_NOTATION": 2,
+          "DOTTED_METHOD_CALL": 2
+        },
+        "importList": [],
+        "typeList": [
+          "String"
+        ],
+        "identifierList": []
+      },
+      "lineCount": {
+        "source": 3,
+        "comment": 0,
+        "blank": 0
+      },
+      "expectedDeadCount": 1
+    },
+    "alternativeSolutions": [],
+    "incorrect": [],
+    "common": [],
+    "javaTemplate": "public class Question {\n  {{{ contents }}}\n}",
+    "importWhitelist": [],
+    "importBlacklist": [],
+    "slug": "combine-minus-two",
+    "hasKotlin": false,
+    "published": {
+      "name": "Combine Minus Two",
+      "type": "METHOD",
+      "path": "combine-minus-two",
+      "author": "challen@illinois.edu",
+      "version": "2021.6.0",
+      "packageName": "com.examples.combineminustwo",
+      "languages": [
+        "java"
+      ],
+      "descriptions": {
+        "java": "<p>Write a function <code>combine</code> that, given two <code>String</code> arguments, returns the second appended to the first.\nExcept you should omit the first two characters of each <code>String</code>.\nFor example, given <code>Java</code> and <code>Kotlin</code>, you would return <code>vatlin</code>.\nYou can assume that each <code>String</code> is of length at least two.</p>"
+      },
+      "complexity": {
+        "java": 1
+      },
+      "features": {
+        "java": {
+          "featureMap": {
+            "ARITHMETIC_OPERATORS": 1,
+            "METHOD": 1,
+            "RETURN": 1,
+            "STRING": 3,
+            "DOT_NOTATION": 2,
+            "DOTTED_METHOD_CALL": 2
+          },
+          "importList": [],
+          "typeList": [
+            "String"
+          ],
+          "identifierList": []
+        }
+      },
+      "lineCounts": {
+        "java": {
+          "source": 3,
+          "comment": 0,
+          "blank": 0
+        }
+      }
+    },
+    "fauxStatic": false
+  },
+  "Fancy String Compare": {
+    "name": "Fancy String Compare",
+    "type": "METHOD",
+    "klass": "Question",
+    "metadata": {
+      "contentHash": "d267c2127f7e72dbbf605a384b73d47b",
+      "packageName": "com.examples.fancystringcompare",
+      "version": "2021.6.0",
+      "author": "challen@illinois.edu",
+      "javaDescription": "<p>Write a method <code>fancyCompare</code> that takes two <code>String</code> arguments. If the two <code>String</code>s are equal, return -1.\nOtherwise, return the length of the longer <code>String</code>.\nYou should <code>assert</code> that both inputs are not <code>null</code>.</p>",
+      "usedFiles": [
+        "/Users/challen/code/questioner-problems/src/main/java/com/examples/fancystringcompare/incorrect/badequals/Question.java"
+      ],
+      "focused": false
+    },
+    "annotatedControls": {},
+    "question": {
+      "klass": "Question",
+      "contents": "import edu.illinois.cs.cs125.questioner.lib.Correct;\nimport edu.illinois.cs.cs125.questioner.lib.Wrap;\n\n/*\n * Write a method `fancyCompare` that takes two `String` arguments. If the two `String`s are equal, return -1.\n * Otherwise, return the length of the longer `String`.\n * You should `assert` that both inputs are not `null`.\n */\n\n@SuppressWarnings(\"ManualMinMaxCalculation\")\n@Correct(name = \"Fancy String Compare\", author = \"challen@illinois.edu\", version = \"2021.6.0\")\n@Wrap\npublic class Question {\n  int fancyEquals(String first, String second) {\n    assert first != null;\n    assert second != null;\n    if (first.equals(second)) {\n      return -1;\n    } else if (first.length() > second.length()) { // mutate-disable-conditional-boundary\n      return first.length();\n    } else {\n      return second.length();\n    }\n  }\n}",
+      "language": "java",
+      "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/fancystringcompare/Question.java"
+    },
+    "correct": {
+      "klass": "Question",
+      "contents": "int fancyEquals(String first, String second) {\n  assert first != null;\n  assert second != null;\n  if (first.equals(second)) {\n    return -1;\n  } else if (first.length() > second.length()) { // mutate-disable-conditional-boundary\n    return first.length();\n  } else {\n    return second.length();\n  }\n}",
+      "language": "java",
+      "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/fancystringcompare/Question.java",
+      "complexity": 3,
+      "features": {
+        "featureMap": {
+          "COMPARISON_OPERATORS": 3,
+          "IF_STATEMENTS": 1,
+          "ELSE_STATEMENTS": 1,
+          "ELSE_IF": 1,
+          "METHOD": 1,
+          "RETURN": 3,
+          "STRING": 2,
+          "NULL": 2,
+          "ASSERT": 2,
+          "DOT_NOTATION": 5,
+          "DOTTED_METHOD_CALL": 5
+        },
+        "importList": [],
+        "typeList": [
+          "int",
+          "String"
+        ],
+        "identifierList": []
+      },
+      "lineCount": {
+        "source": 11,
+        "comment": 0,
+        "blank": 0
+      },
+      "expectedDeadCount": 3
+    },
+    "alternativeSolutions": [],
+    "incorrect": [
+      {
+        "klass": "Question",
+        "contents": "int fancyEquals(String first, String second) {\n  assert first != null;\n  assert second != null;\n  if (first == second) {\n    return -1;\n  } else if (first.length() > second.length()) { // mutate-disable-conditional-boundary\n    return first.length();\n  } else {\n    return second.length();\n  }\n}",
+        "reason": "TEST",
+        "language": "java",
+        "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/fancystringcompare/incorrect/badequals/Question.java",
+        "starter": false,
+        "needed": true
+      }
+    ],
+    "common": [],
+    "javaTemplate": "public class Question {\n  {{{ contents }}}\n}",
+    "importWhitelist": [],
+    "importBlacklist": [],
+    "slug": "fancy-string-compare",
+    "hasKotlin": false,
+    "published": {
+      "name": "Fancy String Compare",
+      "type": "METHOD",
+      "path": "fancy-string-compare",
+      "author": "challen@illinois.edu",
+      "version": "2021.6.0",
+      "packageName": "com.examples.fancystringcompare",
+      "languages": [
+        "java"
+      ],
+      "descriptions": {
+        "java": "<p>Write a method <code>fancyCompare</code> that takes two <code>String</code> arguments. If the two <code>String</code>s are equal, return -1.\nOtherwise, return the length of the longer <code>String</code>.\nYou should <code>assert</code> that both inputs are not <code>null</code>.</p>"
+      },
+      "complexity": {
+        "java": 3
+      },
+      "features": {
+        "java": {
+          "featureMap": {
+            "COMPARISON_OPERATORS": 3,
+            "IF_STATEMENTS": 1,
+            "ELSE_STATEMENTS": 1,
+            "ELSE_IF": 1,
+            "METHOD": 1,
+            "RETURN": 3,
+            "STRING": 2,
+            "NULL": 2,
+            "ASSERT": 2,
+            "DOT_NOTATION": 5,
+            "DOTTED_METHOD_CALL": 5
+          },
+          "importList": [],
+          "typeList": [
+            "int",
+            "String"
+          ],
+          "identifierList": []
+        }
+      },
+      "lineCounts": {
+        "java": {
+          "source": 11,
+          "comment": 0,
+          "blank": 0
+        }
+      }
+    },
+    "fauxStatic": false
+  },
+  "String Duplicates": {
+    "name": "String Duplicates",
+    "type": "METHOD",
+    "klass": "Question",
+    "metadata": {
+      "contentHash": "848fc37fe58894f89831bf5323eb8e78",
+      "packageName": "com.examples.stringduplicates",
+      "version": "2022.2.0",
+      "author": "challen@illinois.edu",
+      "javaDescription": "<p>Given a non-<code>null</code> <code>String</code> containing comma-separated values, write a method <code>detectDuplicates</code>\nthat returns <code>true</code> if the <code>String</code> includes duplicate values, and <code>false</code> otherwise.\nTrim whitespace from all <code>String</code>s.</p>",
+      "kotlinDescription": "<p>Given a <code>String</code> containing comma-separated values, write a method <code>detectDuplicates</code>\nthat returns <code>true</code> if the <code>String</code> includes duplicate values, and <code>false</code> otherwise.\nTrim whitespace from all <code>String</code>s.</p>",
+      "usedFiles": [
+        "/Users/challen/code/questioner-problems/src/main/java/com/examples/stringduplicates/correct/java/usesmap/Question.java",
+        "/Users/challen/code/questioner-problems/src/main/java/com/examples/stringduplicates/correct/kotlin/Question.kt"
+      ],
+      "focused": false
+    },
+    "annotatedControls": {},
+    "question": {
+      "klass": "Question",
+      "contents": "import edu.illinois.cs.cs125.jenisol.core.NotNull;\nimport edu.illinois.cs.cs125.jenisol.core.RandomParameters;\nimport edu.illinois.cs.cs125.questioner.lib.Correct;\nimport edu.illinois.cs.cs125.questioner.lib.Generators;\nimport edu.illinois.cs.cs125.questioner.lib.TemplateImports;\nimport edu.illinois.cs.cs125.questioner.lib.Wrap;\nimport java.util.HashSet;\nimport java.util.Random;\nimport java.util.Set;\n\n/*\n * Given a non-`null` `String` containing comma-separated values, write a method `detectDuplicates`\n * that returns `true` if the `String` includes duplicate values, and `false` otherwise.\n * Trim whitespace from all `String`s.\n */\n\n@Correct(name = \"String Duplicates\", author = \"challen@illinois.edu\", version = \"2022.2.0\")\n@Wrap\n@TemplateImports(paths = \"java.util.Map, java.util.HashMap\")\npublic class Question {\n  boolean detectDuplicates(@NotNull String input) {\n    Set<String> values = new HashSet<>();\n    for (String part : input.split(\",\")) {\n      String current = part.trim();\n      if (values.contains(current)) {\n        return true;\n      }\n      values.add(current);\n    }\n    return false;\n  }\n\n  @RandomParameters\n  private static String randomParameters(Random random) {\n    String[] values = new String[random.nextInt(32) + 32];\n    for (int i = 0; i < values.length; i++) {\n      String current = Generators.randomAlphanumericString(random, 32);\n      if (random.nextBoolean()) {\n        values[i] = \" \" + current;\n      } else {\n        values[i] = current + \" \";\n      }\n    }\n    if (random.nextBoolean()) {\n      values[random.nextInt(values.length)] =\n          new String(values[random.nextInt(values.length)].toCharArray());\n    }\n    return String.join(\",\", values);\n  }\n}",
+      "language": "java",
+      "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/stringduplicates/Question.java"
+    },
+    "correct": {
+      "klass": "Question",
+      "contents": "boolean detectDuplicates(String input) {\n  Set<String> values = new HashSet<>();\n  for (String part : input.split(\",\")) {\n    String current = part.trim();\n    if (values.contains(current)) {\n      return true;\n    }\n    values.add(current);\n  }\n  return false;\n}",
+      "language": "java",
+      "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/stringduplicates/Question.java",
+      "complexity": 3,
+      "features": {
+        "featureMap": {
+          "LOCAL_VARIABLE_DECLARATIONS": 3,
+          "VARIABLE_ASSIGNMENTS": 2,
+          "IF_STATEMENTS": 1,
+          "FOR_LOOPS": 1,
+          "ENHANCED_FOR": 1,
+          "NESTED_IF": 1,
+          "METHOD": 1,
+          "RETURN": 2,
+          "STRING": 4,
+          "NEW_KEYWORD": 1,
+          "TYPE_PARAMETERS": 1,
+          "DOT_NOTATION": 4,
+          "DOTTED_METHOD_CALL": 4
+        },
+        "importList": [],
+        "typeList": [
+          "boolean",
+          "String",
+          "Set<String>"
+        ],
+        "identifierList": [
+          "values",
+          "current"
+        ]
+      },
+      "lineCount": {
+        "source": 11,
+        "comment": 0,
+        "blank": 0
+      },
+      "expectedDeadCount": 1
+    },
+    "alternativeSolutions": [
+      {
+        "klass": "Question",
+        "contents": "boolean detectDuplicates(String input) {\n  Map<String, Boolean> values = new HashMap<>();\n  for (String part : input.split(\",\")) {\n    String current = part.trim();\n    if (values.keySet().contains(current)) {\n      return true;\n    }\n    values.put(current, true);\n  }\n  return false;\n}",
+        "language": "java",
+        "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/stringduplicates/correct/java/usesmap/Question.java",
+        "complexity": 3,
+        "features": {
+          "featureMap": {
+            "LOCAL_VARIABLE_DECLARATIONS": 3,
+            "VARIABLE_ASSIGNMENTS": 2,
+            "IF_STATEMENTS": 1,
+            "FOR_LOOPS": 1,
+            "ENHANCED_FOR": 1,
+            "NESTED_IF": 1,
+            "METHOD": 1,
+            "RETURN": 2,
+            "STRING": 4,
+            "NEW_KEYWORD": 1,
+            "BOXING_CLASSES": 1,
+            "TYPE_PARAMETERS": 1,
+            "DOT_NOTATION": 5,
+            "DOTTED_METHOD_CALL": 5
+          },
+          "importList": [],
+          "typeList": [
+            "boolean",
+            "String",
+            "Map<String,Boolean>",
+            "Boolean"
+          ],
+          "identifierList": [
+            "values",
+            "current"
+          ]
+        },
+        "lineCount": {
+          "source": 11,
+          "comment": 0,
+          "blank": 0
+        },
+        "expectedDeadCount": 1
+      },
+      {
+        "klass": "Question",
+        "contents": "fun detectDuplicates(input: String): Boolean {\n  val values = mutableSetOf<String>()\n  for (part in input.split(\",\")) {\n    val current = part.trim()\n    if (values.contains(current)) {\n      return true\n    }\n    values.add(current)\n  }\n  return false\n}",
+        "language": "kotlin",
+        "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/stringduplicates/correct/kotlin/Question.kt",
+        "complexity": 3,
+        "lineCount": {
+          "source": 11,
+          "comment": 0,
+          "blank": 0
+        }
+      }
+    ],
+    "incorrect": [],
+    "common": [],
+    "javaTemplate": "import java.util.HashSet;\nimport java.util.Set;\nimport java.util.Map;\nimport  java.util.HashMap;\n\npublic class Question {\n  {{{ contents }}}\n}",
+    "kotlinTemplate": "import java.util.Map\nimport  java.util.HashMap\n\nclass Question {\n  {{{ contents }}}\n}",
+    "importWhitelist": [],
+    "importBlacklist": [],
+    "slug": "string-duplicates",
+    "kotlinSolution": {
+      "klass": "Question",
+      "contents": "fun detectDuplicates(input: String): Boolean {\n  val values = mutableSetOf<String>()\n  for (part in input.split(\",\")) {\n    val current = part.trim()\n    if (values.contains(current)) {\n      return true\n    }\n    values.add(current)\n  }\n  return false\n}",
+      "language": "kotlin",
+      "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/stringduplicates/correct/kotlin/Question.kt",
+      "complexity": 3,
+      "lineCount": {
+        "source": 11,
+        "comment": 0,
+        "blank": 0
+      }
+    },
+    "hasKotlin": true,
+    "published": {
+      "name": "String Duplicates",
+      "type": "METHOD",
+      "path": "string-duplicates",
+      "author": "challen@illinois.edu",
+      "version": "2022.2.0",
+      "packageName": "com.examples.stringduplicates",
+      "languages": [
+        "java",
+        "kotlin"
+      ],
+      "descriptions": {
+        "java": "<p>Given a non-<code>null</code> <code>String</code> containing comma-separated values, write a method <code>detectDuplicates</code>\nthat returns <code>true</code> if the <code>String</code> includes duplicate values, and <code>false</code> otherwise.\nTrim whitespace from all <code>String</code>s.</p>",
+        "kotlin": "<p>Given a <code>String</code> containing comma-separated values, write a method <code>detectDuplicates</code>\nthat returns <code>true</code> if the <code>String</code> includes duplicate values, and <code>false</code> otherwise.\nTrim whitespace from all <code>String</code>s.</p>"
+      },
+      "complexity": {
+        "java": 3,
+        "kotlin": 3
+      },
+      "features": {
+        "java": {
+          "featureMap": {
+            "LOCAL_VARIABLE_DECLARATIONS": 3,
+            "VARIABLE_ASSIGNMENTS": 2,
+            "IF_STATEMENTS": 1,
+            "FOR_LOOPS": 1,
+            "ENHANCED_FOR": 1,
+            "NESTED_IF": 1,
+            "METHOD": 1,
+            "RETURN": 2,
+            "STRING": 4,
+            "NEW_KEYWORD": 1,
+            "TYPE_PARAMETERS": 1,
+            "DOT_NOTATION": 4,
+            "DOTTED_METHOD_CALL": 4
+          },
+          "importList": [],
+          "typeList": [
+            "boolean",
+            "String",
+            "Set<String>"
+          ],
+          "identifierList": [
+            "values",
+            "current"
+          ]
+        }
+      },
+      "lineCounts": {
+        "java": {
+          "source": 11,
+          "comment": 0,
+          "blank": 0
+        },
+        "kotlin": {
+          "source": 11,
+          "comment": 0,
+          "blank": 0
+        }
+      }
+    },
+    "fauxStatic": false
+  },
+  "Add One Class": {
+    "name": "Add One Class",
+    "type": "KLASS",
+    "klass": "Question",
+    "metadata": {
+      "contentHash": "2700693035c222564540ed31a1c7b4ff",
+      "packageName": "com.examples.addoneclass",
+      "version": "2021.6.0",
+      "author": "challen@illinois.edu",
+      "javaDescription": "<p>Write a class named <code>Question</code> with a single <code>static</code> method <code>addOne</code> that returns its <code>int</code> argument plus one.</p>",
+      "kotlinDescription": "<p>Write a function <code>addOne</code> that returns its <code>Int</code> argument plus one.</p>",
+      "usedFiles": [
+        "/Users/challen/code/questioner-problems/src/main/java/com/examples/addoneclass/correct/kotlin/Question.kt"
+      ],
+      "focused": false
+    },
+    "annotatedControls": {},
+    "question": {
+      "klass": "Question",
+      "contents": "import edu.illinois.cs.cs125.questioner.lib.Correct;\nimport edu.illinois.cs.cs125.questioner.lib.Wrap;\n\n/*\n * Write a class named `Question` with a single `static` method `addOne` that returns its `int` argument plus one.\n */\n\n@Correct(name = \"Add One Class\", author = \"challen@illinois.edu\", version = \"2021.6.0\")\npublic class Question {\n  public static int addOne(int value) {\n    return value + 1;\n  }\n}",
+      "language": "java",
+      "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/addoneclass/Question.java"
+    },
+    "correct": {
+      "klass": "Question",
+      "contents": "public class Question {\n  public static int addOne(int value) {\n    return value + 1;\n  }\n}\n",
+      "language": "java",
+      "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/addoneclass/Question.java",
+      "complexity": 1,
+      "features": {
+        "featureMap": {
+          "ARITHMETIC_OPERATORS": 1,
+          "METHOD": 1,
+          "RETURN": 1,
+          "CLASS": 1,
+          "VISIBILITY_MODIFIERS": 2,
+          "STATIC_METHOD": 1
+        },
+        "importList": [],
+        "typeList": [
+          "int"
+        ],
+        "identifierList": []
+      },
+      "lineCount": {
+        "source": 5,
+        "comment": 0,
+        "blank": 1
+      },
+      "expectedDeadCount": 1
+    },
+    "alternativeSolutions": [
+      {
+        "klass": "QuestionKt",
+        "contents": "fun addOne(value: Int): Int {\n  return value + 1\n}",
+        "language": "kotlin",
+        "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/addoneclass/correct/kotlin/Question.kt",
+        "complexity": 1,
+        "lineCount": {
+          "source": 3,
+          "comment": 0,
+          "blank": 0
+        }
+      }
+    ],
+    "incorrect": [],
+    "common": [],
+    "importWhitelist": [],
+    "importBlacklist": [],
+    "slug": "add-one-class",
+    "kotlinSolution": {
+      "klass": "QuestionKt",
+      "contents": "fun addOne(value: Int): Int {\n  return value + 1\n}",
+      "language": "kotlin",
+      "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/addoneclass/correct/kotlin/Question.kt",
+      "complexity": 1,
+      "lineCount": {
+        "source": 3,
+        "comment": 0,
+        "blank": 0
+      }
+    },
+    "hasKotlin": true,
+    "published": {
+      "name": "Add One Class",
+      "type": "KLASS",
+      "path": "add-one-class",
+      "author": "challen@illinois.edu",
+      "version": "2021.6.0",
+      "packageName": "com.examples.addoneclass",
+      "languages": [
+        "java",
+        "kotlin"
+      ],
+      "descriptions": {
+        "java": "<p>Write a class named <code>Question</code> with a single <code>static</code> method <code>addOne</code> that returns its <code>int</code> argument plus one.</p>",
+        "kotlin": "<p>Write a function <code>addOne</code> that returns its <code>Int</code> argument plus one.</p>"
+      },
+      "complexity": {
+        "java": 1,
+        "kotlin": 1
+      },
+      "features": {
+        "java": {
+          "featureMap": {
+            "ARITHMETIC_OPERATORS": 1,
+            "METHOD": 1,
+            "RETURN": 1,
+            "CLASS": 1,
+            "VISIBILITY_MODIFIERS": 2,
+            "STATIC_METHOD": 1
+          },
+          "importList": [],
+          "typeList": [
+            "int"
+          ],
+          "identifierList": []
+        }
+      },
+      "lineCounts": {
+        "java": {
+          "source": 5,
+          "comment": 0,
+          "blank": 1
+        },
+        "kotlin": {
+          "source": 3,
+          "comment": 0,
+          "blank": 0
+        }
+      }
+    },
+    "fauxStatic": false
+  },
+  "Add One": {
+    "name": "Add One",
+    "type": "METHOD",
+    "klass": "Question",
+    "metadata": {
+      "contentHash": "1de3e62a1da5371e08f407b53e2861c9",
+      "packageName": "com.examples.addone",
+      "version": "2021.6.0",
+      "author": "challen@illinois.edu",
+      "javaDescription": "<p>Write a method <code>addOne</code> that returns its <code>int</code> argument plus one.</p>",
+      "kotlinDescription": "<p>Write a method <code>addOne</code> that returns its <code>Int</code> argument plus one.</p>",
+      "usedFiles": [
+        "/Users/challen/code/questioner-problems/src/main/java/com/examples/addone/incorrect/java/timeout/Question.java",
+        "/Users/challen/code/questioner-problems/src/main/java/com/examples/addone/incorrect/java/toolong/Question.java",
+        "/Users/challen/code/questioner-problems/src/main/java/com/examples/addone/incorrect/java/memorylimit/Question.java",
+        "/Users/challen/code/questioner-problems/src/main/java/com/examples/addone/incorrect/java/deadcode/Question.java",
+        "/Users/challen/code/questioner-problems/src/main/java/com/examples/addone/correct/java/Question.java",
+        "/Users/challen/code/questioner-problems/src/main/java/com/examples/addone/correct/kotlin/Question.kt"
+      ],
+      "focused": false
+    },
+    "annotatedControls": {},
+    "question": {
+      "klass": "Question",
+      "contents": "import edu.illinois.cs.cs125.questioner.lib.Correct;\nimport edu.illinois.cs.cs125.questioner.lib.Wrap;\n\n/*\n * Write a method `addOne` that returns its `int` argument plus one.\n */\n\n@Correct(name = \"Add One\", author = \"challen@illinois.edu\", version = \"2021.6.0\")\n@Wrap\npublic class Question {\n  int addOne(int value) {\n    return value + 1;\n  }\n}",
+      "language": "java",
+      "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/addone/Question.java"
+    },
+    "correct": {
+      "klass": "Question",
+      "contents": "int addOne(int value) {\n  return value + 1;\n}",
+      "language": "java",
+      "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/addone/Question.java",
+      "complexity": 1,
+      "features": {
+        "featureMap": {
+          "ARITHMETIC_OPERATORS": 1,
+          "METHOD": 1,
+          "RETURN": 1
+        },
+        "importList": [],
+        "typeList": [
+          "int"
+        ],
+        "identifierList": []
+      },
+      "lineCount": {
+        "source": 3,
+        "comment": 0,
+        "blank": 0
+      },
+      "expectedDeadCount": 1
+    },
+    "alternativeSolutions": [
+      {
+        "klass": "Question",
+        "contents": "int addOne(int value) {\n  return value + 2 - 1;\n}",
+        "language": "java",
+        "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/addone/correct/java/Question.java",
+        "complexity": 1,
+        "features": {
+          "featureMap": {
+            "ARITHMETIC_OPERATORS": 2,
+            "METHOD": 1,
+            "RETURN": 1
+          },
+          "importList": [],
+          "typeList": [
+            "int"
+          ],
+          "identifierList": []
+        },
+        "lineCount": {
+          "source": 3,
+          "comment": 0,
+          "blank": 0
+        },
+        "expectedDeadCount": 1
+      },
+      {
+        "klass": "Question",
+        "contents": "// Note that this question was originally set up a bit differently in the demo video.\n// Now Kotlin solutions that use @file:AlsoCorrect will not be templated when @Wrap is used on the solution.\n// So the Kotlin solution should follow the class design established by the Java code, even for faux-static methods.\nfun addOne(value: Int): Int {\n  return value + 1\n}",
+        "language": "kotlin",
+        "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/addone/correct/kotlin/Question.kt",
+        "complexity": 1,
+        "lineCount": {
+          "source": 3,
+          "comment": 3,
+          "blank": 0
+        }
+      }
+    ],
+    "incorrect": [
+      {
+        "klass": "Question",
+        "contents": "int addOne(int value) {\n  int j = 0;\n  for (int i = 0; i < 1024; i++) {\n    j++;\n  }\n  return value + 1;\n}",
+        "reason": "LINECOUNT",
+        "language": "java",
+        "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/addone/incorrect/java/timeout/Question.java",
+        "starter": false,
+        "needed": true
+      },
+      {
+        "klass": "Question",
+        "contents": "int addOne(int value) {\n  int toReturn = value + 1;\n  toReturn -= 1;\n  toReturn += 1;\n  toReturn -= 1;\n  toReturn += 1;\n  toReturn -= 1;\n  toReturn += 1;\n  return toReturn;\n}",
+        "reason": "TOOLONG",
+        "language": "java",
+        "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/addone/incorrect/java/toolong/Question.java",
+        "starter": false,
+        "needed": true
+      },
+      {
+        "klass": "Question",
+        "contents": "private final int[] values = new int[1024];\n\nint addOne(int value) {\n  return value + 1;\n}",
+        "reason": "MEMORYLIMIT",
+        "language": "java",
+        "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/addone/incorrect/java/memorylimit/Question.java",
+        "starter": false,
+        "needed": true
+      },
+      {
+        "klass": "Question",
+        "contents": "int addOne(int value) {\n  if (value == 1234567) {\n    return 1234568;\n  }\n  return value + 1;\n}",
+        "reason": "DEADCODE",
+        "language": "java",
+        "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/addone/incorrect/java/deadcode/Question.java",
+        "starter": false,
+        "needed": true
+      }
+    ],
+    "common": [],
+    "javaTemplate": "public class Question {\n  {{{ contents }}}\n}",
+    "kotlinTemplate": "class Question {\n  {{{ contents }}}\n}",
+    "importWhitelist": [],
+    "importBlacklist": [],
+    "slug": "add-one",
+    "kotlinSolution": {
+      "klass": "Question",
+      "contents": "// Note that this question was originally set up a bit differently in the demo video.\n// Now Kotlin solutions that use @file:AlsoCorrect will not be templated when @Wrap is used on the solution.\n// So the Kotlin solution should follow the class design established by the Java code, even for faux-static methods.\nfun addOne(value: Int): Int {\n  return value + 1\n}",
+      "language": "kotlin",
+      "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/addone/correct/kotlin/Question.kt",
+      "complexity": 1,
+      "lineCount": {
+        "source": 3,
+        "comment": 3,
+        "blank": 0
+      }
+    },
+    "hasKotlin": true,
+    "published": {
+      "name": "Add One",
+      "type": "METHOD",
+      "path": "add-one",
+      "author": "challen@illinois.edu",
+      "version": "2021.6.0",
+      "packageName": "com.examples.addone",
+      "languages": [
+        "java",
+        "kotlin"
+      ],
+      "descriptions": {
+        "java": "<p>Write a method <code>addOne</code> that returns its <code>int</code> argument plus one.</p>",
+        "kotlin": "<p>Write a method <code>addOne</code> that returns its <code>Int</code> argument plus one.</p>"
+      },
+      "complexity": {
+        "java": 1,
+        "kotlin": 1
+      },
+      "features": {
+        "java": {
+          "featureMap": {
+            "ARITHMETIC_OPERATORS": 1,
+            "METHOD": 1,
+            "RETURN": 1
+          },
+          "importList": [],
+          "typeList": [
+            "int"
+          ],
+          "identifierList": []
+        }
+      },
+      "lineCounts": {
+        "java": {
+          "source": 3,
+          "comment": 0,
+          "blank": 0
+        },
+        "kotlin": {
+          "source": 3,
+          "comment": 3,
+          "blank": 0
+        }
+      }
+    },
+    "fauxStatic": false
+  }
+}

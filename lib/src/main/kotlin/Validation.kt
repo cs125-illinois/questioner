@@ -264,14 +264,14 @@ suspend fun Question.validate(seed: Int): ValidationReport {
     }
     val incorrectLength = Instant.now().toEpochMilli() - incorrectStart.toEpochMilli()
 
-    val javaCorrect = correct.contents
-    val kotlinCorrect = alternativeSolutions.find { it.language == Question.Language.kotlin }?.contents
-
     validationSubmissions = incorrectResults.mapIndexed { i, result ->
+        if ((result.results.failureCount ?: 0) == 0) {
+            return@mapIndexed null
+        }
         val correct = when (result.incorrect.language) {
-            Question.Language.java -> javaCorrect
-            Question.Language.kotlin -> kotlinCorrect!!
-        }.lines()
+            Question.Language.java -> correctByLanguage[Question.Language.java]
+            Question.Language.kotlin -> correctByLanguage[Question.Language.kotlin]
+        }!!.lines()
         val extension = when (result.incorrect.language) {
             Question.Language.java -> ".java"
             Question.Language.kotlin -> ".kt"
@@ -286,10 +286,12 @@ suspend fun Question.validate(seed: Int): ValidationReport {
         }
         Question.ValidationSubmission(
             unifiedDiffs,
+            result.incorrect.language,
             incorrectIndex,
-            allIncorrect[i].mutation?.mutations?.first()?.mutation?.mutationType
+            allIncorrect[i].mutation?.mutations?.first()?.mutation?.mutationType,
+            result.results.tests()!!.indexOfFirst { !it.passed } + 1
         )
-    }
+    }.filterNotNull()
     val requiredTestCount = incorrectResults
         .filter { !it.results.timeout && !it.results.succeeded }
         .mapNotNull { it.results.tests()?.size }
