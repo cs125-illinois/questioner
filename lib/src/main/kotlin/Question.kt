@@ -312,8 +312,8 @@ data class Question(
         }
 
         @Transient
-        private var _compiled: CompiledSource? = null
-        suspend fun compiled(question: Question): CompiledSource {
+        private var _compiled: ClassLoader? = null
+        suspend fun compiled(question: Question): ClassLoader {
             if (_compiled != null) {
                 return _compiled!!
             }
@@ -331,6 +331,8 @@ data class Question(
                         InvertingClassLoader(setOf(question.klass, "${question.klass}Kt")),
                         results
                     )
+            }.let {
+                question.fixTestingMethods(it.classLoader)
             }.also {
                 _compiled = it
             }
@@ -361,6 +363,25 @@ data class Question(
                     )
                 )
             }
+        }
+    }
+
+    @delegate:Transient
+    val compiledSolutionForTesting by lazy {
+        Source(mapOf("${question.klass}.java" to question.contents)).let { questionSource ->
+            if (compiledCommon == null) {
+                questionSource.compile(CompilationArguments(isolatedClassLoader = true, parameters = true))
+            } else {
+                questionSource.compile(
+                    CompilationArguments(
+                        parentClassLoader = compiledCommon!!.classLoader,
+                        parentFileManager = compiledCommon!!.fileManager,
+                        parameters = true
+                    )
+                )
+            }
+        }.let {
+            fixTestingMethods(it.classLoader)
         }
     }
 

@@ -6,6 +6,7 @@ import io.kotest.matchers.ints.shouldBeGreaterThan
 import io.kotest.matchers.longs.shouldBeLessThan
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
+import io.kotest.matchers.types.shouldBeSameInstanceAs
 import java.nio.file.Path
 import kotlin.system.measureTimeMillis
 
@@ -15,10 +16,13 @@ private val validator = Validator(
     seed = 124
 )
 
-const val EMPTY_SUITE = """
+const val EMPTY_SUITE_CLASS = """
 public class TestQuestion {
   public static void test() {
   }
+}
+"""
+const val EMPTY_SUITE_METHOD = """void test() {
 }
 """
 class TestTestTesting : StringSpec({
@@ -27,7 +31,7 @@ class TestTestTesting : StringSpec({
             question.validated shouldBe true
             report shouldNotBe null
         }
-        question.testTests(EMPTY_SUITE, Question.Language.java).also { results ->
+        question.testTests(EMPTY_SUITE_CLASS, Question.Language.java).also { results ->
             results.failedSteps.size shouldBe 0
         }
         question.testTests("""
@@ -36,6 +40,21 @@ public class TestQuestion {
     assert(Question.addOne(0) == 1);
   }
 }""", Question.Language.java).also { results ->
+            results.failedSteps.size shouldBe 0
+        }
+    }
+    "should test test suites for methods" {
+        val (question) = validator.validate("Add One", force = true, testing = true).also { (question, report) ->
+            question.validated shouldBe true
+            report shouldNotBe null
+        }
+        question.testTests(EMPTY_SUITE_METHOD, Question.Language.java).also { results ->
+            results.failedSteps.size shouldBe 0
+        }
+        question.testTests("""void test() {
+  assert(addOne(0) == 0);
+}""", Question.Language.java).also { results ->
+            println(results.summary)
             results.failedSteps.size shouldBe 0
         }
     }
@@ -58,7 +77,7 @@ public class TestQuestion {
         question.validationSubmissions!!.forEach { incorrect ->
             incorrect.language shouldBe Question.Language.java
             incorrect.compiled(question).also {
-                it.classLoader.definedClasses shouldContain question.klass
+                (it as CopyableClassLoader).bytecodeForClasses.keys shouldContain question.klass
             }
             question.test(incorrect.contents(question), incorrect.language).also {
                 it.complete.testing?.passed shouldBe false
