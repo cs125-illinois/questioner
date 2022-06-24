@@ -149,7 +149,12 @@ data class ParsedJavaFile(val path: String, val contents: String) {
                 val sourceLinesMultiplier = parameters["sourceLinesMultiplier"]?.toDouble()
 
                 Question.CorrectData(
-                    path, name, version, author, description, focused,
+                    path,
+                    name,
+                    version,
+                    author,
+                    description,
+                    focused,
                     Question.TestingControl(
                         solutionThrows,
                         minTestCount,

@@ -233,7 +233,7 @@ fun Application.questioner() {
                     question.metadata.javaDescription,
                     question.metadata.author,
                     question.metadata.packageName,
-                    question.detemplatedJavaStarter,
+                    question.detemplatedJavaStarter
                 )
             )
         }
