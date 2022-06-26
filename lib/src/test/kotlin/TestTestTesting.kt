@@ -6,7 +6,6 @@ import io.kotest.matchers.ints.shouldBeGreaterThan
 import io.kotest.matchers.longs.shouldBeLessThan
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
-import io.kotest.matchers.types.shouldBeSameInstanceAs
 import java.nio.file.Path
 import kotlin.system.measureTimeMillis
 
@@ -16,22 +15,29 @@ private val validator = Validator(
     seed = 124
 )
 
-const val EMPTY_SUITE_CLASS = """
+const val JAVA_EMPTY_SUITE_CLASS = """
 public class TestQuestion {
   public static void test() {
   }
 }
 """
-const val EMPTY_SUITE_METHOD = """void test() {
+const val JAVA_EMPTY_SUITE_METHOD = """void test() {
 }
 """
+const val KOTLIN_EMPTY_SUITE = """fun test() {
+}
+"""
+
 class TestTestTesting : StringSpec({
-    "should test test suites for classes" {
+    "f: should test test suites for classes" {
         val (question) = validator.validate("Add One Class", force = true, testing = true).also { (question, report) ->
             question.validated shouldBe true
             report shouldNotBe null
         }
-        question.testTests(EMPTY_SUITE_CLASS, Question.Language.java).also { results ->
+        question.testTests(JAVA_EMPTY_SUITE_CLASS, Question.Language.java).also { results ->
+            results.failedSteps.size shouldBe 0
+        }
+        question.testTests(KOTLIN_EMPTY_SUITE, Question.Language.kotlin).also { results ->
             results.failedSteps.size shouldBe 0
         }
         question.testTests("""
@@ -42,19 +48,33 @@ public class TestQuestion {
 }""", Question.Language.java).also { results ->
             results.failedSteps.size shouldBe 0
         }
+        question.testTests("""
+fun test() {
+  check(Question.addOne(0) == 1)
+}
+""", Question.Language.kotlin).also { results ->
+            results.failedSteps.size shouldBe 0
+        }
     }
-    "should test test suites for methods" {
+    "f: should test test suites for methods" {
         val (question) = validator.validate("Add One", force = true, testing = true).also { (question, report) ->
             question.validated shouldBe true
             report shouldNotBe null
         }
-        question.testTests(EMPTY_SUITE_METHOD, Question.Language.java).also { results ->
+        question.testTests(JAVA_EMPTY_SUITE_METHOD, Question.Language.java).also { results ->
+            results.failedSteps.size shouldBe 0
+        }
+        question.testTests(KOTLIN_EMPTY_SUITE, Question.Language.kotlin).also { results ->
             results.failedSteps.size shouldBe 0
         }
         question.testTests("""void test() {
   assert(addOne(0) == 0);
 }""", Question.Language.java).also { results ->
-            println(results.summary)
+            results.failedSteps.size shouldBe 0
+        }
+        question.testTests("""fun test() {
+  require(addOne(0) == 0)
+}""", Question.Language.kotlin).also { results ->
             results.failedSteps.size shouldBe 0
         }
     }

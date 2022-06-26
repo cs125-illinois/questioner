@@ -520,7 +520,7 @@
     "type": "METHOD",
     "klass": "Question",
     "metadata": {
-      "contentHash": "d267c2127f7e72dbbf605a384b73d47b",
+      "contentHash": "238a3487d82ef1431fab06a22392a361",
       "packageName": "com.examples.fancystringcompare",
       "version": "2021.6.0",
       "author": "challen@illinois.edu",
@@ -533,13 +533,13 @@
     "annotatedControls": {},
     "question": {
       "klass": "Question",
-      "contents": "import edu.illinois.cs.cs125.questioner.lib.Correct;\nimport edu.illinois.cs.cs125.questioner.lib.Wrap;\n\n/*\n * Write a method `fancyCompare` that takes two `String` arguments. If the two `String`s are equal, return -1.\n * Otherwise, return the length of the longer `String`.\n * You should `assert` that both inputs are not `null`.\n */\n\n@SuppressWarnings(\"ManualMinMaxCalculation\")\n@Correct(name = \"Fancy String Compare\", author = \"challen@illinois.edu\", version = \"2021.6.0\")\n@Wrap\npublic class Question {\n  int fancyEquals(String first, String second) {\n    assert first != null;\n    assert second != null;\n    if (first.equals(second)) {\n      return -1;\n    } else if (first.length() > second.length()) { // mutate-disable-conditional-boundary\n      return first.length();\n    } else {\n      return second.length();\n    }\n  }\n}",
+      "contents": "import edu.illinois.cs.cs125.questioner.lib.Correct;\nimport edu.illinois.cs.cs125.questioner.lib.Wrap;\n\n/*\n * Write a method `fancyCompare` that takes two `String` arguments. If the two `String`s are equal, return -1.\n * Otherwise, return the length of the longer `String`.\n * You should `assert` that both inputs are not `null`.\n */\n\n@SuppressWarnings(\"ManualMinMaxCalculation\")\n@Correct(name = \"Fancy String Compare\", author = \"challen@illinois.edu\", version = \"2021.6.0\")\n@Wrap\npublic class Question {\n  int fancyEquals(String first, String second) {\n    assert first != null;\n    assert second != null;\n    if (first.equals(second)) {\n      return -1;\n      // mutate-disable-conditional-boundary\n      // mutate-disable-modify-length-and-size\n    } else if (first.length() > second.length()) {\n      return first.length();\n    } else {\n      return second.length();\n    }\n  }\n}",
       "language": "java",
       "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/fancystringcompare/Question.java"
     },
     "correct": {
       "klass": "Question",
-      "contents": "int fancyEquals(String first, String second) {\n  assert first != null;\n  assert second != null;\n  if (first.equals(second)) {\n    return -1;\n  } else if (first.length() > second.length()) { // mutate-disable-conditional-boundary\n    return first.length();\n  } else {\n    return second.length();\n  }\n}",
+      "contents": "int fancyEquals(String first, String second) {\n  assert first != null;\n  assert second != null;\n  if (first.equals(second)) {\n    return -1;\n    // mutate-disable-conditional-boundary\n    // mutate-disable-modify-length-and-size\n  } else if (first.length() > second.length()) {\n    return first.length();\n  } else {\n    return second.length();\n  }\n}",
       "language": "java",
       "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/fancystringcompare/Question.java",
       "complexity": 3,
@@ -566,7 +566,7 @@
       },
       "lineCount": {
         "source": 11,
-        "comment": 0,
+        "comment": 2,
         "blank": 0
       },
       "expectedDeadCount": 3
@@ -631,7 +631,7 @@
       "lineCounts": {
         "java": {
           "source": 11,
-          "comment": 0,
+          "comment": 2,
           "blank": 0
         }
       }
@@ -846,7 +846,7 @@
     "type": "KLASS",
     "klass": "Question",
     "metadata": {
-      "contentHash": "2700693035c222564540ed31a1c7b4ff",
+      "contentHash": "144cc102fd3530a84a5e30737e94336c",
       "packageName": "com.examples.addoneclass",
       "version": "2021.6.0",
       "author": "challen@illinois.edu",
@@ -860,7 +860,7 @@
     "annotatedControls": {},
     "question": {
       "klass": "Question",
-      "contents": "import edu.illinois.cs.cs125.questioner.lib.Correct;\nimport edu.illinois.cs.cs125.questioner.lib.Wrap;\n\n/*\n * Write a class named `Question` with a single `static` method `addOne` that returns its `int` argument plus one.\n */\n\n@Correct(name = \"Add One Class\", author = \"challen@illinois.edu\", version = \"2021.6.0\")\npublic class Question {\n  public static int addOne(int value) {\n    return value + 1;\n  }\n}",
+      "contents": "import edu.illinois.cs.cs125.questioner.lib.Correct;\n\n/*\n * Write a class named `Question` with a single `static` method `addOne` that returns its `int` argument plus one.\n */\n\n@Correct(name = \"Add One Class\", author = \"challen@illinois.edu\", version = \"2021.6.0\")\npublic class Question {\n  public static int addOne(int value) {\n    return value + 1;\n  }\n}",
       "language": "java",
       "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/addoneclass/Question.java"
     },

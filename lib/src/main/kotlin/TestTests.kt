@@ -4,7 +4,6 @@ import edu.illinois.cs.cs125.jeed.core.*
 import edu.illinois.cs.cs125.jeed.core.moshi.CompiledSourceResult
 import edu.illinois.cs.cs125.jenisol.core.isPackagePrivate
 import edu.illinois.cs.cs125.jenisol.core.isPrivate
-import edu.illinois.cs.cs125.jenisol.core.isPublic
 import edu.illinois.cs.cs125.jenisol.core.isStatic
 import org.objectweb.asm.*
 import java.lang.reflect.InvocationTargetException
@@ -12,11 +11,11 @@ import java.lang.reflect.InvocationTargetException
 suspend fun Question.testTests(
     contents: String,
     language: Question.Language
-): TestResults {
+): TestTestResults {
     compileAllValidatedSubmissions()
 
     val testKlass = "Test$klass"
-    val results = TestResults(language)
+    val results = TestTestResults(language)
 
     val compilationClassLoader = when (language) {
         Question.Language.java -> InvertingClassLoader(
@@ -28,14 +27,8 @@ suspend fun Question.testTests(
     }
     val compiledSubmission = try {
         when (language) {
-            Question.Language.java ->
-                compileTestSuites(contents, compilationClassLoader, results)
-            Question.Language.kotlin ->
-                kompileSubmission(
-                    contents,
-                    InvertingClassLoader(setOf(testKlass, "${testKlass}Kt")),
-                    results
-                )
+            Question.Language.java -> compileTestSuites(contents, compilationClassLoader, results)
+            Question.Language.kotlin -> kompileTestSuites(contents, compilationClassLoader, results)
         }
     } catch (e: TemplatingFailed) {
         return results
@@ -62,7 +55,7 @@ suspend fun Question.testTests(
 
     val testingClass = compiledSubmission.classLoader.loadClass(klassName)
     val staticTestingMethod = testingClass.getTestingMethod()!!.isStatic()
-    if (staticTestingMethod) {
+    if (!staticTestingMethod) {
         check(testingClass.declaredConstructors.find { it.parameters.isEmpty() } != null) {
             "Non-static testing method needs an empty constructor"
         }
@@ -96,7 +89,10 @@ suspend fun Question.testTests(
     return results
 }
 
-fun Question.templateTestSuites(contents: String, language: Question.Language = Question.Language.java): Source {
+fun Question.templateTestSuites(
+    contents: String,
+    language: Question.Language
+): Pair<Source, String?> {
     val template = when (type) {
         Question.Type.KLASS -> null
         Question.Type.METHOD -> {
@@ -108,7 +104,7 @@ fun Question.templateTestSuites(contents: String, language: Question.Language = 
 """
                 }
                 Question.Language.kotlin -> {
-                    """class Test${klass} : $klass {
+                    """class Test${klass} : ${klass}() {
   {{{ contents }}}
 }"""
                 }
@@ -119,11 +115,13 @@ fun Question.templateTestSuites(contents: String, language: Question.Language = 
 
     val fileName = "Test${klass}.${language.extension()}"
     return if (template == null) {
-        Source(mapOf(fileName to contents))
+        Pair(Source(mapOf(fileName to contents)), null)
     } else {
-        Source.fromTemplates(
-            mapOf(fileName to contents.trimEnd()),
-            mapOf("$fileName.hbs" to template)
+        Pair(
+            Source.fromTemplates(
+                mapOf(fileName to contents.trimEnd()),
+                mapOf("$fileName.hbs" to template)
+            ), template
         )
     }
 }
@@ -132,15 +130,13 @@ fun Question.templateTestSuites(contents: String, language: Question.Language = 
 suspend fun Question.compileTestSuites(
     contents: String,
     parentClassLoader: ClassLoader,
-    testResults: TestResults
+    testResults: TestTestResults
 ): CompiledSource {
     return try {
-        val source = templateTestSuites(contents).also {
-            if (getTemplate(Question.Language.java) != null) {
-                testResults.completedSteps.add(TestResults.Step.templateSubmission)
-            }
+        val (source, template) = templateTestSuites(contents, Question.Language.java)
+        if (template != null) {
+            testResults.completedSteps.add(TestTestResults.Step.templateSubmission)
         }
-        println(source.contents)
         val compiledSource = source.compile(
             CompilationArguments(
                 parentClassLoader = parentClassLoader,
@@ -149,21 +145,59 @@ suspend fun Question.compileTestSuites(
             )
         ).also {
             testResults.complete.compileSubmission = CompiledSourceResult(it)
-            testResults.completedSteps.add(TestResults.Step.compileSubmission)
+            testResults.completedSteps.add(TestTestResults.Step.compileSubmission)
         }
         testResults.addCheckstyleResults(source.checkstyle(CheckstyleArguments(failOnError = false)))
         compiledSource
     } catch (e: TemplatingFailed) {
         testResults.failed.templateSubmission = e
-        testResults.failedSteps.add(TestResults.Step.templateSubmission)
+        testResults.failedSteps.add(TestTestResults.Step.templateSubmission)
         throw e
     } catch (e: CheckstyleFailed) {
         testResults.failed.checkstyle = e
-        testResults.failedSteps.add(TestResults.Step.checkstyle)
+        testResults.failedSteps.add(TestTestResults.Step.checkstyle)
         throw e
     } catch (e: CompilationFailed) {
         testResults.failed.compileSubmission = e
-        testResults.failedSteps.add(TestResults.Step.compileSubmission)
+        testResults.failedSteps.add(TestTestResults.Step.compileSubmission)
+        throw e
+    }
+}
+
+@Suppress("ThrowsCount")
+suspend fun Question.kompileTestSuites(
+    contents: String,
+    parentClassLoader: ClassLoader,
+    testResults: TestTestResults
+): CompiledSource {
+    return try {
+        val (source, template) = templateTestSuites(contents, Question.Language.kotlin)
+        if (template != null) {
+            testResults.completedSteps.add(TestTestResults.Step.templateSubmission)
+        }
+        val compiledSource = source.kompile(
+            KompilationArguments(
+                parentClassLoader = parentClassLoader,
+                parentFileManager = compiledSolution.fileManager,
+                parameters = true
+            )
+        ).also {
+            testResults.complete.compileSubmission = CompiledSourceResult(it)
+            testResults.completedSteps.add(TestTestResults.Step.compileSubmission)
+        }
+        testResults.addKtlintResults(source.ktLint(KtLintArguments(failOnError = false)))
+        compiledSource
+    } catch (e: TemplatingFailed) {
+        testResults.failed.templateSubmission = e
+        testResults.failedSteps.add(TestTestResults.Step.templateSubmission)
+        throw e
+    } catch (e: KtLintFailed) {
+        testResults.failed.ktlint = e
+        testResults.failedSteps.add(TestTestResults.Step.ktlint)
+        throw e
+    } catch (e: CompilationFailed) {
+        testResults.failed.compileSubmission = e
+        testResults.failedSteps.add(TestTestResults.Step.compileSubmission)
         throw e
     }
 }
@@ -174,19 +208,19 @@ private fun Class<*>.getTestingMethod() = declaredMethods.find { testingMethod -
 
 fun Question.checkCompiledTestSuite(
     compiledTestSuite: CompiledSource,
-    testResults: TestResults
+    testResults: TestTestResults
 ): String? = compiledTestSuite.classLoader.definedClasses.topLevelClasses().let {
     val testKlass = "Test$klass"
 
     when {
         it.isEmpty() -> {
             testResults.failed.checkCompiledSubmission = "Test suite defined no classes"
-            testResults.failedSteps.add(TestResults.Step.checkCompiledSubmission)
+            testResults.failedSteps.add(TestTestResults.Step.checkCompiledSubmission)
             return null
         }
         it.size > 1 -> {
             testResults.failed.checkCompiledSubmission = "Test suite defined multiple classes"
-            testResults.failedSteps.add(TestResults.Step.checkCompiledSubmission)
+            testResults.failedSteps.add(TestTestResults.Step.checkCompiledSubmission)
             return null
         }
     }
@@ -200,7 +234,7 @@ fun Question.checkCompiledTestSuite(
         if (klass != testKlass) {
             testResults.failed.checkCompiledSubmission =
                 "Test suite defines incorrect class: ${it.first()} != $testKlass"
-            testResults.failedSteps.add(TestResults.Step.checkCompiledSubmission)
+            testResults.failedSteps.add(TestTestResults.Step.checkCompiledSubmission)
             return null
         }
     }
@@ -208,7 +242,7 @@ fun Question.checkCompiledTestSuite(
         testingKlass.getTestingMethod() ?: run {
             testResults.failed.checkCompiledSubmission =
                 "Test suite does not define a non-private static testing method named test accepting no arguments"
-            testResults.failedSteps.add(TestResults.Step.checkCompiledSubmission)
+            testResults.failedSteps.add(TestTestResults.Step.checkCompiledSubmission)
             return null
         }
     }
