@@ -10,7 +10,7 @@ dependencies {
     implementation("org.apache.commons:commons-text:1.9")
     implementation("io.github.java-diff-utils:java-diff-utils:4.11")
 
-    api("com.beyondgrader.resource-agent:agent:2022.6.5")
+    api("com.beyondgrader.resource-agent:agent:2022.6.6")
     api("com.github.cs125-illinois.jeed:core:2022.6.5")
     api("com.github.cs125-illinois:jenisol:2022.6.5")
     api("io.kotest:kotest-runner-junit5:5.3.2")
