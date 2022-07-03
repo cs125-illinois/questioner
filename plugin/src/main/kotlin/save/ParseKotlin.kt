@@ -4,6 +4,7 @@ import edu.illinois.cs.cs125.jeed.core.SnippetArguments
 import edu.illinois.cs.cs125.jeed.core.Source
 import edu.illinois.cs.cs125.jeed.core.complexity
 import edu.illinois.cs.cs125.jeed.core.countLines
+import edu.illinois.cs.cs125.jeed.core.features
 import edu.illinois.cs.cs125.jeed.core.fromSnippet
 import edu.illinois.cs.cs125.questioner.antlr.KotlinLexer
 import edu.illinois.cs.cs125.questioner.antlr.KotlinParser
@@ -94,11 +95,12 @@ data class ParsedKotlinFile(val path: String, val contents: String) {
     fun toAlternateFile(cleanSpec: CleanSpec): Question.FlatFile {
         check(alternateSolution != null) { "Not an alternate solution file" }
         val solutionContent = clean(cleanSpec).trimStart()
-        val complexity = if (cleanSpec.notClass) {
+        val source = if (cleanSpec.notClass) {
             Source.fromSnippet(solutionContent, SnippetArguments(fileType = Source.FileType.KOTLIN, noEmptyMain = true))
         } else {
             Source(mapOf("$className.kt" to solutionContent))
-        }.complexity().let {
+        }
+        val complexity = source.complexity().let {
             if (cleanSpec.notClass) {
                 it.lookup("").complexity
             } else {
@@ -109,7 +111,16 @@ data class ParsedKotlinFile(val path: String, val contents: String) {
             check(it >= 0) { "Invalid complexity value" }
         }
         val lineCounts = solutionContent.countLines(Source.FileType.KOTLIN)
-        return Question.FlatFile(className, solutionContent, Question.Language.kotlin, path, complexity, null, lineCounts)
+        val features = source.features().let { features ->
+            if (cleanSpec.notClass) {
+                features.lookup("")
+            } else if (topLevelFile) {
+                features.lookup("", "$className.kt")
+            } else {
+                features.lookup(className, "$className.kt")
+            }
+        }.features
+        return Question.FlatFile(className, solutionContent, Question.Language.kotlin, path, complexity, features, lineCounts)
     }
 
     fun toStarterFile(cleanSpec: CleanSpec): Question.IncorrectFile {
