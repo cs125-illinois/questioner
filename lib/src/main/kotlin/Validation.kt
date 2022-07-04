@@ -116,7 +116,8 @@ suspend fun Question.validate(seed: Int): ValidationReport {
                 Question.IncorrectFile.Reason.DEADCODE,
                 Question.IncorrectFile.Reason.LINECOUNT,
                 Question.IncorrectFile.Reason.TOOLONG,
-                Question.IncorrectFile.Reason.MEMORYLIMIT
+                Question.IncorrectFile.Reason.MEMORYLIMIT,
+                Question.IncorrectFile.Reason.RECURSION
             ).contains(file.reason)
         ) {
             if (succeeded) {
@@ -169,12 +170,38 @@ suspend fun Question.validate(seed: Int): ValidationReport {
             control.maxExecutionCountMultiplier!! * 1024
         ) // No execution count limit
         // No allocation limit
+        // No known recursive methods yet
     )
+
     val firstCorrectResults = (setOf(correct) + alternativeSolutions).map { right ->
         test(right.contents, right.language, bootstrapSettings).also { testResults ->
             testResults.checkCorrect(right)
         }
     }
+
+    val solutionJavaRecursiveMethods = firstCorrectResults
+        .filter { testResults -> testResults.language == Question.Language.java }
+        .also { check(it.isNotEmpty()) }
+        .map { testResults -> testResults.resourceMonitoringResults!!.invokedRecursiveFunctions }
+        .reduce { first, second ->
+            first.intersect(second)
+        }
+
+    val solutionKotlinRecursiveMethods = firstCorrectResults
+        .filter { testResults -> testResults.language == Question.Language.kotlin }
+        .let {
+            if (it.isEmpty()) {
+                null
+            } else {
+                it.map { testResults -> testResults.resourceMonitoringResults!!.invokedRecursiveFunctions }
+                    .reduce { first, second ->
+                        first.intersect(second)
+                    }
+            }
+        }
+
+    val solutionRecursiveMethods =
+        Question.LanguagesRecursiveMethods(solutionJavaRecursiveMethods, solutionKotlinRecursiveMethods)
 
     val bootstrapSolutionCoverage = firstCorrectResults
         .mapNotNull { it.complete.coverage }
@@ -244,7 +271,8 @@ suspend fun Question.validate(seed: Int): ValidationReport {
             control.maxTestCount!! * control.maxExecutionCountMultiplier!! * 1024,
             control.maxTestCount!! * control.maxExecutionCountMultiplier!! * 1024
         ),
-        solutionAllocation = bootstrapSolutionAllocation
+        solutionAllocation = bootstrapSolutionAllocation,
+        solutionRecursiveMethods = solutionRecursiveMethods
     )
     val incorrectResults = allIncorrect.map { wrong ->
         val specificIncorrectSettings = if (wrong.reason == Question.IncorrectFile.Reason.MEMORYLIMIT) {
@@ -353,6 +381,7 @@ suspend fun Question.validate(seed: Int): ValidationReport {
             solutionAllocation.kotlin?.times(control.allocationLimitMultiplier!!)
         )
     )
+
     validationResults = Question.ValidationResults(
         seed = seed,
         requiredTestCount = requiredTestCount,
@@ -364,7 +393,8 @@ suspend fun Question.validate(seed: Int): ValidationReport {
         calibrationLength = calibrationLength,
         solutionCoverage = solutionCoverage,
         executionCounts = solutionExecutionCounts,
-        memoryAllocation = solutionAllocation
+        memoryAllocation = solutionAllocation,
+        solutionRecursiveMethods = solutionRecursiveMethods
     )
 
     return ValidationReport(
@@ -402,6 +432,9 @@ private fun TestResults.validate(reason: Question.IncorrectFile.Reason, isMutate
         }
         Question.IncorrectFile.Reason.MEMORYLIMIT -> require(complete.memoryAllocation?.failed == true) {
             "Expected submission to allocate too much memory: ${complete.memoryAllocation}"
+        }
+        Question.IncorrectFile.Reason.RECURSION -> require(failed.checkExecutedSubmission?.contains("was not implemented recursively") == true) {
+            "Expected submission to not correctly provide a recursive method"
         }
         else -> require(isMutated || (!timeout && complete.testing?.passed == false)) {
             "Expected submission to fail tests"

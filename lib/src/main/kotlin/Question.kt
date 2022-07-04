@@ -238,7 +238,8 @@ data class Question(
         var solutionAllocation: LanguagesResourceUsage? = null,
         val checkBlacklist: Boolean = true,
         val disableLineCountLimit: Boolean = false,
-        val disableAllocationLimit: Boolean = false
+        val disableAllocationLimit: Boolean = false,
+        var solutionRecursiveMethods: LanguagesRecursiveMethods? = null
     )
 
     @JsonClass(generateAdapter = true)
@@ -253,11 +254,18 @@ data class Question(
         val calibrationLength: Long,
         val solutionCoverage: TestResults.CoverageComparison.LineCoverage,
         val executionCounts: LanguagesResourceUsage,
-        val memoryAllocation: LanguagesResourceUsage
+        val memoryAllocation: LanguagesResourceUsage,
+        val solutionRecursiveMethods: LanguagesRecursiveMethods
     )
 
     @JsonClass(generateAdapter = true)
     data class LanguagesResourceUsage(val java: Long, val kotlin: Long? = null)
+
+    @JsonClass(generateAdapter = true)
+    data class LanguagesRecursiveMethods(
+        val java: Set<ResourceMonitoringResults.MethodInfo>,
+        val kotlin: Set<ResourceMonitoringResults.MethodInfo>? = null
+    )
 
     @JsonClass(generateAdapter = true)
     data class Citation(val source: String, val link: String? = null)
@@ -287,7 +295,7 @@ data class Question(
         val mutation: MutatedSource? = null
     ) {
         @Suppress("SpellCheckingInspection")
-        enum class Reason { DESIGN, COMPILE, TEST, CHECKSTYLE, TIMEOUT, DEADCODE, LINECOUNT, TOOLONG, MEMORYLIMIT }
+        enum class Reason { DESIGN, COMPILE, TEST, CHECKSTYLE, TIMEOUT, DEADCODE, LINECOUNT, TOOLONG, MEMORYLIMIT, RECURSION }
     }
 
     @JsonClass(generateAdapter = true)
@@ -565,6 +573,7 @@ fun String.toReason() = when (uppercase(Locale.getDefault())) {
     "LINECOUNT" -> Question.IncorrectFile.Reason.LINECOUNT
     "TOOLONG" -> Question.IncorrectFile.Reason.TOOLONG
     "MEMORYLIMIT" -> Question.IncorrectFile.Reason.MEMORYLIMIT
+    "RECURSION" -> Question.IncorrectFile.Reason.RECURSION
     else -> error("Invalid incorrect reason: $this")
 }
 

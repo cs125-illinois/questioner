@@ -6,7 +6,6 @@ import edu.illinois.cs.cs125.jeed.core.ComplexityFailed
 import edu.illinois.cs.cs125.jeed.core.ConfiguredSandboxPlugin
 import edu.illinois.cs.cs125.jeed.core.Jacoco
 import edu.illinois.cs.cs125.jeed.core.KtLintFailed
-import edu.illinois.cs.cs125.jeed.core.LineLimitExceeded
 import edu.illinois.cs.cs125.jeed.core.Sandbox
 import edu.illinois.cs.cs125.jeed.core.SnippetTransformationFailed
 import edu.illinois.cs.cs125.jeed.core.TemplatingFailed
@@ -140,13 +139,14 @@ suspend fun Question.test(
 
     val threw = taskResults.returned?.threw ?: taskResults.threw
     val timeout = taskResults.timeout
-    results.taskResults = taskResults
-    results.timeout = timeout
-    val resourceUsage = taskResults.pluginResult(ResourceMonitoring)
-
     if (!timeout && threw is ThreadDeath) {
         throw CachePoisonedException("ThreadDeath")
     }
+
+    results.taskResults = taskResults
+    results.timeout = timeout
+    val resourceUsage = taskResults.pluginResult(ResourceMonitoring)
+    results.resourceMonitoringResults = resourceUsage
 
     // checkExecutedSubmission
     if (!timeout && threw != null) {
@@ -160,8 +160,8 @@ suspend fun Question.test(
                 "Class design error: attempted to use unavailable class ${threw.message}"
             is OutOfMemoryError -> results.failed.checkExecutedSubmission =
                 "Allocated too much memory: ${threw.message}, already used ${resourceUsage.allocatedMemory} bytes"
-                // TODO: Adjust Jenisol to let OutOfMemoryError escape the testing loop or remove this case
-                // (currently it will never be reached)
+            // TODO: Adjust Jenisol to let OutOfMemoryError escape the testing loop or remove this case
+            // (currently it will never be reached)
             else -> {
                 val actualException = when (threw) {
                     is InvocationTargetException -> threw.targetException ?: threw
@@ -176,6 +176,38 @@ suspend fun Question.test(
     if (!checkExecutedSubmission(taskResults, results, language)) {
         return results
     }
+
+    // testing
+    if (taskResults.returned == null) {
+        results.failedSteps.add(TestResults.Step.testing)
+        return results
+    }
+
+    results.addTestingResults(
+        TestResults.TestingResult(
+            taskResults.returned!!.map { it.asTestResult(compiledSubmission.source) },
+            settings.testCount,
+            taskResults.completed && !timeout
+        )
+    )
+
+    val expectedRecursiveMethods = if (language == Question.Language.java) {
+        validationResults?.solutionRecursiveMethods?.java
+            ?: settings.solutionRecursiveMethods?.java
+    } else {
+        validationResults?.solutionRecursiveMethods?.kotlin
+            ?: settings.solutionRecursiveMethods?.kotlin
+    } ?: resourceUsage.invokedRecursiveFunctions
+
+    val missingRecursiveMethods = expectedRecursiveMethods - resourceUsage.invokedRecursiveFunctions
+    if (missingRecursiveMethods.isNotEmpty()) {
+        results.failed.checkExecutedSubmission =
+            "Method ${missingRecursiveMethods.first().methodName} was not implemented recursively"
+        results.failedSteps.add(TestResults.Step.checkExecutedSubmission)
+        return results
+    }
+
+    results.completedSteps.add(TestResults.Step.checkExecutedSubmission)
 
     // executioncount
     val submissionExecutionCount = resourceUsage.submissionLines
@@ -207,19 +239,6 @@ suspend fun Question.test(
     )
     results.completedSteps.add(TestResults.Step.memoryAllocation)
 
-    // testing
-    if (taskResults.returned == null) {
-        results.failedSteps.add(TestResults.Step.testing)
-        return results
-    }
-
-    results.addTestingResults(
-        TestResults.TestingResult(
-            taskResults.returned!!.map { it.asTestResult(compiledSubmission.source) },
-            settings.testCount,
-            taskResults.completed && !timeout
-        )
-    )
 
     // coverage
     val coverage = taskResults.pluginResult(Jacoco).classes.find { it.name == klassName }!!

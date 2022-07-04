@@ -27,7 +27,9 @@ data class TestResults(
     val skippedSteps: MutableSet<Step> = mutableSetOf(),
     var timeout: Boolean = false,
     @Transient
-    var taskResults: Sandbox.TaskResults<*>? = null
+    var taskResults: Sandbox.TaskResults<*>? = null,
+    @Transient
+    var resourceMonitoringResults: ResourceMonitoringResults? = null
 ) {
     var completed: Boolean = false
     var succeeded: Boolean = false

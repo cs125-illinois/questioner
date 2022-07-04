@@ -1,4 +1,175 @@
 {
+  "Recursive Factorial": {
+    "name": "Recursive Factorial",
+    "type": "KLASS",
+    "klass": "Question",
+    "metadata": {
+      "contentHash": "b293520370d29deb1f59fbaf56992faf",
+      "packageName": "com.examples.recursivefactorial",
+      "version": "2022.7.0",
+      "author": "challen@illinois.edu",
+      "javaDescription": "<p>Write a class method that provides a recursive implementation of factorial, accepting and returning <code>long</code> arguments.\nThrow an <code>IllegalArgumentException</code> on invalid inputs.</p>",
+      "kotlinDescription": "<p>Write a method that provides a recursive implementation of factorial, accepting and returning <code>Long</code> arguments.\nThrow an <code>IllegalArgumentException</code> on invalid inputs.</p>",
+      "usedFiles": [
+        "/Users/challen/code/questioner-problems/src/main/java/com/examples/recursivefactorial/incorrect/java/iterative/Question.java",
+        "/Users/challen/code/questioner-problems/src/main/java/com/examples/recursivefactorial/correct/kotlin/Question.kt"
+      ],
+      "focused": false
+    },
+    "annotatedControls": {},
+    "question": {
+      "klass": "Question",
+      "contents": "import edu.illinois.cs.cs125.jenisol.core.FixedParameters;\nimport edu.illinois.cs.cs125.jenisol.core.RandomParameters;\nimport edu.illinois.cs.cs125.questioner.lib.Correct;\n\nimport java.util.Arrays;\nimport java.util.List;\nimport java.util.Random;\n\n/*\n * Write a class method that provides a recursive implementation of factorial, accepting and returning `long` arguments.\n * Throw an `IllegalArgumentException` on invalid inputs.\n */\n\n@Correct(name = \"Recursive Factorial\", version = \"2022.7.0\", author = \"challen@illinois.edu\")\npublic class Question {\n  public static long factorial(long input) {\n    if (input <= 0) { // mutate-disable-conditional-boundary\n      throw new IllegalArgumentException();\n    }\n    if (input == 1) {\n      return 1;\n    }\n    return input * factorial(input - 1);\n  }\n\n  @FixedParameters\n  private static final List<Long> FIXED = Arrays.asList(-10L, -1L, 0L, 1L, 2L);\n\n  @RandomParameters\n  private static long randomParameters(Random random) {\n    return random.nextInt(32);\n  }\n}",
+      "language": "java",
+      "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/recursivefactorial/Question.java"
+    },
+    "correct": {
+      "klass": "Question",
+      "contents": "public class Question {\n  public static long factorial(long input) {\n    if (input <= 0) { // mutate-disable-conditional-boundary\n      throw new IllegalArgumentException();\n    }\n    if (input == 1) {\n      return 1;\n    }\n    return input * factorial(input - 1);\n  }\n}\n",
+      "language": "java",
+      "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/recursivefactorial/Question.java",
+      "complexity": 4,
+      "features": {
+        "featureMap": {
+          "ARITHMETIC_OPERATORS": 2,
+          "COMPARISON_OPERATORS": 2,
+          "IF_STATEMENTS": 2,
+          "METHOD": 1,
+          "RETURN": 2,
+          "CLASS": 1,
+          "THROW": 1,
+          "NEW_KEYWORD": 1,
+          "VISIBILITY_MODIFIERS": 2,
+          "STATIC_METHOD": 1,
+          "RECURSION": 1
+        },
+        "importList": [],
+        "typeList": [
+          "long"
+        ],
+        "identifierList": []
+      },
+      "lineCount": {
+        "source": 11,
+        "comment": 0,
+        "blank": 1
+      },
+      "expectedDeadCount": 1
+    },
+    "alternativeSolutions": [
+      {
+        "klass": "QuestionKt",
+        "contents": "fun factorial(input: Long): Long {\n  require(input > 0)\n  if (input == 1L) {\n    return 1\n  }\n  return input * factorial(input - 1)\n}",
+        "language": "kotlin",
+        "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/recursivefactorial/correct/kotlin/Question.kt",
+        "complexity": 3,
+        "features": {
+          "featureMap": {
+            "IF_STATEMENTS": 1
+          },
+          "importList": [],
+          "typeList": [],
+          "identifierList": []
+        },
+        "lineCount": {
+          "source": 7,
+          "comment": 0,
+          "blank": 0
+        }
+      }
+    ],
+    "incorrect": [
+      {
+        "klass": "Question",
+        "contents": "public class Question {\n  public static long factorial(long input) {\n    if (input <= 0) {\n      throw new IllegalArgumentException();\n    }\n    long result = 1;\n    for (long multiplier = 2; multiplier <= input; multiplier++) {\n      result *= multiplier;\n    }\n    return result;\n  }\n}\n",
+        "reason": "RECURSION",
+        "language": "java",
+        "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/recursivefactorial/incorrect/java/iterative/Question.java",
+        "starter": false,
+        "needed": true
+      }
+    ],
+    "common": [],
+    "importWhitelist": [],
+    "importBlacklist": [],
+    "slug": "recursive-factorial",
+    "kotlinSolution": {
+      "klass": "QuestionKt",
+      "contents": "fun factorial(input: Long): Long {\n  require(input > 0)\n  if (input == 1L) {\n    return 1\n  }\n  return input * factorial(input - 1)\n}",
+      "language": "kotlin",
+      "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/recursivefactorial/correct/kotlin/Question.kt",
+      "complexity": 3,
+      "features": {
+        "featureMap": {
+          "IF_STATEMENTS": 1
+        },
+        "importList": [],
+        "typeList": [],
+        "identifierList": []
+      },
+      "lineCount": {
+        "source": 7,
+        "comment": 0,
+        "blank": 0
+      }
+    },
+    "hasKotlin": true,
+    "published": {
+      "name": "Recursive Factorial",
+      "type": "KLASS",
+      "path": "recursive-factorial",
+      "author": "challen@illinois.edu",
+      "version": "2022.7.0",
+      "packageName": "com.examples.recursivefactorial",
+      "languages": [
+        "java",
+        "kotlin"
+      ],
+      "descriptions": {
+        "java": "<p>Write a class method that provides a recursive implementation of factorial, accepting and returning <code>long</code> arguments.\nThrow an <code>IllegalArgumentException</code> on invalid inputs.</p>",
+        "kotlin": "<p>Write a method that provides a recursive implementation of factorial, accepting and returning <code>Long</code> arguments.\nThrow an <code>IllegalArgumentException</code> on invalid inputs.</p>"
+      },
+      "complexity": {
+        "java": 4,
+        "kotlin": 3
+      },
+      "features": {
+        "java": {
+          "featureMap": {
+            "ARITHMETIC_OPERATORS": 2,
+            "COMPARISON_OPERATORS": 2,
+            "IF_STATEMENTS": 2,
+            "METHOD": 1,
+            "RETURN": 2,
+            "CLASS": 1,
+            "THROW": 1,
+            "NEW_KEYWORD": 1,
+            "VISIBILITY_MODIFIERS": 2,
+            "STATIC_METHOD": 1,
+            "RECURSION": 1
+          },
+          "importList": [],
+          "typeList": [
+            "long"
+          ],
+          "identifierList": []
+        }
+      },
+      "lineCounts": {
+        "java": {
+          "source": 11,
+          "comment": 0,
+          "blank": 1
+        },
+        "kotlin": {
+          "source": 7,
+          "comment": 0,
+          "blank": 0
+        }
+      }
+    },
+    "fauxStatic": false
+  },
   "Equals 88": {
     "name": "Equals 88",
     "type": "METHOD",
@@ -154,6 +325,14 @@
         "language": "kotlin",
         "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/counterobject/correct/kotlin/Counter.kt",
         "complexity": 3,
+        "features": {
+          "featureMap": {
+            "VARIABLE_REASSIGNMENTS": 2
+          },
+          "importList": [],
+          "typeList": [],
+          "identifierList": []
+        },
         "lineCount": {
           "source": 10,
           "comment": 0,
@@ -172,6 +351,14 @@
       "language": "kotlin",
       "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/counterobject/correct/kotlin/Counter.kt",
       "complexity": 3,
+      "features": {
+        "featureMap": {
+          "VARIABLE_REASSIGNMENTS": 2
+        },
+        "importList": [],
+        "typeList": [],
+        "identifierList": []
+      },
       "lineCount": {
         "source": 10,
         "comment": 0,
@@ -751,6 +938,17 @@
         "language": "kotlin",
         "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/stringduplicates/correct/kotlin/Question.kt",
         "complexity": 3,
+        "features": {
+          "featureMap": {
+            "LOCAL_VARIABLE_DECLARATIONS": 2,
+            "VARIABLE_ASSIGNMENTS": 2,
+            "IF_STATEMENTS": 1,
+            "FOR_LOOPS": 1
+          },
+          "importList": [],
+          "typeList": [],
+          "identifierList": []
+        },
         "lineCount": {
           "source": 11,
           "comment": 0,
@@ -771,6 +969,17 @@
       "language": "kotlin",
       "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/stringduplicates/correct/kotlin/Question.kt",
       "complexity": 3,
+      "features": {
+        "featureMap": {
+          "LOCAL_VARIABLE_DECLARATIONS": 2,
+          "VARIABLE_ASSIGNMENTS": 2,
+          "IF_STATEMENTS": 1,
+          "FOR_LOOPS": 1
+        },
+        "importList": [],
+        "typeList": [],
+        "identifierList": []
+      },
       "lineCount": {
         "source": 11,
         "comment": 0,
@@ -841,6 +1050,157 @@
     },
     "fauxStatic": false
   },
+  "Maybe Recursive Factorial": {
+    "name": "Maybe Recursive Factorial",
+    "type": "KLASS",
+    "klass": "Question",
+    "metadata": {
+      "contentHash": "7718b5849bcebf674db37a2e80c8bdd1",
+      "packageName": "com.examples.mayberecursivefactorial",
+      "version": "2022.7.0",
+      "author": "challen@illinois.edu",
+      "javaDescription": "<p>Write a class method that provides an implementation of factorial, accepting and returning <code>long</code> arguments.\nThrow an <code>IllegalArgumentException</code> on invalid inputs.\nYour implementation can be recursive or not.</p>",
+      "usedFiles": [
+        "/Users/challen/code/questioner-problems/src/main/java/com/examples/mayberecursivefactorial/correct/java/iterative/Question.java"
+      ],
+      "focused": false
+    },
+    "annotatedControls": {},
+    "question": {
+      "klass": "Question",
+      "contents": "import edu.illinois.cs.cs125.jenisol.core.FixedParameters;\nimport edu.illinois.cs.cs125.jenisol.core.RandomParameters;\nimport edu.illinois.cs.cs125.questioner.lib.Correct;\n\nimport java.util.Arrays;\nimport java.util.List;\nimport java.util.Random;\n\n/*\n * Write a class method that provides an implementation of factorial, accepting and returning `long` arguments.\n * Throw an `IllegalArgumentException` on invalid inputs.\n * Your implementation can be recursive or not.\n */\n\n@Correct(name = \"Maybe Recursive Factorial\", version = \"2022.7.0\", author = \"challen@illinois.edu\")\npublic class Question {\n  public static long factorial(long input) {\n    if (input <= 0) { // mutate-disable-conditional-boundary\n      throw new IllegalArgumentException();\n    }\n    if (input == 1) {\n      return 1;\n    }\n    return input * factorial(input - 1);\n  }\n\n  @FixedParameters\n  private static final List<Long> FIXED = Arrays.asList(-10L, -1L, 0L, 1L, 2L);\n\n  @RandomParameters\n  private static long randomParameters(Random random) {\n    return random.nextInt(32);\n  }\n}",
+      "language": "java",
+      "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/mayberecursivefactorial/Question.java"
+    },
+    "correct": {
+      "klass": "Question",
+      "contents": "public class Question {\n  public static long factorial(long input) {\n    if (input <= 0) { // mutate-disable-conditional-boundary\n      throw new IllegalArgumentException();\n    }\n    if (input == 1) {\n      return 1;\n    }\n    return input * factorial(input - 1);\n  }\n}\n",
+      "language": "java",
+      "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/mayberecursivefactorial/Question.java",
+      "complexity": 4,
+      "features": {
+        "featureMap": {
+          "ARITHMETIC_OPERATORS": 2,
+          "COMPARISON_OPERATORS": 2,
+          "IF_STATEMENTS": 2,
+          "METHOD": 1,
+          "RETURN": 2,
+          "CLASS": 1,
+          "THROW": 1,
+          "NEW_KEYWORD": 1,
+          "VISIBILITY_MODIFIERS": 2,
+          "STATIC_METHOD": 1,
+          "RECURSION": 1
+        },
+        "importList": [],
+        "typeList": [
+          "long"
+        ],
+        "identifierList": []
+      },
+      "lineCount": {
+        "source": 11,
+        "comment": 0,
+        "blank": 1
+      },
+      "expectedDeadCount": 1
+    },
+    "alternativeSolutions": [
+      {
+        "klass": "Question",
+        "contents": "public class Question {\n  public static long factorial(long input) {\n    if (input <= 0) {\n      throw new IllegalArgumentException();\n    }\n    long result = 1;\n    for (long multiplier = 2; multiplier <= input; multiplier++) {\n      result *= multiplier;\n    }\n    return result;\n  }\n}\n",
+        "language": "java",
+        "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/mayberecursivefactorial/correct/java/iterative/Question.java",
+        "complexity": 4,
+        "features": {
+          "featureMap": {
+            "LOCAL_VARIABLE_DECLARATIONS": 2,
+            "VARIABLE_ASSIGNMENTS": 2,
+            "VARIABLE_REASSIGNMENTS": 2,
+            "UNARY_OPERATORS": 1,
+            "ASSIGNMENT_OPERATORS": 1,
+            "COMPARISON_OPERATORS": 2,
+            "IF_STATEMENTS": 1,
+            "FOR_LOOPS": 1,
+            "METHOD": 1,
+            "RETURN": 1,
+            "CLASS": 1,
+            "THROW": 1,
+            "NEW_KEYWORD": 1,
+            "VISIBILITY_MODIFIERS": 2,
+            "STATIC_METHOD": 1
+          },
+          "importList": [],
+          "typeList": [
+            "long"
+          ],
+          "identifierList": [
+            "result",
+            "multiplier"
+          ]
+        },
+        "lineCount": {
+          "source": 12,
+          "comment": 0,
+          "blank": 1
+        },
+        "expectedDeadCount": 1
+      }
+    ],
+    "incorrect": [],
+    "common": [],
+    "importWhitelist": [],
+    "importBlacklist": [],
+    "slug": "maybe-recursive-factorial",
+    "hasKotlin": false,
+    "published": {
+      "name": "Maybe Recursive Factorial",
+      "type": "KLASS",
+      "path": "maybe-recursive-factorial",
+      "author": "challen@illinois.edu",
+      "version": "2022.7.0",
+      "packageName": "com.examples.mayberecursivefactorial",
+      "languages": [
+        "java"
+      ],
+      "descriptions": {
+        "java": "<p>Write a class method that provides an implementation of factorial, accepting and returning <code>long</code> arguments.\nThrow an <code>IllegalArgumentException</code> on invalid inputs.\nYour implementation can be recursive or not.</p>"
+      },
+      "complexity": {
+        "java": 4
+      },
+      "features": {
+        "java": {
+          "featureMap": {
+            "ARITHMETIC_OPERATORS": 2,
+            "COMPARISON_OPERATORS": 2,
+            "IF_STATEMENTS": 2,
+            "METHOD": 1,
+            "RETURN": 2,
+            "CLASS": 1,
+            "THROW": 1,
+            "NEW_KEYWORD": 1,
+            "VISIBILITY_MODIFIERS": 2,
+            "STATIC_METHOD": 1,
+            "RECURSION": 1
+          },
+          "importList": [],
+          "typeList": [
+            "long"
+          ],
+          "identifierList": []
+        }
+      },
+      "lineCounts": {
+        "java": {
+          "source": 11,
+          "comment": 0,
+          "blank": 1
+        }
+      }
+    },
+    "fauxStatic": false
+  },
   "Add One Class": {
     "name": "Add One Class",
     "type": "KLASS",
@@ -899,6 +1259,12 @@
         "language": "kotlin",
         "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/addoneclass/correct/kotlin/Question.kt",
         "complexity": 1,
+        "features": {
+          "featureMap": {},
+          "importList": [],
+          "typeList": [],
+          "identifierList": []
+        },
         "lineCount": {
           "source": 3,
           "comment": 0,
@@ -917,6 +1283,12 @@
       "language": "kotlin",
       "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/addoneclass/correct/kotlin/Question.kt",
       "complexity": 1,
+      "features": {
+        "featureMap": {},
+        "importList": [],
+        "typeList": [],
+        "identifierList": []
+      },
       "lineCount": {
         "source": 3,
         "comment": 0,
@@ -1060,6 +1432,12 @@
         "language": "kotlin",
         "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/addone/correct/kotlin/Question.kt",
         "complexity": 1,
+        "features": {
+          "featureMap": {},
+          "importList": [],
+          "typeList": [],
+          "identifierList": []
+        },
         "lineCount": {
           "source": 3,
           "comment": 3,
@@ -1117,6 +1495,12 @@
       "language": "kotlin",
       "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/addone/correct/kotlin/Question.kt",
       "complexity": 1,
+      "features": {
+        "featureMap": {},
+        "importList": [],
+        "typeList": [],
+        "identifierList": []
+      },
       "lineCount": {
         "source": 3,
         "comment": 3,
@@ -1166,6 +1550,183 @@
         "kotlin": {
           "source": 3,
           "comment": 3,
+          "blank": 0
+        }
+      }
+    },
+    "fauxStatic": false
+  },
+  "Kotlin Null Test": {
+    "name": "Kotlin Null Test",
+    "type": "KLASS",
+    "klass": "Question",
+    "metadata": {
+      "contentHash": "1dd99e7ac3924f1494c070aa28019d6d",
+      "packageName": "com.examples.kotlinnulltest",
+      "version": "2022.6.0",
+      "author": "challen@illinois.edu",
+      "javaDescription": "<p>Return the length of a string.\nHere for Kotlin null memory usage checking.</p>",
+      "kotlinDescription": "<p>Return the length of a string.\nHere for Kotlin null memory usage checking.</p>",
+      "usedFiles": [
+        "/Users/challen/code/questioner-problems/src/main/java/com/examples/kotlinnulltest/correct/kotlin/reference/Question.kt",
+        "/Users/challen/code/questioner-problems/src/main/java/com/examples/kotlinnulltest/correct/kotlin/nonnullparameter/Question.kt"
+      ],
+      "focused": false
+    },
+    "annotatedControls": {},
+    "question": {
+      "klass": "Question",
+      "contents": "import edu.illinois.cs.cs125.questioner.lib.Correct;\n\n/*\n * Return the length of a string.\n * Here for Kotlin null memory usage checking.\n */\n\n@Correct(name = \"Kotlin Null Test\", version = \"2022.6.0\", author = \"challen@illinois.edu\")\npublic class Question {\n  public static int length(String test) {\n    assert test != null;\n    return test.length();\n  }\n}",
+      "language": "java",
+      "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/kotlinnulltest/Question.java"
+    },
+    "correct": {
+      "klass": "Question",
+      "contents": "public class Question {\n  public static int length(String test) {\n    assert test != null;\n    return test.length();\n  }\n}\n",
+      "language": "java",
+      "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/kotlinnulltest/Question.java",
+      "complexity": 1,
+      "features": {
+        "featureMap": {
+          "COMPARISON_OPERATORS": 1,
+          "METHOD": 1,
+          "RETURN": 1,
+          "STRING": 1,
+          "NULL": 1,
+          "CLASS": 1,
+          "ASSERT": 1,
+          "VISIBILITY_MODIFIERS": 2,
+          "STATIC_METHOD": 1,
+          "DOT_NOTATION": 1,
+          "DOTTED_METHOD_CALL": 1
+        },
+        "importList": [],
+        "typeList": [
+          "int",
+          "String"
+        ],
+        "identifierList": []
+      },
+      "lineCount": {
+        "source": 6,
+        "comment": 0,
+        "blank": 1
+      },
+      "expectedDeadCount": 2
+    },
+    "alternativeSolutions": [
+      {
+        "klass": "QuestionKt",
+        "contents": "fun length(test: String?): Int {\n  require(test != null)\n  return test.length\n}",
+        "language": "kotlin",
+        "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/kotlinnulltest/correct/kotlin/reference/Question.kt",
+        "complexity": 2,
+        "features": {
+          "featureMap": {},
+          "importList": [],
+          "typeList": [],
+          "identifierList": []
+        },
+        "lineCount": {
+          "source": 4,
+          "comment": 0,
+          "blank": 0
+        }
+      },
+      {
+        "klass": "QuestionKt",
+        "contents": "fun length(test: String): Int {\n  return test.length\n}",
+        "language": "kotlin",
+        "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/kotlinnulltest/correct/kotlin/nonnullparameter/Question.kt",
+        "complexity": 1,
+        "features": {
+          "featureMap": {},
+          "importList": [],
+          "typeList": [],
+          "identifierList": []
+        },
+        "lineCount": {
+          "source": 3,
+          "comment": 0,
+          "blank": 0
+        }
+      }
+    ],
+    "incorrect": [],
+    "common": [],
+    "importWhitelist": [],
+    "importBlacklist": [],
+    "slug": "kotlin-null-test",
+    "kotlinSolution": {
+      "klass": "QuestionKt",
+      "contents": "fun length(test: String?): Int {\n  require(test != null)\n  return test.length\n}",
+      "language": "kotlin",
+      "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/kotlinnulltest/correct/kotlin/reference/Question.kt",
+      "complexity": 2,
+      "features": {
+        "featureMap": {},
+        "importList": [],
+        "typeList": [],
+        "identifierList": []
+      },
+      "lineCount": {
+        "source": 4,
+        "comment": 0,
+        "blank": 0
+      }
+    },
+    "hasKotlin": true,
+    "published": {
+      "name": "Kotlin Null Test",
+      "type": "KLASS",
+      "path": "kotlin-null-test",
+      "author": "challen@illinois.edu",
+      "version": "2022.6.0",
+      "packageName": "com.examples.kotlinnulltest",
+      "languages": [
+        "java",
+        "kotlin"
+      ],
+      "descriptions": {
+        "java": "<p>Return the length of a string.\nHere for Kotlin null memory usage checking.</p>",
+        "kotlin": "<p>Return the length of a string.\nHere for Kotlin null memory usage checking.</p>"
+      },
+      "complexity": {
+        "java": 1,
+        "kotlin": 1
+      },
+      "features": {
+        "java": {
+          "featureMap": {
+            "COMPARISON_OPERATORS": 1,
+            "METHOD": 1,
+            "RETURN": 1,
+            "STRING": 1,
+            "NULL": 1,
+            "CLASS": 1,
+            "ASSERT": 1,
+            "VISIBILITY_MODIFIERS": 2,
+            "STATIC_METHOD": 1,
+            "DOT_NOTATION": 1,
+            "DOTTED_METHOD_CALL": 1
+          },
+          "importList": [],
+          "typeList": [
+            "int",
+            "String"
+          ],
+          "identifierList": []
+        }
+      },
+      "lineCounts": {
+        "java": {
+          "source": 6,
+          "comment": 0,
+          "blank": 1
+        },
+        "kotlin": {
+          "source": 4,
+          "comment": 0,
           "blank": 0
         }
       }
