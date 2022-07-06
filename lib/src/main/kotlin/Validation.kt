@@ -112,22 +112,6 @@ suspend fun Question.validate(seed: Int): ValidationReport {
         if (!mutated && failedLinting == true) {
             throw IncorrectFailedLinting(file, correct)
         }
-        if (!listOf(
-                Question.IncorrectFile.Reason.DEADCODE,
-                Question.IncorrectFile.Reason.LINECOUNT,
-                Question.IncorrectFile.Reason.TOOLONG,
-                Question.IncorrectFile.Reason.MEMORYLIMIT,
-                Question.IncorrectFile.Reason.RECURSION
-            ).contains(file.reason)
-        ) {
-            if (succeeded) {
-                throw IncorrectPassed(file, correct)
-            }
-            if (tests()?.size?.let { it > control.maxTestCount!! } == true) {
-                val failingInput = tests()!!.find { !it.passed }?.arguments
-                throw IncorrectTooManyTests(file, correct, tests()!!.size, control.maxTestCount!!, failingInput)
-            }
-        }
         try {
             validate(file.reason, mutated)
         } catch (e: Exception) {
@@ -137,11 +121,19 @@ suspend fun Question.validate(seed: Int): ValidationReport {
                 IncorrectWrongReason(file, e.message!!, summary)
             }
         }
+        if (listOf(Question.IncorrectFile.Reason.TEST, Question.IncorrectFile.Reason.TIMEOUT).contains(file.reason)
+            && tests()?.size?.let { it > control.maxTestCount!! } == true
+        ) {
+            val failingInput = tests()!!.find { !it.passed }?.arguments
+            throw IncorrectTooManyTests(file, correct, tests()!!.size, control.maxTestCount!!, failingInput)
+        }
         val solutionThrew = tests()?.filter {
             it.jenisol!!.solution.threw != null
         }?.find {
             val exception = it.jenisol!!.solution.threw!!
-            exception !is AssertionError && exception !is IllegalArgumentException && exception !is IllegalStateException
+            exception !is AssertionError
+                && exception !is IllegalArgumentException
+                && exception !is IllegalStateException
         }
         if (!control.solutionThrows!! && solutionThrew != null) {
             throw SolutionThrew(correct, solutionThrew.jenisol!!.solution.threw!!, solutionThrew.jenisol.parameters)

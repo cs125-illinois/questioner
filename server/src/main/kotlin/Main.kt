@@ -75,7 +75,7 @@ object Questions {
         try {
             moshi.adapter(Question::class.java).fromJson(it.first()!!.toJson())
         } catch (e: Exception) {
-            logger.warn { "Couldn't load question $path, which might use an old schema" }
+            logger.warn { "Couldn't load question $path, which might use an old schema: $e" }
             null
         }
     }
@@ -96,7 +96,7 @@ object Questions {
         try {
             moshi.adapter(Question::class.java).fromJson(it.first()!!.toJson())
         } catch (e: Exception) {
-            logger.warn { "Couldn't load question $path, which might use an old schema" }
+            logger.warn { "Couldn't load question $path, which might use an old schema: $e" }
             null
         }
     }
