@@ -40,7 +40,10 @@ import kotlin.collections.forEach
 import kotlin.system.exitProcess
 import edu.illinois.cs.cs125.jeed.core.moshi.Adapters as JeedAdapters
 
-private val moshi = Moshi.Builder().apply { JeedAdapters.forEach { add(it) } }.build()
+private val moshi = Moshi.Builder().apply {
+    JeedAdapters.forEach { add(it) }
+    Adapters.forEach { add(it) }
+}.build()
 private val logger = KotlinLogging.logger {}
 private val collection: MongoCollection<BsonDocument> = run {
     require(System.getenv("MONGODB") != null) { "MONGODB environment variable not set" }
