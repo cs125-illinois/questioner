@@ -27,7 +27,12 @@ suspend fun Question.validate(seed: Int): ValidationReport {
             throw SolutionFailed(file, summary)
         }
         if (failedLinting!!) {
-            throw SolutionFailedLinting(file)
+            val errors = if (language == Question.Language.java) {
+                complete.checkstyle!!.errors.joinToString("\n") { it.message }
+            } else {
+                complete.ktlint!!.errors.joinToString("\n") { it.message }
+            }
+            throw SolutionFailedLinting(file, errors)
         }
         val solutionThrew = tests()?.filter {
             it.jenisol!!.solution.threw != null
@@ -468,13 +473,13 @@ class SolutionFailed(val solution: Question.FlatFile, val explanation: String) :
     """.trimMargin()
 }
 
-class SolutionFailedLinting(val solution: Question.FlatFile) : ValidationFailed() {
+class SolutionFailedLinting(val solution: Question.FlatFile, val errors: String) : ValidationFailed() {
     override val message = """
         |Solution failed linting with ${
         if (solution.language == Question.Language.kotlin) {
-            "ktlint"
+            "ktlint\n$errors"
         } else {
-            "checkstyle"
+            "checkstyle\n$errors"
         }
     }
         |${printContents(solution.contents, solution.path)}

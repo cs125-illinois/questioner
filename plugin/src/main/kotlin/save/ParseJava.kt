@@ -102,8 +102,7 @@ data class ParsedJavaFile(val path: String, val contents: String) {
                 } catch (e: Exception) {
                     error("Couldn't parse @Blacklist paths for $path: $e")
                 }.let { names ->
-                    names.split(",").map {
-                        it.trim()
+                    names.split(",").map { it.trim() }.map {
                         check(!it.endsWith("*")) { "Wildcard imports not allowed in @TemplateImports" }
                         it
                     }

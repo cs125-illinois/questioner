@@ -47,7 +47,9 @@ suspend fun Question.compileSubmission(
 ): CompiledSource {
     return try {
         val actualParents = Pair(compiledCommon?.classLoader ?: parentClassLoader, compiledCommon?.fileManager)
-        val source = templateSubmission(contents).also {
+        val source = templateSubmission(contents.lines().joinToString("\n") {
+            it.ifBlank { "" }
+        }).also {
             if (getTemplate(Question.Language.java) != null) {
                 testResults.completedSteps.add(TestResults.Step.templateSubmission)
             }
@@ -87,7 +89,9 @@ suspend fun Question.kompileSubmission(
 ): CompiledSource {
     return try {
         val actualParents = Pair(compiledCommon?.classLoader ?: parentClassLoader, compiledCommon?.fileManager)
-        val source = templateSubmission(contents, Question.Language.kotlin).also {
+        val source = templateSubmission(contents.lines().joinToString("\n") {
+            it.ifBlank { "" }
+        }, Question.Language.kotlin).also {
             if (kotlinTemplate != null) {
                 testResults.completedSteps.add(TestResults.Step.templateSubmission)
             }

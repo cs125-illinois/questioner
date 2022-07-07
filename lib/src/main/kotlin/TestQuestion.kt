@@ -91,7 +91,7 @@ suspend fun Question.test(
         seed = settings.seed,
         shrink = settings.shrink,
         overrideTotalCount = settings.testCount,
-        startMultipleCount = (settings.testCount / 2).coerceAtMost(
+        startMultipleCount = (settings.testCount / 4).coerceAtMost(
             Question.MAX_START_MULTIPLE_COUNT
         )
     )
