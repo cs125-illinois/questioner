@@ -47,7 +47,8 @@
         "typeList": [
           "long"
         ],
-        "identifierList": []
+        "identifierList": [],
+        "dottedMethodList": []
       },
       "lineCount": {
         "source": 11,
@@ -65,11 +66,14 @@
         "complexity": 3,
         "features": {
           "featureMap": {
-            "IF_STATEMENTS": 1
+            "COMPARISON_OPERATORS": 1,
+            "IF_STATEMENTS": 1,
+            "METHOD": 1
           },
           "importList": [],
           "typeList": [],
-          "identifierList": []
+          "identifierList": [],
+          "dottedMethodList": []
         },
         "lineCount": {
           "source": 7,
@@ -101,11 +105,14 @@
       "complexity": 3,
       "features": {
         "featureMap": {
-          "IF_STATEMENTS": 1
+          "COMPARISON_OPERATORS": 1,
+          "IF_STATEMENTS": 1,
+          "METHOD": 1
         },
         "importList": [],
         "typeList": [],
-        "identifierList": []
+        "identifierList": [],
+        "dottedMethodList": []
       },
       "lineCount": {
         "source": 7,
@@ -152,7 +159,8 @@
           "typeList": [
             "long"
           ],
-          "identifierList": []
+          "identifierList": [],
+          "dottedMethodList": []
         }
       },
       "lineCounts": {
@@ -207,7 +215,8 @@
           "boolean",
           "int"
         ],
-        "identifierList": []
+        "identifierList": [],
+        "dottedMethodList": []
       },
       "lineCount": {
         "source": 3,
@@ -252,7 +261,8 @@
             "boolean",
             "int"
           ],
-          "identifierList": []
+          "identifierList": [],
+          "dottedMethodList": []
         }
       },
       "lineCounts": {
@@ -309,7 +319,8 @@
         "typeList": [
           "int"
         ],
-        "identifierList": []
+        "identifierList": [],
+        "dottedMethodList": []
       },
       "lineCount": {
         "source": 15,
@@ -327,11 +338,13 @@
         "complexity": 3,
         "features": {
           "featureMap": {
-            "VARIABLE_REASSIGNMENTS": 2
+            "VARIABLE_REASSIGNMENTS": 2,
+            "METHOD": 2
           },
           "importList": [],
           "typeList": [],
-          "identifierList": []
+          "identifierList": [],
+          "dottedMethodList": []
         },
         "lineCount": {
           "source": 10,
@@ -353,11 +366,13 @@
       "complexity": 3,
       "features": {
         "featureMap": {
-          "VARIABLE_REASSIGNMENTS": 2
+          "VARIABLE_REASSIGNMENTS": 2,
+          "METHOD": 2
         },
         "importList": [],
         "typeList": [],
-        "identifierList": []
+        "identifierList": [],
+        "dottedMethodList": []
       },
       "lineCount": {
         "source": 10,
@@ -401,7 +416,8 @@
           "typeList": [
             "int"
           ],
-          "identifierList": []
+          "identifierList": [],
+          "dottedMethodList": []
         }
       },
       "lineCounts": {
@@ -452,7 +468,10 @@
         },
         "importList": [],
         "typeList": [],
-        "identifierList": []
+        "identifierList": [],
+        "dottedMethodList": [
+          "println"
+        ]
       },
       "lineCount": {
         "source": 1,
@@ -493,7 +512,10 @@
           },
           "importList": [],
           "typeList": [],
-          "identifierList": []
+          "identifierList": [],
+          "dottedMethodList": [
+            "println"
+          ]
         }
       },
       "lineCounts": {
@@ -544,7 +566,8 @@
         "typeList": [
           "int"
         ],
-        "identifierList": []
+        "identifierList": [],
+        "dottedMethodList": []
       },
       "lineCount": {
         "source": 7,
@@ -590,7 +613,8 @@
           "typeList": [
             "int"
           ],
-          "identifierList": []
+          "identifierList": [],
+          "dottedMethodList": []
         }
       },
       "lineCounts": {
@@ -642,7 +666,10 @@
         "typeList": [
           "String"
         ],
-        "identifierList": []
+        "identifierList": [],
+        "dottedMethodList": [
+          "substring"
+        ]
       },
       "lineCount": {
         "source": 3,
@@ -689,7 +716,10 @@
           "typeList": [
             "String"
           ],
-          "identifierList": []
+          "identifierList": [],
+          "dottedMethodList": [
+            "substring"
+          ]
         }
       },
       "lineCounts": {
@@ -749,7 +779,11 @@
           "int",
           "String"
         ],
-        "identifierList": []
+        "identifierList": [],
+        "dottedMethodList": [
+          "equals",
+          "length"
+        ]
       },
       "lineCount": {
         "source": 11,
@@ -812,7 +846,11 @@
             "int",
             "String"
           ],
-          "identifierList": []
+          "identifierList": [],
+          "dottedMethodList": [
+            "equals",
+            "length"
+          ]
         }
       },
       "lineCounts": {
@@ -880,6 +918,12 @@
         "identifierList": [
           "values",
           "current"
+        ],
+        "dottedMethodList": [
+          "split",
+          "trim",
+          "contains",
+          "add"
         ]
       },
       "lineCount": {
@@ -923,6 +967,13 @@
           "identifierList": [
             "values",
             "current"
+          ],
+          "dottedMethodList": [
+            "split",
+            "trim",
+            "contains",
+            "keySet",
+            "put"
           ]
         },
         "lineCount": {
@@ -943,11 +994,20 @@
             "LOCAL_VARIABLE_DECLARATIONS": 2,
             "VARIABLE_ASSIGNMENTS": 2,
             "IF_STATEMENTS": 1,
-            "FOR_LOOPS": 1
+            "FOR_LOOPS": 1,
+            "METHOD": 1,
+            "DOT_NOTATION": 4,
+            "DOTTED_METHOD_CALL": 4
           },
           "importList": [],
           "typeList": [],
-          "identifierList": []
+          "identifierList": [],
+          "dottedMethodList": [
+            "split",
+            "trim",
+            "contains",
+            "add"
+          ]
         },
         "lineCount": {
           "source": 11,
@@ -958,8 +1018,8 @@
     ],
     "incorrect": [],
     "common": [],
-    "javaTemplate": "import java.util.HashSet;\nimport java.util.Set;\nimport java.util.Map;\nimport  java.util.HashMap;\n\npublic class Question {\n  {{{ contents }}}\n}",
-    "kotlinTemplate": "import java.util.Map\nimport  java.util.HashMap\n\nclass Question {\n  {{{ contents }}}\n}",
+    "javaTemplate": "import java.util.HashSet;\nimport java.util.Set;\nimport java.util.Map;\nimport java.util.HashMap;\n\npublic class Question {\n  {{{ contents }}}\n}",
+    "kotlinTemplate": "import java.util.Map\nimport java.util.HashMap\n\nclass Question {\n  {{{ contents }}}\n}",
     "importWhitelist": [],
     "importBlacklist": [],
     "slug": "string-duplicates",
@@ -974,11 +1034,20 @@
           "LOCAL_VARIABLE_DECLARATIONS": 2,
           "VARIABLE_ASSIGNMENTS": 2,
           "IF_STATEMENTS": 1,
-          "FOR_LOOPS": 1
+          "FOR_LOOPS": 1,
+          "METHOD": 1,
+          "DOT_NOTATION": 4,
+          "DOTTED_METHOD_CALL": 4
         },
         "importList": [],
         "typeList": [],
-        "identifierList": []
+        "identifierList": [],
+        "dottedMethodList": [
+          "split",
+          "trim",
+          "contains",
+          "add"
+        ]
       },
       "lineCount": {
         "source": 11,
@@ -1032,6 +1101,12 @@
           "identifierList": [
             "values",
             "current"
+          ],
+          "dottedMethodList": [
+            "split",
+            "trim",
+            "contains",
+            "add"
           ]
         }
       },
@@ -1045,6 +1120,128 @@
           "source": 11,
           "comment": 0,
           "blank": 0
+        }
+      }
+    },
+    "fauxStatic": false
+  },
+  "Private Recursive Helper": {
+    "name": "Private Recursive Helper",
+    "type": "KLASS",
+    "klass": "Question",
+    "metadata": {
+      "contentHash": "d4b72ea3fce31f94f4e57e3685eef631",
+      "packageName": "com.examples.privaterecursivehelper",
+      "version": "2022.7.0",
+      "author": "challen@illinois.edu",
+      "javaDescription": "<p>Testing question for recursion checks on private methods.</p>",
+      "usedFiles": [
+        "/Users/challen/code/questioner-problems/src/main/java/com/examples/privaterecursivehelper/incorrect/java/iterative/Question.java"
+      ],
+      "focused": false
+    },
+    "annotatedControls": {},
+    "question": {
+      "klass": "Question",
+      "contents": "import edu.illinois.cs.cs125.jenisol.core.FilterParameters;\nimport edu.illinois.cs.cs125.jenisol.core.SkipTest;\nimport edu.illinois.cs.cs125.questioner.lib.Correct;\n\n/*\n * Testing question for recursion checks on private methods.\n */\n\n@Correct(name = \"Private Recursive Helper\", version = \"2022.7.0\", author = \"challen@illinois.edu\")\npublic class Question {\n  private static int rangeSumHelper(int range) {\n    if (range == 0) {\n      return 0;\n    }\n    return range + rangeSumHelper(range - 1);\n  }\n\n  @FilterParameters\n  private static void filterRangeSum(int range) {\n    if (range > 1024) {\n      throw new SkipTest();\n    }\n  }\n\n  public static int rangeSum(int range) {\n    if (range < 0) {\n      throw new IllegalArgumentException();\n    }\n    return rangeSumHelper(range);\n  }\n}",
+      "language": "java",
+      "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/privaterecursivehelper/Question.java"
+    },
+    "correct": {
+      "klass": "Question",
+      "contents": "public class Question {\n  private static int rangeSumHelper(int range) {\n    if (range == 0) {\n      return 0;\n    }\n    return range + rangeSumHelper(range - 1);\n  }\n\n  public static int rangeSum(int range) {\n    if (range < 0) {\n      throw new IllegalArgumentException();\n    }\n    return rangeSumHelper(range);\n  }\n}\n",
+      "language": "java",
+      "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/privaterecursivehelper/Question.java",
+      "complexity": 5,
+      "features": {
+        "featureMap": {
+          "ARITHMETIC_OPERATORS": 2,
+          "COMPARISON_OPERATORS": 2,
+          "IF_STATEMENTS": 2,
+          "METHOD": 2,
+          "RETURN": 3,
+          "CLASS": 1,
+          "THROW": 1,
+          "NEW_KEYWORD": 1,
+          "VISIBILITY_MODIFIERS": 3,
+          "STATIC_METHOD": 2,
+          "RECURSION": 1
+        },
+        "importList": [],
+        "typeList": [
+          "int"
+        ],
+        "identifierList": [],
+        "dottedMethodList": []
+      },
+      "lineCount": {
+        "source": 14,
+        "comment": 0,
+        "blank": 2
+      },
+      "expectedDeadCount": 1
+    },
+    "alternativeSolutions": [],
+    "incorrect": [
+      {
+        "klass": "Question",
+        "contents": "public class Question {\n  private static int rangeSumHelper(int range) {\n    int sum = 0;\n    for (int i = 0; i <= range; i++) {\n      sum += i;\n    }\n    return sum;\n  }\n\n  public static int rangeSum(int range) {\n    if (range < 0) {\n      throw new IllegalArgumentException();\n    }\n    return rangeSumHelper(range);\n  }\n}\n",
+        "reason": "RECURSION",
+        "language": "java",
+        "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/privaterecursivehelper/incorrect/java/iterative/Question.java",
+        "starter": false,
+        "needed": true
+      }
+    ],
+    "common": [],
+    "importWhitelist": [],
+    "importBlacklist": [],
+    "slug": "private-recursive-helper",
+    "hasKotlin": false,
+    "published": {
+      "name": "Private Recursive Helper",
+      "type": "KLASS",
+      "path": "private-recursive-helper",
+      "author": "challen@illinois.edu",
+      "version": "2022.7.0",
+      "packageName": "com.examples.privaterecursivehelper",
+      "languages": [
+        "java"
+      ],
+      "descriptions": {
+        "java": "<p>Testing question for recursion checks on private methods.</p>"
+      },
+      "complexity": {
+        "java": 5
+      },
+      "features": {
+        "java": {
+          "featureMap": {
+            "ARITHMETIC_OPERATORS": 2,
+            "COMPARISON_OPERATORS": 2,
+            "IF_STATEMENTS": 2,
+            "METHOD": 2,
+            "RETURN": 3,
+            "CLASS": 1,
+            "THROW": 1,
+            "NEW_KEYWORD": 1,
+            "VISIBILITY_MODIFIERS": 3,
+            "STATIC_METHOD": 2,
+            "RECURSION": 1
+          },
+          "importList": [],
+          "typeList": [
+            "int"
+          ],
+          "identifierList": [],
+          "dottedMethodList": []
+        }
+      },
+      "lineCounts": {
+        "java": {
+          "source": 14,
+          "comment": 0,
+          "blank": 2
         }
       }
     },
@@ -1096,7 +1293,8 @@
         "typeList": [
           "long"
         ],
-        "identifierList": []
+        "identifierList": [],
+        "dottedMethodList": []
       },
       "lineCount": {
         "source": 11,
@@ -1137,7 +1335,8 @@
           "identifierList": [
             "result",
             "multiplier"
-          ]
+          ],
+          "dottedMethodList": []
         },
         "lineCount": {
           "source": 12,
@@ -1188,7 +1387,8 @@
           "typeList": [
             "long"
           ],
-          "identifierList": []
+          "identifierList": [],
+          "dottedMethodList": []
         }
       },
       "lineCounts": {
@@ -1243,7 +1443,8 @@
         "typeList": [
           "int"
         ],
-        "identifierList": []
+        "identifierList": [],
+        "dottedMethodList": []
       },
       "lineCount": {
         "source": 5,
@@ -1260,10 +1461,13 @@
         "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/addoneclass/correct/kotlin/Question.kt",
         "complexity": 1,
         "features": {
-          "featureMap": {},
+          "featureMap": {
+            "METHOD": 1
+          },
           "importList": [],
           "typeList": [],
-          "identifierList": []
+          "identifierList": [],
+          "dottedMethodList": []
         },
         "lineCount": {
           "source": 3,
@@ -1284,10 +1488,13 @@
       "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/addoneclass/correct/kotlin/Question.kt",
       "complexity": 1,
       "features": {
-        "featureMap": {},
+        "featureMap": {
+          "METHOD": 1
+        },
         "importList": [],
         "typeList": [],
-        "identifierList": []
+        "identifierList": [],
+        "dottedMethodList": []
       },
       "lineCount": {
         "source": 3,
@@ -1329,7 +1536,8 @@
           "typeList": [
             "int"
           ],
-          "identifierList": []
+          "identifierList": [],
+          "dottedMethodList": []
         }
       },
       "lineCounts": {
@@ -1391,7 +1599,8 @@
         "typeList": [
           "int"
         ],
-        "identifierList": []
+        "identifierList": [],
+        "dottedMethodList": []
       },
       "lineCount": {
         "source": 3,
@@ -1417,7 +1626,8 @@
           "typeList": [
             "int"
           ],
-          "identifierList": []
+          "identifierList": [],
+          "dottedMethodList": []
         },
         "lineCount": {
           "source": 3,
@@ -1433,10 +1643,13 @@
         "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/addone/correct/kotlin/Question.kt",
         "complexity": 1,
         "features": {
-          "featureMap": {},
+          "featureMap": {
+            "METHOD": 1
+          },
           "importList": [],
           "typeList": [],
-          "identifierList": []
+          "identifierList": [],
+          "dottedMethodList": []
         },
         "lineCount": {
           "source": 3,
@@ -1496,10 +1709,13 @@
       "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/addone/correct/kotlin/Question.kt",
       "complexity": 1,
       "features": {
-        "featureMap": {},
+        "featureMap": {
+          "METHOD": 1
+        },
         "importList": [],
         "typeList": [],
-        "identifierList": []
+        "identifierList": [],
+        "dottedMethodList": []
       },
       "lineCount": {
         "source": 3,
@@ -1538,7 +1754,8 @@
           "typeList": [
             "int"
           ],
-          "identifierList": []
+          "identifierList": [],
+          "dottedMethodList": []
         }
       },
       "lineCounts": {
@@ -1605,7 +1822,10 @@
           "int",
           "String"
         ],
-        "identifierList": []
+        "identifierList": [],
+        "dottedMethodList": [
+          "length"
+        ]
       },
       "lineCount": {
         "source": 6,
@@ -1622,10 +1842,15 @@
         "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/kotlinnulltest/correct/kotlin/reference/Question.kt",
         "complexity": 2,
         "features": {
-          "featureMap": {},
+          "featureMap": {
+            "METHOD": 1,
+            "DOT_NOTATION": 1,
+            "DOTTED_VARIABLE_ACCESS": 1
+          },
           "importList": [],
           "typeList": [],
-          "identifierList": []
+          "identifierList": [],
+          "dottedMethodList": []
         },
         "lineCount": {
           "source": 4,
@@ -1640,10 +1865,15 @@
         "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/kotlinnulltest/correct/kotlin/nonnullparameter/Question.kt",
         "complexity": 1,
         "features": {
-          "featureMap": {},
+          "featureMap": {
+            "METHOD": 1,
+            "DOT_NOTATION": 1,
+            "DOTTED_VARIABLE_ACCESS": 1
+          },
           "importList": [],
           "typeList": [],
-          "identifierList": []
+          "identifierList": [],
+          "dottedMethodList": []
         },
         "lineCount": {
           "source": 3,
@@ -1664,10 +1894,15 @@
       "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/kotlinnulltest/correct/kotlin/reference/Question.kt",
       "complexity": 2,
       "features": {
-        "featureMap": {},
+        "featureMap": {
+          "METHOD": 1,
+          "DOT_NOTATION": 1,
+          "DOTTED_VARIABLE_ACCESS": 1
+        },
         "importList": [],
         "typeList": [],
-        "identifierList": []
+        "identifierList": [],
+        "dottedMethodList": []
       },
       "lineCount": {
         "source": 4,
@@ -1715,7 +1950,10 @@
             "int",
             "String"
           ],
-          "identifierList": []
+          "identifierList": [],
+          "dottedMethodList": [
+            "length"
+          ]
         }
       },
       "lineCounts": {

@@ -29,7 +29,9 @@ data class TestResults(
     @Transient
     var taskResults: Sandbox.TaskResults<*>? = null,
     @Transient
-    var resourceMonitoringResults: ResourceMonitoringResults? = null
+    var resourceMonitoringResults: ResourceMonitoringResults? = null,
+    @Transient
+    var foundRecursiveMethods: Set<ResourceMonitoringResults.MethodInfo>? = null
 ) {
     var completed: Boolean = false
     var succeeded: Boolean = false
@@ -72,6 +74,19 @@ data class TestResults(
         var testing: TestingResult? = null,
         var coverage: CoverageComparison? = null
     )
+
+    fun checkAll() {
+        check(failed.checkCompiledSubmission == null) { failed.checkCompiledSubmission!! }
+        check(failed.checkExecutedSubmission == null) { failed.checkExecutedSubmission!! }
+        check(failedSteps.isEmpty()) { "Failed steps: ${failedSteps.joinToString("\n")}" }
+        check(succeeded) { "Testing failed" }
+        check(failedLinting != true) { "Linting failed" }
+        check(complete.complexity?.failed == false)
+        check(complete.lineCount?.failed == false)
+        check(complete.executionCount?.failed == false)
+        check(complete.memoryAllocation?.failed == false)
+        check(complete.coverage?.failed == false)
+    }
 
     @JsonClass(generateAdapter = true)
     data class FailedTasks(
@@ -158,7 +173,8 @@ data class TestResults(
             val output: String? = null,
             val complexity: Int? = null,
             val submissionStackTrace: String? = null,
-            @Transient val jenisol: JenisolTestResult<*, *>? = null
+            @Transient val jenisol: JenisolTestResult<*, *>? = null,
+            @Transient val submissionResourceUsage: ResourceMonitoringCheckpoint? = null
         )
     }
 
@@ -238,5 +254,6 @@ fun TestResult<*, *>.asTestResult(source: Source) = TestResults.TestingResult.Te
             "at java.base"
         )
     ),
-    this
+    this,
+    this.submission.tag as ResourceMonitoringCheckpoint
 )

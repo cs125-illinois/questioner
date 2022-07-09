@@ -27,4 +27,17 @@ class TestValidation : StringSpec({
             report!!.requiredTestCount shouldBeGreaterThan 0
         }
     }
+    "recursion with private helper should work" {
+        val (question, _) = validator.validate("Private Recursive Helper", force = true, testing = true)
+            .also { (question, report) ->
+                question.validated shouldBe true
+                report shouldNotBe null
+                report!!.requiredTestCount shouldBeGreaterThan 0
+            }
+        val differentName =
+            question.correctByLanguage[Question.Language.java]!!.replace("rangeSumHelper", "rangeSumHelping")
+        question.test(differentName, Question.Language.java).also {
+            it.checkAll()
+        }
+    }
 })

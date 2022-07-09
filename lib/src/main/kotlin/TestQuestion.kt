@@ -12,7 +12,9 @@ import edu.illinois.cs.cs125.jeed.core.TemplatingFailed
 import edu.illinois.cs.cs125.jenisol.core.Settings
 import edu.illinois.cs.cs125.jenisol.core.SubmissionDesignError
 import org.jacoco.core.analysis.ICounter
+import org.objectweb.asm.Type
 import java.lang.reflect.InvocationTargetException
+import java.lang.reflect.Method
 
 class CachePoisonedException(message: String) : RuntimeException(message)
 
@@ -24,7 +26,8 @@ private const val MIN_ALLOCATION_LIMIT_BYTES: Long = 1024 * 1024 // Leave room f
 suspend fun Question.test(
     contents: String,
     language: Question.Language,
-    settings: Question.TestingSettings? = testingSettings
+    settings: Question.TestingSettings? = testingSettings,
+    isSolution: Boolean = false
 ): TestResults {
     check(settings != null) { "No test settings provided" }
 
@@ -183,23 +186,42 @@ suspend fun Question.test(
         return results
     }
 
+    val testingResults = taskResults.returned!!.map { it.asTestResult(compiledSubmission.source) }
     results.addTestingResults(
         TestResults.TestingResult(
-            taskResults.returned!!.map { it.asTestResult(compiledSubmission.source) },
+            testingResults,
             settings.testCount,
             taskResults.completed && !timeout
         )
     )
 
-    val expectedRecursiveMethods = if (language == Question.Language.java) {
-        validationResults?.solutionRecursiveMethods?.java
-            ?: settings.solutionRecursiveMethods?.java
-    } else {
-        validationResults?.solutionRecursiveMethods?.kotlin
-            ?: settings.solutionRecursiveMethods?.kotlin
-    } ?: resourceUsage.invokedRecursiveFunctions
+    fun List<TestResults.TestingResult.TestResult>.recursiveMethods() = filter {
+        it.submissionResourceUsage!!.invokedRecursiveFunctions.isNotEmpty()
+    }.map {
+        it.jenisol!!.solutionExecutable
+    }.filterIsInstance<Method>().map {
+        ResourceMonitoringResults.MethodInfo(klassName, it.name, Type.getMethodDescriptor(it))
+    }.toSet()
 
-    val missingRecursiveMethods = expectedRecursiveMethods - resourceUsage.invokedRecursiveFunctions
+    val expectedRecursiveMethods = if (isSolution) {
+        testingResults.recursiveMethods()
+    } else {
+        if (language == Question.Language.java) {
+            validationResults?.solutionRecursiveMethods?.java
+                ?: settings.solutionRecursiveMethods?.java
+        } else {
+            validationResults?.solutionRecursiveMethods?.kotlin
+                ?: settings.solutionRecursiveMethods?.kotlin
+        }
+    }
+
+    check(expectedRecursiveMethods != null)
+
+    if (isSolution) {
+        results.foundRecursiveMethods = expectedRecursiveMethods
+    }
+
+    val missingRecursiveMethods = expectedRecursiveMethods - testingResults.recursiveMethods()
     if (missingRecursiveMethods.isNotEmpty()) {
         results.failed.checkExecutedSubmission =
             "Method ${missingRecursiveMethods.first().methodName} was not implemented recursively"

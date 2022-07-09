@@ -171,31 +171,27 @@ suspend fun Question.validate(seed: Int): ValidationReport {
     )
 
     val firstCorrectResults = (setOf(correct) + alternativeSolutions).map { right ->
-        test(right.contents, right.language, bootstrapSettings).also { testResults ->
+        test(right.contents, right.language, bootstrapSettings, isSolution = true).also { testResults ->
             testResults.checkCorrect(right)
         }
     }
 
-    val solutionJavaRecursiveMethods = firstCorrectResults
-        .filter { testResults -> testResults.language == Question.Language.java }
-        .also { check(it.isNotEmpty()) }
-        .map { testResults -> testResults.resourceMonitoringResults!!.invokedRecursiveFunctions }
-        .reduce { first, second ->
-            first.intersect(second)
-        }
+    fun List<TestResults>.getRecursiveMethods(language: Question.Language) =
+        filter { testResults -> testResults.language == language }
+            .let {
+                if (it.isEmpty()) {
+                    null
+                } else {
+                    it.map { testResults -> testResults.foundRecursiveMethods!! }
+                        .reduce { first, second ->
+                            first.intersect(second)
+                        }
+                }
+            }?.toSet()
 
-    val solutionKotlinRecursiveMethods = firstCorrectResults
-        .filter { testResults -> testResults.language == Question.Language.kotlin }
-        .let {
-            if (it.isEmpty()) {
-                null
-            } else {
-                it.map { testResults -> testResults.resourceMonitoringResults!!.invokedRecursiveFunctions }
-                    .reduce { first, second ->
-                        first.intersect(second)
-                    }
-            }
-        }
+    val solutionJavaRecursiveMethods = firstCorrectResults.getRecursiveMethods(Question.Language.java)
+    check(solutionJavaRecursiveMethods != null)
+    val solutionKotlinRecursiveMethods = firstCorrectResults.getRecursiveMethods(Question.Language.kotlin)
 
     val solutionRecursiveMethods =
         Question.LanguagesRecursiveMethods(solutionJavaRecursiveMethods, solutionKotlinRecursiveMethods)
@@ -337,7 +333,8 @@ suspend fun Question.validate(seed: Int): ValidationReport {
         executionCountLimit = Question.LanguagesResourceUsage(
             testCount * control.maxExecutionCountMultiplier!! * 1024,
             testCount * control.maxExecutionCountMultiplier!! * 1024
-        )
+        ),
+        solutionRecursiveMethods = solutionRecursiveMethods
     )
     val calibrationResults = (setOf(correct) + alternativeSolutions).map { right ->
         test(
@@ -376,7 +373,8 @@ suspend fun Question.validate(seed: Int): ValidationReport {
         allocationLimit = Question.LanguagesResourceUsage(
             solutionAllocation.java * control.allocationLimitMultiplier!!,
             solutionAllocation.kotlin?.times(control.allocationLimitMultiplier!!)
-        )
+        ),
+        solutionRecursiveMethods = solutionRecursiveMethods
     )
 
     validationResults = Question.ValidationResults(
