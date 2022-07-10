@@ -6,7 +6,6 @@ import com.github.difflib.DiffUtils
 import com.github.difflib.UnifiedDiffUtils
 import edu.illinois.cs.cs125.jeed.core.suppressionComment
 import edu.illinois.cs.cs125.jenisol.core.ParameterGroup
-import edu.illinois.cs.cs125.jenisol.core.TestResult
 import edu.illinois.cs.cs125.jenisol.core.fullName
 import edu.illinois.cs.cs125.jenisol.core.isBoth
 import java.lang.reflect.Constructor
@@ -28,10 +27,11 @@ suspend fun Question.validate(seed: Int): ValidationReport {
 
     fun TestResults.checkCorrect(file: Question.FlatFile) {
         if (!succeeded) {
-            if (complete.testing?.failedReceiverGeneration == true) {
-                throw SolutionReceiverGeneration(file)
-            } else {
+            if (complete.testing?.passed == false) {
                 throw SolutionFailed(file, summary)
+            } else {
+                check(complete.testing?.failedReceiverGeneration == true)
+                throw SolutionReceiverGeneration(file)
             }
         }
         if (failedLinting!!) {
