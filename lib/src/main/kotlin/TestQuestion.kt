@@ -93,10 +93,9 @@ suspend fun Question.test(
     val jenisolSettings = Settings(
         seed = settings.seed,
         shrink = settings.shrink,
-        overrideTotalCount = settings.testCount,
-        startMultipleCount = (settings.testCount / 4).coerceAtMost(
-            Question.MAX_START_MULTIPLE_COUNT
-        )
+        totalTestCount = settings.testCount,
+        minTestCount = settings.minTestCount,
+        maxTestCount = settings.maxTestCount
     )
 
     val executionArguments = Sandbox.ExecutionArguments(
@@ -190,12 +189,13 @@ suspend fun Question.test(
     results.addTestingResults(
         TestResults.TestingResult(
             testingResults,
-            settings.testCount,
-            taskResults.completed && !timeout
+            taskResults.returned!!.settings.totalTestCount,
+            taskResults.completed && !timeout,
+            !taskResults.returned!!.finishedReceivers
         )
     )
 
-    fun List<TestResults.TestingResult.TestResult>.recursiveMethods() = filter {
+    fun List<TestResults.TestingResult.TestResult>.recursiveMethods() = asSequence().filter {
         it.submissionResourceUsage!!.invokedRecursiveFunctions.isNotEmpty()
     }.map {
         it.jenisol!!.solutionExecutable

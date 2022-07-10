@@ -155,7 +155,8 @@ data class TestResults(
         val tests: List<TestResult>,
         val testCount: Int,
         val completed: Boolean,
-        val passed: Boolean = completed && tests.none { !it.passed }
+        val failedReceiverGeneration: Boolean,
+        val passed: Boolean = completed && tests.none { !it.passed },
     ) {
         @JsonClass(generateAdapter = true)
         data class TestResult(
@@ -193,8 +194,8 @@ data class TestResults(
     fun addTestingResults(testing: TestingResult) {
         completedSteps.add(Step.testing)
         complete.testing = testing
-        completed = true
-        succeeded = !timeout && testing.passed == true && testing.completed == true
+        completed = testing.tests.size == testing.testCount
+        succeeded = !timeout && testing.passed == true && testing.completed == true && testing.tests.size == testing.testCount
         failureCount = testing.tests.filter { !it.passed }.size
     }
 
@@ -217,6 +218,8 @@ data class TestResults(
             "Testing timed out"
         } else if (complete.testing?.passed == false) {
             "Testing failed: ${complete.testing!!.tests.find { !it.passed }!!.explanation}"
+        } else if (complete.testing?.failedReceiverGeneration == true) {
+            "Couldn't generate enough receivers"
         } else if (!completed) {
             "Didn't complete all required tests: $failedSteps"
         } else {

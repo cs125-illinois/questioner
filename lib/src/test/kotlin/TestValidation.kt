@@ -40,4 +40,12 @@ class TestValidation : StringSpec({
             it.checkAll()
         }
     }
+    "equals with both and filter should work" {
+        validator.validate("Cougar Feliform", force = true, testing = true)
+            .also { (question, report) ->
+                question.validated shouldBe true
+                report shouldNotBe null
+                report!!.requiredTestCount shouldBeGreaterThan 0
+            }
+    }
 })

@@ -177,7 +177,7 @@ data class Question(
     ) {
         companion object {
             const val DEFAULT_SOLUTION_THROWS = false
-            const val DEFAULT_MIN_TEST_COUNT = 128
+            const val DEFAULT_MIN_TEST_COUNT = 64
             const val DEFAULT_MAX_TEST_COUNT = 1024
             const val DEFAULT_MIN_TIMEOUT = 128
             const val DEFAULT_MAX_TIMEOUT = 2048
@@ -225,7 +225,7 @@ data class Question(
     @JsonClass(generateAdapter = true)
     data class TestingSettings(
         val seed: Int,
-        val testCount: Int,
+        val testCount: Int = -1,
         val timeout: Int,
         val outputLimit: Int,
         val javaWhitelist: Set<String>?,
@@ -239,7 +239,9 @@ data class Question(
         val checkBlacklist: Boolean = true,
         val disableLineCountLimit: Boolean = false,
         val disableAllocationLimit: Boolean = false,
-        var solutionRecursiveMethods: LanguagesRecursiveMethods? = null
+        var solutionRecursiveMethods: LanguagesRecursiveMethods? = null,
+        val minTestCount: Int = -1,
+        val maxTestCount: Int = -1
     )
 
     @JsonClass(generateAdapter = true)

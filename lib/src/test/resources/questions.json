@@ -4,7 +4,7 @@
     "type": "KLASS",
     "klass": "Question",
     "metadata": {
-      "contentHash": "b293520370d29deb1f59fbaf56992faf",
+      "contentHash": "fcad45960dac5ebd8f0fc7dd4fd168a0",
       "packageName": "com.examples.recursivefactorial",
       "version": "2022.7.0",
       "author": "challen@illinois.edu",
@@ -19,7 +19,7 @@
     "annotatedControls": {},
     "question": {
       "klass": "Question",
-      "contents": "import edu.illinois.cs.cs125.jenisol.core.FixedParameters;\nimport edu.illinois.cs.cs125.jenisol.core.RandomParameters;\nimport edu.illinois.cs.cs125.questioner.lib.Correct;\n\nimport java.util.Arrays;\nimport java.util.List;\nimport java.util.Random;\n\n/*\n * Write a class method that provides a recursive implementation of factorial, accepting and returning `long` arguments.\n * Throw an `IllegalArgumentException` on invalid inputs.\n */\n\n@Correct(name = \"Recursive Factorial\", version = \"2022.7.0\", author = \"challen@illinois.edu\")\npublic class Question {\n  public static long factorial(long input) {\n    if (input <= 0) { // mutate-disable-conditional-boundary\n      throw new IllegalArgumentException();\n    }\n    if (input == 1) {\n      return 1;\n    }\n    return input * factorial(input - 1);\n  }\n\n  @FixedParameters\n  private static final List<Long> FIXED = Arrays.asList(-10L, -1L, 0L, 1L, 2L);\n\n  @RandomParameters\n  private static long randomParameters(Random random) {\n    return random.nextInt(32);\n  }\n}",
+      "contents": "import edu.illinois.cs.cs125.jenisol.core.FixedParameters;\nimport edu.illinois.cs.cs125.jenisol.core.RandomParameters;\nimport edu.illinois.cs.cs125.questioner.lib.Correct;\nimport java.util.Arrays;\nimport java.util.List;\nimport java.util.Random;\n\n/*\n * Write a class method that provides a recursive implementation of factorial, accepting and returning `long` arguments.\n * Throw an `IllegalArgumentException` on invalid inputs.\n */\n\n@Correct(name = \"Recursive Factorial\", version = \"2022.7.0\", author = \"challen@illinois.edu\")\npublic class Question {\n  public static long factorial(long input) {\n    if (input <= 0) { // mutate-disable-conditional-boundary\n      throw new IllegalArgumentException();\n    }\n    if (input == 1) {\n      return 1;\n    }\n    return input * factorial(input - 1);\n  }\n\n  @FixedParameters private static final List<Long> FIXED = Arrays.asList(-10L, -1L, 0L, 1L, 2L);\n\n  @RandomParameters\n  private static long randomParameters(Random random) {\n    return random.nextInt(32);\n  }\n}",
       "language": "java",
       "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/recursivefactorial/Question.java"
     },
@@ -270,6 +270,140 @@
           "source": 3,
           "comment": 0,
           "blank": 0
+        }
+      }
+    },
+    "fauxStatic": false
+  },
+  "Squirrel Equality": {
+    "name": "Squirrel Equality",
+    "type": "KLASS",
+    "klass": "Squirrel",
+    "metadata": {
+      "contentHash": "9cd2928e396f2f70a67b1d3aedb4d20c",
+      "packageName": "com.examples.tripleequals",
+      "version": "2022.7.0",
+      "author": "challen@illinois.edu",
+      "javaDescription": "<p>Define a public class named <code>Squirrel</code>.\nThe <code>Squirrel</code> constructor should accept a <code>String</code> name, <code>String</code> tree, and <code>int</code> acorns, in that order.\nReject <code>null</code> names and trees using <code>assert</code>, and also <code>assert</code> that acorns is greater than 0 and less than or\nequal to 24.\n(Squirrels don't get too greedy and never acquire more acorns than that!)\nOverride equals and consider two <code>Squirrel</code> instances to be equal if they have the same name and tree.\nDo not provide getters or setters for your variables or expose them publicly.</p>",
+      "usedFiles": [],
+      "focused": false
+    },
+    "annotatedControls": {},
+    "question": {
+      "klass": "Squirrel",
+      "contents": "import edu.illinois.cs.cs125.jenisol.core.FixedParameters;\nimport edu.illinois.cs.cs125.jenisol.core.RandomParameters;\nimport edu.illinois.cs.cs125.jenisol.core.Three;\nimport edu.illinois.cs.cs125.questioner.lib.Correct;\nimport edu.illinois.cs.cs125.questioner.lib.Generators;\n\nimport java.util.Arrays;\nimport java.util.List;\nimport java.util.Random;\n\n/*\n * Define a public class named `Squirrel`.\n * The `Squirrel` constructor should accept a `String` name, `String` tree, and `int` acorns, in that order.\n * Reject `null` names and trees using `assert`, and also `assert` that acorns is greater than 0 and less than or\n * equal to 24.\n * (Squirrels don't get too greedy and never acquire more acorns than that!)\n * Override equals and consider two `Squirrel` instances to be equal if they have the same name and tree.\n * Do not provide getters or setters for your variables or expose them publicly.\n */\n\n@SuppressWarnings(\"FieldCanBeLocal\")\n@Correct(name = \"Squirrel Equality\", version = \"2022.7.0\", author = \"challen@illinois.edu\")\npublic class Squirrel {\n  private final String name;\n  private final String tree;\n  private final int acorns;\n\n  public Squirrel(String setName, String setTree, int setAcorns) {\n    assert setName != null;\n    assert setTree != null;\n    assert setAcorns > 0 && setAcorns <= 9;\n    name = setName;\n    tree = setTree;\n    acorns = setAcorns;\n  }\n\n  @Override\n  public boolean equals(Object o) {\n    if (!(o instanceof Squirrel other)) {\n      return false;\n    }\n    return name.equals(other.name) && tree.equals(other.tree);\n  }\n\n  @FixedParameters\n  private static final List<Three<String, String, Integer>> FIXED =\n    Arrays.asList(\n      new Three<>(\"Patch\", \"Elm\", 8),\n      new Three<>(null, \"Elm\", 8),\n      new Three<>(\"Patch\", null, 8),\n      new Three<>(\"Patch\", \"Elm\", 0),\n      new Three<>(\"Patch\", \"Elm\", 10),\n      new Three<>(\"Patch\", \"Elm\", 9),\n      new Three<>(\"Marty\", \"Elm\", 8),\n      new Three<>(\"Patch\", \"Oak\", 1),\n      new Three<>(\"Patch\", \"Elm\", 8));\n\n  @RandomParameters\n  private static Three<String, String, Integer> randomParameters(Random random) {\n    String name = Generators.randomAlphanumericString(random, 16);\n    String breed = Generators.randomAlphanumericString(random, 32);\n    int lives = random.nextInt(26);\n    return new Three<>(name, breed, lives);\n  }\n}",
+      "language": "java",
+      "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/tripleequals/Squirrel.java"
+    },
+    "correct": {
+      "klass": "Squirrel",
+      "contents": "public class Squirrel {\n  private final String name;\n  private final String tree;\n  private final int acorns;\n\n  public Squirrel(String setName, String setTree, int setAcorns) {\n    assert setName != null;\n    assert setTree != null;\n    assert setAcorns > 0 && setAcorns <= 9;\n    name = setName;\n    tree = setTree;\n    acorns = setAcorns;\n  }\n\n  public boolean equals(Object o) {\n    if (!(o instanceof Squirrel other)) {\n      return false;\n    }\n    return name.equals(other.name) && tree.equals(other.tree);\n  }\n}\n",
+      "language": "java",
+      "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/tripleequals/Squirrel.java",
+      "complexity": 5,
+      "features": {
+        "featureMap": {
+          "VARIABLE_REASSIGNMENTS": 3,
+          "COMPARISON_OPERATORS": 4,
+          "LOGICAL_OPERATORS": 3,
+          "IF_STATEMENTS": 1,
+          "METHOD": 1,
+          "RETURN": 2,
+          "CONSTRUCTOR": 1,
+          "STRING": 4,
+          "NULL": 2,
+          "INSTANCEOF": 1,
+          "CLASS": 1,
+          "ASSERT": 3,
+          "VISIBILITY_MODIFIERS": 6,
+          "FINAL_FIELD": 3,
+          "DOT_NOTATION": 4,
+          "DOTTED_METHOD_CALL": 2,
+          "DOTTED_VARIABLE_ACCESS": 2
+        },
+        "importList": [],
+        "typeList": [
+          "String",
+          "int",
+          "boolean",
+          "Object",
+          "Squirrel"
+        ],
+        "identifierList": [],
+        "dottedMethodList": [
+          "equals"
+        ]
+      },
+      "lineCount": {
+        "source": 19,
+        "comment": 0,
+        "blank": 3
+      },
+      "expectedDeadCount": 4
+    },
+    "alternativeSolutions": [],
+    "incorrect": [],
+    "common": [],
+    "importWhitelist": [],
+    "importBlacklist": [],
+    "slug": "squirrel-equality",
+    "hasKotlin": false,
+    "published": {
+      "name": "Squirrel Equality",
+      "type": "KLASS",
+      "path": "squirrel-equality",
+      "author": "challen@illinois.edu",
+      "version": "2022.7.0",
+      "packageName": "com.examples.tripleequals",
+      "languages": [
+        "java"
+      ],
+      "descriptions": {
+        "java": "<p>Define a public class named <code>Squirrel</code>.\nThe <code>Squirrel</code> constructor should accept a <code>String</code> name, <code>String</code> tree, and <code>int</code> acorns, in that order.\nReject <code>null</code> names and trees using <code>assert</code>, and also <code>assert</code> that acorns is greater than 0 and less than or\nequal to 24.\n(Squirrels don't get too greedy and never acquire more acorns than that!)\nOverride equals and consider two <code>Squirrel</code> instances to be equal if they have the same name and tree.\nDo not provide getters or setters for your variables or expose them publicly.</p>"
+      },
+      "complexity": {
+        "java": 5
+      },
+      "features": {
+        "java": {
+          "featureMap": {
+            "VARIABLE_REASSIGNMENTS": 3,
+            "COMPARISON_OPERATORS": 4,
+            "LOGICAL_OPERATORS": 3,
+            "IF_STATEMENTS": 1,
+            "METHOD": 1,
+            "RETURN": 2,
+            "CONSTRUCTOR": 1,
+            "STRING": 4,
+            "NULL": 2,
+            "INSTANCEOF": 1,
+            "CLASS": 1,
+            "ASSERT": 3,
+            "VISIBILITY_MODIFIERS": 6,
+            "FINAL_FIELD": 3,
+            "DOT_NOTATION": 4,
+            "DOTTED_METHOD_CALL": 2,
+            "DOTTED_VARIABLE_ACCESS": 2
+          },
+          "importList": [],
+          "typeList": [
+            "String",
+            "int",
+            "boolean",
+            "Object",
+            "Squirrel"
+          ],
+          "identifierList": [],
+          "dottedMethodList": [
+            "equals"
+          ]
+        }
+      },
+      "lineCounts": {
+        "java": {
+          "source": 19,
+          "comment": 0,
+          "blank": 3
         }
       }
     },
@@ -1252,7 +1386,7 @@
     "type": "KLASS",
     "klass": "Question",
     "metadata": {
-      "contentHash": "7718b5849bcebf674db37a2e80c8bdd1",
+      "contentHash": "996c3cdb90539d435a2d1a2e2527cdc6",
       "packageName": "com.examples.mayberecursivefactorial",
       "version": "2022.7.0",
       "author": "challen@illinois.edu",
@@ -1265,7 +1399,7 @@
     "annotatedControls": {},
     "question": {
       "klass": "Question",
-      "contents": "import edu.illinois.cs.cs125.jenisol.core.FixedParameters;\nimport edu.illinois.cs.cs125.jenisol.core.RandomParameters;\nimport edu.illinois.cs.cs125.questioner.lib.Correct;\n\nimport java.util.Arrays;\nimport java.util.List;\nimport java.util.Random;\n\n/*\n * Write a class method that provides an implementation of factorial, accepting and returning `long` arguments.\n * Throw an `IllegalArgumentException` on invalid inputs.\n * Your implementation can be recursive or not.\n */\n\n@Correct(name = \"Maybe Recursive Factorial\", version = \"2022.7.0\", author = \"challen@illinois.edu\")\npublic class Question {\n  public static long factorial(long input) {\n    if (input <= 0) { // mutate-disable-conditional-boundary\n      throw new IllegalArgumentException();\n    }\n    if (input == 1) {\n      return 1;\n    }\n    return input * factorial(input - 1);\n  }\n\n  @FixedParameters\n  private static final List<Long> FIXED = Arrays.asList(-10L, -1L, 0L, 1L, 2L);\n\n  @RandomParameters\n  private static long randomParameters(Random random) {\n    return random.nextInt(32);\n  }\n}",
+      "contents": "import edu.illinois.cs.cs125.jenisol.core.FixedParameters;\nimport edu.illinois.cs.cs125.jenisol.core.RandomParameters;\nimport edu.illinois.cs.cs125.questioner.lib.Correct;\nimport java.util.Arrays;\nimport java.util.List;\nimport java.util.Random;\n\n/*\n * Write a class method that provides an implementation of factorial, accepting and returning `long` arguments.\n * Throw an `IllegalArgumentException` on invalid inputs.\n * Your implementation can be recursive or not.\n */\n\n@Correct(name = \"Maybe Recursive Factorial\", version = \"2022.7.0\", author = \"challen@illinois.edu\")\npublic class Question {\n  public static long factorial(long input) {\n    if (input <= 0) { // mutate-disable-conditional-boundary\n      throw new IllegalArgumentException();\n    }\n    if (input == 1) {\n      return 1;\n    }\n    return input * factorial(input - 1);\n  }\n\n  @FixedParameters private static final List<Long> FIXED = Arrays.asList(-10L, -1L, 0L, 1L, 2L);\n\n  @RandomParameters\n  private static long randomParameters(Random random) {\n    return random.nextInt(32);\n  }\n}",
       "language": "java",
       "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/mayberecursivefactorial/Question.java"
     },
@@ -1550,6 +1684,138 @@
           "source": 3,
           "comment": 0,
           "blank": 0
+        }
+      }
+    },
+    "fauxStatic": false
+  },
+  "Cougar Feliform": {
+    "name": "Cougar Feliform",
+    "type": "KLASS",
+    "klass": "Cougar",
+    "metadata": {
+      "contentHash": "4c65ecfb92ef970cb5c501e4b393298a",
+      "packageName": "com.examples.cougarfeliform",
+      "version": "2021.7.0",
+      "author": "challen@illinois.edu",
+      "javaDescription": "<p>Create and complete the implementation of the <code>Cougar</code> class.\nYour class should be public, not final and not abstract, inherit from the <code>Feliform</code> class,\nand provide the following methods:</p><ol><li>Constructor that takes a <code>int</code> parameter <code>speed</code> and a second <code>weight</code>.\nCreates a new <code>Cougar</code> with the passed speed and weight.\nYou should call the <code>Feliform</code> constructor and pass it the <code>String</code> &quot;cougar&quot; to identify the type of this\nfeliform.</li><li>Public instance method <code>dangerousness</code> that takes no arguments and returns an <code>int</code>.\nReturn the dangerousness of this cougar which equals its speed times its weight.</li><li>Override <code>public boolean equals(Object other)</code>.\nReturn <code>true</code> if <code>other</code> is a <code>Cougar</code> with the same speed and weight, and <code>false</code> otherwise.\nNote that <code>other</code> may be <code>null</code> or not a <code>Housecat</code>.</li></ol><p>Finally, note that your class should not expose any of its internal state publicly.</p>",
+      "usedFiles": [
+        "/Users/challen/code/questioner-problems/src/main/java/com/examples/cougarfeliform/Feliform.java"
+      ],
+      "focused": true
+    },
+    "annotatedControls": {},
+    "question": {
+      "klass": "Cougar",
+      "contents": "import edu.illinois.cs.cs125.jenisol.core.*;\nimport edu.illinois.cs.cs125.questioner.lib.Correct;\n\nimport java.util.Arrays;\nimport java.util.List;\nimport java.util.Random;\n\n/*\n * Create and complete the implementation of the `Cougar` class.\n * Your class should be public, not final and not abstract, inherit from the `Feliform` class,\n * and provide the following methods:\n *\n * 1. Constructor that takes a `int` parameter `speed` and a second `weight`.\n * Creates a new `Cougar` with the passed speed and weight.\n * You should call the `Feliform` constructor and pass it the `String` \"cougar\" to identify the type of this\n * feliform.\n * 1. Public instance method `dangerousness` that takes no arguments and returns an `int`.\n * Return the dangerousness of this cougar which equals its speed times its weight.\n * 1. Override `public boolean equals(Object other)`.\n * Return `true` if `other` is a `Cougar` with the same speed and weight, and `false` otherwise.\n * Note that `other` may be `null` or not a `Housecat`.\n *\n * Finally, note that your class should not expose any of its internal state publicly.\n */\n@Correct(name = \"Cougar Feliform\", version = \"2021.7.0\", author = \"challen@illinois.edu\", focused = true)\npublic class Cougar extends Feliform {\n  private final int speed;\n  private final int weight;\n\n  @FixedParameters\n  private static final List<Two<Integer, Integer>> FIXED = Arrays.asList(\n    new Two<>(10, 10),\n    new Two<>(10, 10),\n    new Two<>(11, 9),\n    new Two<>(10, 9)\n  );\n\n  @RandomParameters\n  private static final Two<Integer, Integer> randomParameters(Random random) {\n    return new Two<>(random.nextInt(1024), random.nextInt(1024));\n  }\n\n  public Cougar(int setSpeed, int setWeight) {\n    super(\"cougar\");\n    speed = setSpeed;\n    weight = setWeight;\n  }\n\n  @Override\n  public int dangerousness() {\n    return speed * weight;\n  }\n\n  @Override\n  public boolean equals(Object o) {\n    if (!(o instanceof Cougar housecat)) {\n      return false;\n    }\n    return speed == housecat.speed && weight == housecat.weight;\n  }\n\n  @Both\n  public static String getType(Feliform feliform) {\n    return feliform.getType();\n  }\n}",
+      "language": "java",
+      "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/cougarfeliform/Cougar.java"
+    },
+    "correct": {
+      "klass": "Cougar",
+      "contents": "public class Cougar extends Feliform {\n  private final int speed;\n  private final int weight;\n\n  public Cougar(int setSpeed, int setWeight) {\n    super(\"cougar\");\n    speed = setSpeed;\n    weight = setWeight;\n  }\n\n  public int dangerousness() {\n    return speed * weight;\n  }\n\n  public boolean equals(Object o) {\n    if (!(o instanceof Cougar housecat)) {\n      return false;\n    }\n    return speed == housecat.speed && weight == housecat.weight;\n  }\n}\n",
+      "language": "java",
+      "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/cougarfeliform/Cougar.java",
+      "complexity": 5,
+      "features": {
+        "featureMap": {
+          "VARIABLE_REASSIGNMENTS": 2,
+          "ARITHMETIC_OPERATORS": 1,
+          "COMPARISON_OPERATORS": 2,
+          "LOGICAL_OPERATORS": 2,
+          "IF_STATEMENTS": 1,
+          "METHOD": 2,
+          "RETURN": 3,
+          "CONSTRUCTOR": 1,
+          "INSTANCEOF": 1,
+          "CLASS": 1,
+          "EXTENDS": 1,
+          "SUPER": 1,
+          "VISIBILITY_MODIFIERS": 6,
+          "FINAL_FIELD": 2,
+          "DOT_NOTATION": 2,
+          "DOTTED_VARIABLE_ACCESS": 2
+        },
+        "importList": [],
+        "typeList": [
+          "Feliform",
+          "int",
+          "boolean",
+          "Object",
+          "Cougar"
+        ],
+        "identifierList": [],
+        "dottedMethodList": []
+      },
+      "lineCount": {
+        "source": 18,
+        "comment": 0,
+        "blank": 4
+      },
+      "expectedDeadCount": 0
+    },
+    "alternativeSolutions": [],
+    "incorrect": [],
+    "common": [
+      "public abstract class Feliform {\n  private final String type;\n\n  public Feliform(String setType) {\n    type = setType;\n  }\n\n  public String getType() {\n    return type;\n  }\n\n  public abstract int dangerousness();\n}\n"
+    ],
+    "importWhitelist": [],
+    "importBlacklist": [],
+    "slug": "cougar-feliform",
+    "hasKotlin": false,
+    "published": {
+      "name": "Cougar Feliform",
+      "type": "KLASS",
+      "path": "cougar-feliform",
+      "author": "challen@illinois.edu",
+      "version": "2021.7.0",
+      "packageName": "com.examples.cougarfeliform",
+      "languages": [
+        "java"
+      ],
+      "descriptions": {
+        "java": "<p>Create and complete the implementation of the <code>Cougar</code> class.\nYour class should be public, not final and not abstract, inherit from the <code>Feliform</code> class,\nand provide the following methods:</p><ol><li>Constructor that takes a <code>int</code> parameter <code>speed</code> and a second <code>weight</code>.\nCreates a new <code>Cougar</code> with the passed speed and weight.\nYou should call the <code>Feliform</code> constructor and pass it the <code>String</code> &quot;cougar&quot; to identify the type of this\nfeliform.</li><li>Public instance method <code>dangerousness</code> that takes no arguments and returns an <code>int</code>.\nReturn the dangerousness of this cougar which equals its speed times its weight.</li><li>Override <code>public boolean equals(Object other)</code>.\nReturn <code>true</code> if <code>other</code> is a <code>Cougar</code> with the same speed and weight, and <code>false</code> otherwise.\nNote that <code>other</code> may be <code>null</code> or not a <code>Housecat</code>.</li></ol><p>Finally, note that your class should not expose any of its internal state publicly.</p>"
+      },
+      "complexity": {
+        "java": 5
+      },
+      "features": {
+        "java": {
+          "featureMap": {
+            "VARIABLE_REASSIGNMENTS": 2,
+            "ARITHMETIC_OPERATORS": 1,
+            "COMPARISON_OPERATORS": 2,
+            "LOGICAL_OPERATORS": 2,
+            "IF_STATEMENTS": 1,
+            "METHOD": 2,
+            "RETURN": 3,
+            "CONSTRUCTOR": 1,
+            "INSTANCEOF": 1,
+            "CLASS": 1,
+            "EXTENDS": 1,
+            "SUPER": 1,
+            "VISIBILITY_MODIFIERS": 6,
+            "FINAL_FIELD": 2,
+            "DOT_NOTATION": 2,
+            "DOTTED_VARIABLE_ACCESS": 2
+          },
+          "importList": [],
+          "typeList": [
+            "Feliform",
+            "int",
+            "boolean",
+            "Object",
+            "Cougar"
+          ],
+          "identifierList": [],
+          "dottedMethodList": []
+        }
+      },
+      "lineCounts": {
+        "java": {
+          "source": 18,
+          "comment": 0,
+          "blank": 4
         }
       }
     },

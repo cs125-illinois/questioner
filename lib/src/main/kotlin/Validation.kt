@@ -6,9 +6,12 @@ import com.github.difflib.DiffUtils
 import com.github.difflib.UnifiedDiffUtils
 import edu.illinois.cs.cs125.jeed.core.suppressionComment
 import edu.illinois.cs.cs125.jenisol.core.ParameterGroup
+import edu.illinois.cs.cs125.jenisol.core.TestResult
 import edu.illinois.cs.cs125.jenisol.core.fullName
-import edu.illinois.cs.cs125.jenisol.core.generators.Parameters
+import edu.illinois.cs.cs125.jenisol.core.isBoth
+import java.lang.reflect.Constructor
 import java.lang.reflect.Executable
+import java.lang.reflect.Method
 import java.time.Instant
 
 data class CorrectResults(val incorrect: Question.FlatFile, val results: TestResults)
@@ -18,13 +21,18 @@ data class IncorrectResults(val incorrect: Question.IncorrectFile, val results: 
 suspend fun Question.validate(seed: Int): ValidationReport {
 
     fauxStatic = solution.fauxStatic
+    var deferredException: Exception? = null
 
     val javaClassWhitelist = mutableSetOf<String>().apply { addAll(defaultJavaClassWhitelist) }
     val kotlinClassWhitelist = mutableSetOf<String>().apply { addAll(defaultKotlinClassWhitelist) }
 
     fun TestResults.checkCorrect(file: Question.FlatFile) {
         if (!succeeded) {
-            throw SolutionFailed(file, summary)
+            if (complete.testing?.failedReceiverGeneration == true) {
+                throw SolutionReceiverGeneration(file)
+            } else {
+                throw SolutionFailed(file, summary)
+            }
         }
         if (failedLinting!!) {
             val errors = if (language == Question.Language.java) {
@@ -46,11 +54,9 @@ suspend fun Question.validate(seed: Int): ValidationReport {
         tests()
             ?.filter {
                 it.jenisol!!.solution.threw == null
-                    && (it.jenisol.parameterType == Parameters.Type.RANDOM
-                    || it.jenisol.parameterType == Parameters.Type.RANDOM_METHOD
-                    )
-            }
-            ?.let { results ->
+                    && it.jenisol.parameters.toList().isNotEmpty()
+                    && !(it.jenisol.solutionExecutable is Method && (it.jenisol.solutionExecutable as Method).isBoth())
+            }?.let { results ->
                 val executableReturns = mutableMapOf<Executable, MutableList<Any>>()
                 for (result in results) {
                     result.jenisol!!.solution.returned?.let {
@@ -61,6 +67,9 @@ suspend fun Question.validate(seed: Int): ValidationReport {
                 }
                 executableReturns.forEach { (executable, values) ->
                     if (executable.fullName() == "public boolean equals(java.lang.Object)") {
+                        return@forEach
+                    }
+                    if (executable is Constructor<*> && fauxStatic) {
                         return@forEach
                     }
                     if (values.distinct().size == 1) {
@@ -85,8 +94,8 @@ suspend fun Question.validate(seed: Int): ValidationReport {
             file.expectedDeadCount ?: correct.expectedDeadCount ?: error("Couldn't load dead code count")
         val deadCodeLimit = control.maxDeadCode!! + expectedDeadCode
 
-        if (complete.coverage!!.submission.missed > deadCodeLimit) {
-            throw SolutionDeadCode(
+        if (complete.coverage!!.submission.missed > deadCodeLimit && deferredException == null) {
+            deferredException = SolutionDeadCode(
                 file,
                 complete.coverage!!.submission.missed,
                 deadCodeLimit,
@@ -117,13 +126,19 @@ suspend fun Question.validate(seed: Int): ValidationReport {
         if (!mutated && failedLinting == true) {
             throw IncorrectFailedLinting(file, correct)
         }
-        try {
-            validate(file.reason, mutated)
-        } catch (e: Exception) {
-            throw if (succeeded) {
-                WrongReasonPassed(file, e.message!!)
-            } else {
-                IncorrectWrongReason(file, e.message!!, summary)
+        if (mutated) {
+            if (succeeded) {
+                throw IncorrectPassed(file, correct)
+            }
+        } else {
+            try {
+                validate(file.reason)
+            } catch (e: Exception) {
+                throw if (succeeded) {
+                    WrongReasonPassed(file, e.message!!)
+                } else {
+                    IncorrectWrongReason(file, e.message!!, summary)
+                }
             }
         }
         if (listOf(Question.IncorrectFile.Reason.TEST, Question.IncorrectFile.Reason.TIMEOUT).contains(file.reason)
@@ -155,7 +170,8 @@ suspend fun Question.validate(seed: Int): ValidationReport {
     // Sets javaClassWhitelist and kotlinClassWhitelist
     val bootstrapSettings = Question.TestingSettings(
         seed = seed,
-        testCount = control.minTestCount!!,
+        minTestCount = control.minTestCount!!,
+        maxTestCount = control.maxTestCount!!,
         timeout = control.maxTimeout!!, // No timeout
         outputLimit = Question.UNLIMITED_OUTPUT_LINES, // No line limit
         javaWhitelist = null,
@@ -319,6 +335,10 @@ suspend fun Question.validate(seed: Int): ValidationReport {
         .maxOrNull() ?: error("No incorrect results")
     val testCount = requiredTestCount.coerceAtLeast(control.minTestCount!!)
 
+    if (deferredException != null) {
+        throw deferredException!!
+    }
+
     // Rerun solutions to set timeouts and output limits
     // sets solution runtime, output lines, executed lines, and allocation
     val calibrationStart = Instant.now()
@@ -402,7 +422,7 @@ suspend fun Question.validate(seed: Int): ValidationReport {
     )
 }
 
-private fun TestResults.validate(reason: Question.IncorrectFile.Reason, isMutated: Boolean) {
+private fun TestResults.validate(reason: Question.IncorrectFile.Reason) {
     when (reason) {
         Question.IncorrectFile.Reason.COMPILE -> require(failed.compileSubmission != null) {
             "Expected submission not to compile"
@@ -431,7 +451,7 @@ private fun TestResults.validate(reason: Question.IncorrectFile.Reason, isMutate
         Question.IncorrectFile.Reason.RECURSION -> require(failed.checkExecutedSubmission?.contains("was not implemented recursively") == true) {
             "Expected submission to not correctly provide a recursive method"
         }
-        else -> require(isMutated || (!timeout && complete.testing?.passed == false)) {
+        else -> require(complete.testing?.passed == false) {
             "Expected submission to fail tests"
         }
     }
@@ -471,6 +491,16 @@ class SolutionFailed(val solution: Question.FlatFile, val explanation: String) :
     """.trimMargin()
 }
 
+class SolutionReceiverGeneration(val solution: Question.FlatFile) : ValidationFailed() {
+    override val message = """
+        |Solution failed the test suites:
+        |${printContents(solution.contents, solution.path)}
+        |Couldn't generate enough receivers during testing.
+        |Examine any @FilterParameters methods you might be using, or exceptions thrown in your constructor.
+        |Consider adding parameter generation methods for your constructor.
+    """.trimMargin()
+}
+
 class SolutionFailedLinting(val solution: Question.FlatFile, val errors: String) : ValidationFailed() {
     override val message = """
         |Solution failed linting with ${
@@ -504,7 +534,7 @@ class SolutionLacksEntropy(
 ) :
     ValidationFailed() {
     override val message = """
-        |$count random inputs to the solution method ${executable.fullName()} only generated $amount distinct results: $result
+        |$count inputs to the solution method ${executable.fullName()} only generated $amount distinct results: $result
         |${
         if (fauxStatic) {
             "Note that the solution is being tested as a faux static method, which may cause problems"
@@ -513,7 +543,7 @@ class SolutionLacksEntropy(
         }
     }
         |${printContents(solution.contents, solution.path)}
-        |You may need to add or adjust the @RandomParameters method
+        |You may need to add or adjust the @RandomParameters method or @FixedParameters field
         """.trimMargin()
 }
 

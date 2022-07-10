@@ -214,6 +214,22 @@ fun ValidationFailed.report(question: Question): String {
     |<p><strong>Please verify that this solution matches the reference solution.</strong></p>
 """.trimMargin()
         }
+        is SolutionReceiverGeneration -> {
+            """
+    |<h2>Solution Failed Testing</h2>
+    |<p>The following solution failed testing:</p>
+    |<pre><code class="${
+                if (solution.language == Question.Language.java) {
+                    "java"
+                } else {
+                    "kotlin"
+                }
+            }"> ${StringEscapeUtils.escapeHtml4(solution.contents)}</code></pre>
+    |<p>Couldn't generate enough receivers during testing.
+    |Examine any @FilterParameters methods you might be using, or exceptions thrown in your constructor.
+    |Consider adding parameter generation methods for your constructor.</p>
+""".trimMargin()
+        }
         is SolutionThrew -> {
             """
     |<h2>Solution Not Expected to Throw</h2>
