@@ -26,11 +26,18 @@ suspend fun Question.validate(seed: Int): ValidationReport {
     val kotlinClassWhitelist = mutableSetOf<String>().apply { addAll(defaultKotlinClassWhitelist) }
 
     fun TestResults.checkCorrect(file: Question.FlatFile) {
+        if (taskResults?.threw != null) {
+            throw SolutionTestingThrew(file, taskResults!!.threw!!)
+        }
         if (!succeeded) {
-            if (complete.testing?.passed == false) {
+            if (failed.checkExecutedSubmission != null) {
+                throw SolutionFailed(file, failed.checkExecutedSubmission!!)
+            } else if (complete.testing?.passed == false) {
                 throw SolutionFailed(file, summary)
             } else {
-                check(complete.testing?.failedReceiverGeneration == true)
+                check(complete.testing?.failedReceiverGeneration == true) {
+                    failedSteps
+                }
                 throw SolutionReceiverGeneration(file)
             }
         }
@@ -521,6 +528,13 @@ class SolutionThrew(val solution: Question.FlatFile, val threw: Throwable, val p
         |${printContents(solution.contents, solution.path)}
         |If it should throw, allow it using @Correct(solutionThrows = true)
         |Otherwise filter the inputs using @FixedParameters, @RandomParameters, or @FilterParameters
+    """.trimMargin()
+}
+
+class SolutionTestingThrew(val solution: Question.FlatFile, val threw: Throwable) :
+    ValidationFailed() {
+    override val message = """
+        |Solution testing threw an exception $threw
     """.trimMargin()
 }
 
