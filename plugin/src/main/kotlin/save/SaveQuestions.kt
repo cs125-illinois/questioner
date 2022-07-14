@@ -11,6 +11,7 @@ import edu.illinois.cs.cs125.jenisol.core.EdgeType
 import edu.illinois.cs.cs125.jenisol.core.FilterParameters
 import edu.illinois.cs.cs125.jenisol.core.FixedParameters
 import edu.illinois.cs.cs125.jenisol.core.InstanceValidator
+import edu.illinois.cs.cs125.jenisol.core.Limit
 import edu.illinois.cs.cs125.jenisol.core.NotNull
 import edu.illinois.cs.cs125.jenisol.core.RandomParameters
 import edu.illinois.cs.cs125.jenisol.core.RandomType
@@ -455,7 +456,8 @@ val annotationsToRemove =
         Wrap::class.java.simpleName,
         AlsoCorrect::class.java.simpleName,
         Configure::class.java.simpleName,
-        Cite::class.java.simpleName
+        Cite::class.java.simpleName,
+        Limit::class.java.simpleName
     )
 val annotationsToDestroy =
     setOf(

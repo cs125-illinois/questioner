@@ -97,7 +97,6 @@ suspend fun Question.test(
         minTestCount = settings.minTestCount,
         maxTestCount = settings.maxTestCount
     )
-
     val executionArguments = Sandbox.ExecutionArguments(
         timeout = settings.timeout.toLong(),
         classLoaderConfiguration = classLoaderConfiguration,

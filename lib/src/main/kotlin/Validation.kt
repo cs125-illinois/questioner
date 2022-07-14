@@ -168,10 +168,13 @@ suspend fun Question.validate(seed: Int): ValidationReport {
 
     // The solution and alternate solutions define what external classes can be used, so they need to be run first
     // Sets javaClassWhitelist and kotlinClassWhitelist
+    val minTestCount = control.minTestCount!!.coerceAtMost(solution.maxCount)
+    val maxTestCount = control.maxTestCount!!.coerceAtMost(solution.maxCount)
+
     val bootstrapSettings = Question.TestingSettings(
         seed = seed,
-        minTestCount = control.minTestCount!!,
-        maxTestCount = control.maxTestCount!!,
+        minTestCount = minTestCount,
+        maxTestCount = maxTestCount,
         timeout = control.maxTimeout!!, // No timeout
         outputLimit = Question.UNLIMITED_OUTPUT_LINES, // No line limit
         javaWhitelist = null,
@@ -268,7 +271,7 @@ suspend fun Question.validate(seed: Int): ValidationReport {
     val incorrectStart = Instant.now()
     val incorrectSettings = Question.TestingSettings(
         seed = seed,
-        testCount = control.maxTestCount!!,
+        testCount = maxTestCount,
         timeout = control.maxTimeout!!,
         outputLimit = Question.UNLIMITED_OUTPUT_LINES,
         javaWhitelist = javaClassWhitelist,
@@ -333,7 +336,7 @@ suspend fun Question.validate(seed: Int): ValidationReport {
         .filter { !it.results.timeout && !it.results.succeeded }
         .mapNotNull { it.results.tests()?.size }
         .maxOrNull() ?: error("No incorrect results")
-    val testCount = requiredTestCount.coerceAtLeast(control.minTestCount!!)
+    val testCount = requiredTestCount.coerceAtLeast(minTestCount)
 
     if (deferredException != null) {
         throw deferredException!!
