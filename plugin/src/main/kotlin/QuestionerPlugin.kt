@@ -75,7 +75,7 @@ class QuestionerPlugin : Plugin<Project> {
         project.extensions.getByType(JavaPluginExtension::class.java)
             .sourceSets.getByName("main").resources { it.srcDirs(File(project.buildDir, "questioner")) }
         project.tasks.register("cleanQuestions", CleanQuestions::class.java)
-
+        project.tasks.register("printSlowQuestions", PrintSlowQuestions::class.java)
         val reconfigureTesting = project.tasks.register("reconfigureTesting", ReconfigureTesting::class.java).get()
         project.tasks.getByName("test").dependsOn(reconfigureTesting)
         project.tasks.getByName("test").mustRunAfter(reconfigureTesting)

@@ -168,7 +168,7 @@ suspend fun Question.test(
                     is InvocationTargetException -> threw.targetException ?: threw
                     else -> threw
                 }
-                results.failed.checkExecutedSubmission = "Testing generated an unexpected error: $actualException"
+                results.failed.checkExecutedSubmission = "Testing generated an unexpected error: $actualException\n${actualException.stackTraceToString()}"
             }
         }
         return results

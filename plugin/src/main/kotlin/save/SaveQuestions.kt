@@ -15,7 +15,6 @@ import edu.illinois.cs.cs125.jenisol.core.Limit
 import edu.illinois.cs.cs125.jenisol.core.NotNull
 import edu.illinois.cs.cs125.jenisol.core.RandomParameters
 import edu.illinois.cs.cs125.jenisol.core.RandomType
-import edu.illinois.cs.cs125.jenisol.core.ShouldContinue
 import edu.illinois.cs.cs125.jenisol.core.SimpleType
 import edu.illinois.cs.cs125.jenisol.core.Verify
 import edu.illinois.cs.cs125.questioner.lib.AlsoCorrect
@@ -472,8 +471,7 @@ val annotationsToDestroy =
         InstanceValidator::class.java.simpleName,
         CheckSource::class.java.simpleName,
         Ignore::class.java.simpleName,
-        Compare::class.java.simpleName,
-        ShouldContinue::class.java.simpleName
+        Compare::class.java.simpleName
     )
 val annotationsToSnip = setOf(NotNull::class.java.simpleName)
 
