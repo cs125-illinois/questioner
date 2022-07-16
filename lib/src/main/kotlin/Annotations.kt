@@ -2,9 +2,11 @@
 
 package edu.illinois.cs.cs125.questioner.lib
 
+import edu.illinois.cs.cs125.jeed.core.Features
 import java.lang.RuntimeException
 import java.lang.reflect.Method
 import java.lang.reflect.Modifier
+import java.lang.reflect.ParameterizedType
 
 @Suppress("LongParameterList")
 @Target(AnnotationTarget.CLASS)
@@ -63,23 +65,35 @@ annotation class Ignore
 
 @Target(AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.RUNTIME)
-annotation class CheckSource {
+annotation class CheckFeatures {
     companion object {
-        val name: String = CheckSource::class.java.simpleName
+        val name: String = CheckFeatures::class.java.simpleName
         fun validate(method: Method) {
             check(Modifier.isStatic(method.modifiers)) { "@$name methods must be static" }
-            check(method.returnType.name == "void") {
-                "@$name method return values will not be used and should be void"
+            check(method.parameterTypes.size == 2 && method.parameterTypes[0] == Features::class.java && method.parameterTypes[0] == Features::class.java) {
+                "@$name methods must accept parameters (Features solution, Features submission)"
             }
-            check(method.parameterTypes.size == 1 && method.parameterTypes[0] == String::class.java) {
-                "@$name methods must accept parameters (String source)"
+            check(method.genericReturnType is ParameterizedType) {
+                "@$name methods must return List<String>!"
+            }
+            (method.genericReturnType as ParameterizedType).also { collectionType ->
+                @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
+                check(collectionType.rawType == java.util.List::class.java) {
+                    "@$name methods must return List<String>"
+                }
+                check(collectionType.actualTypeArguments.size == 1) {
+                    "@$name methods must return List<String>"
+                    check(collectionType.actualTypeArguments.first()::class.java == String::class.java) {
+                        "@$name methods must return List<String>"
+                    }
+                }
             }
             method.isAccessible = true
         }
     }
 }
 
-fun Method.isCheckSource() = isAnnotationPresent(CheckSource::class.java)
+fun Method.isCheckFeatures() = isAnnotationPresent(CheckFeatures::class.java)
 
-class SourceCheckException(message: String) : RuntimeException(message)
+class FeatureCheckException(message: String) : RuntimeException(message)
 

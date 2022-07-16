@@ -4,7 +4,6 @@ import edu.illinois.cs.cs125.jeed.core.CheckstyleFailed
 import edu.illinois.cs.cs125.jeed.core.CompilationFailed
 import edu.illinois.cs.cs125.jeed.core.ComplexityFailed
 import edu.illinois.cs.cs125.jeed.core.ConfiguredSandboxPlugin
-import edu.illinois.cs.cs125.jeed.core.FeaturesFailed
 import edu.illinois.cs.cs125.jeed.core.Jacoco
 import edu.illinois.cs.cs125.jeed.core.KtLintFailed
 import edu.illinois.cs.cs125.jeed.core.Sandbox
@@ -64,7 +63,7 @@ suspend fun Question.test(
     }
 
     // checkCompiledSubmission
-    val klassName = checkCompiledSubmission(compiledSubmission, contents, results) ?: return results
+    val klassName = checkCompiledSubmission(compiledSubmission, results) ?: return results
 
     // complexity
     try {
@@ -81,12 +80,17 @@ suspend fun Question.test(
 
     // features
     try {
-        computeFeatures(contents, klassName, language)
-        // results.completedSteps.add(TestResults.Step.complexity)
-    } catch (e: FeaturesFailed) {
+        results.complete.features = computeFeatures(contents, klassName, language)
+        results.completedSteps.add(TestResults.Step.features)
+    } catch (e: IllegalStateException) {
         throw e
-        // results.failed.complexity = e
-        // results.failedSteps.add(TestResults.Step.complexity)
+    } catch (e: FeatureCheckException) {
+        results.failed.features = e.message!!
+        results.failedSteps.add(TestResults.Step.features)
+        return results
+    } catch (e: Exception) {
+        results.failed.features = e.message ?: "Unknown features failure"
+        results.failedSteps.add(TestResults.Step.features)
     }
 
     // linecount

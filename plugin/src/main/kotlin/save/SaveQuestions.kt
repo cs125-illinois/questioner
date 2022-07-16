@@ -19,7 +19,7 @@ import edu.illinois.cs.cs125.jenisol.core.SimpleType
 import edu.illinois.cs.cs125.jenisol.core.Verify
 import edu.illinois.cs.cs125.questioner.lib.AlsoCorrect
 import edu.illinois.cs.cs125.questioner.lib.Blacklist
-import edu.illinois.cs.cs125.questioner.lib.CheckSource
+import edu.illinois.cs.cs125.questioner.lib.CheckFeatures
 import edu.illinois.cs.cs125.questioner.lib.Cite
 import edu.illinois.cs.cs125.questioner.lib.Correct
 import edu.illinois.cs.cs125.questioner.lib.Ignore
@@ -469,7 +469,7 @@ val annotationsToDestroy =
         EdgeType::class.java.simpleName,
         RandomType::class.java.simpleName,
         InstanceValidator::class.java.simpleName,
-        CheckSource::class.java.simpleName,
+        CheckFeatures::class.java.simpleName,
         Ignore::class.java.simpleName,
         Compare::class.java.simpleName
     )

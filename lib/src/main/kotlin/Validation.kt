@@ -464,6 +464,9 @@ private fun TestResults.validate(reason: Question.IncorrectFile.Reason) {
         Question.IncorrectFile.Reason.COMPLEXITY -> require(complete.complexity?.failed == true) {
             "Expected submission to be too complex"
         }
+        Question.IncorrectFile.Reason.FEATURES -> require(failed.features != null) {
+            "Expected submission to fail feature check"
+        }
         else -> require(complete.testing?.passed == false) {
             "Expected submission to fail tests"
         }

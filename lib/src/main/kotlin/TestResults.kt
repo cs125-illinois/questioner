@@ -49,6 +49,7 @@ data class TestResults(
         ktlint,
         checkCompiledSubmission,
         complexity,
+        features,
         lineCount,
 
         // execution
@@ -67,6 +68,7 @@ data class TestResults(
         var ktlint: KtLintResults? = null,
         // checkCompiledSubmission doesn't complete
         var complexity: ComplexityComparison? = null,
+        var features: FeaturesComparison? = null,
         var lineCount: LineCountComparison? = null,
         // execution
         // checkExecutedSubmission doesn't complete
@@ -83,6 +85,7 @@ data class TestResults(
         check(succeeded) { "Testing failed" }
         check(failedLinting != true) { "Linting failed" }
         check(complete.complexity?.failed == false)
+        check(complete.features?.failed == false)
         check(complete.lineCount?.failed == false)
         check(complete.executionCount?.failed == false)
         check(complete.memoryAllocation?.failed == false)
@@ -97,6 +100,7 @@ data class TestResults(
         var ktlint: KtLintFailed? = null,
         var checkCompiledSubmission: String? = null,
         var complexity: ComplexityFailed? = null,
+        var features: String? = null,
         // lineCount doesn't fail
         // execution
         var checkExecutedSubmission: String? = null
@@ -204,7 +208,8 @@ data class TestResults(
         completedSteps.add(Step.testing)
         complete.testing = testing
         completed = testing.tests.size == testing.testCount
-        succeeded = !timeout && testing.passed == true && testing.completed == true && testing.tests.size == testing.testCount
+        succeeded =
+            !timeout && testing.passed == true && testing.completed == true && testing.tests.size == testing.testCount
         failureCount = testing.tests.filter { !it.passed }.size
     }
 
@@ -223,6 +228,8 @@ data class TestResults(
             "Checking submission failed: ${failed.checkCompiledSubmission}"
         } else if (failed.checkExecutedSubmission != null) {
             "Checking submission failed: ${failed.checkExecutedSubmission}"
+        } else if (failed.features != null) {
+            "Checking submission features failed: ${failed.features}"
         } else if (timeout) {
             "Testing timed out"
         } else if (complete.testing?.passed == false) {

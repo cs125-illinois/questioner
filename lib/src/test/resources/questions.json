@@ -1970,7 +1970,7 @@
     "type": "KLASS",
     "klass": "Question",
     "metadata": {
-      "contentHash": "83b1e2a4e9e7717bc90391bfb07e4ab1",
+      "contentHash": "cb19a8122edb12c3937dd28e4820ca15",
       "packageName": "com.examples.withimports",
       "version": "2022.7.0",
       "author": "challen@illinois.edu",
@@ -1979,12 +1979,12 @@
       "usedFiles": [
         "/Users/challen/code/questioner-problems/src/main/java/com/examples/withimports/correct/kotlin/Question.kt"
       ],
-      "focused": true
+      "focused": false
     },
     "annotatedControls": {},
     "question": {
       "klass": "Question",
-      "contents": "import edu.illinois.cs.cs125.questioner.lib.Correct;\n\nimport java.util.Arrays;\nimport java.util.List;\n\n/*\n * Example to test use of import statements.\n */\n\n@Correct(name = \"With Imports\", version = \"2022.7.0\", author = \"challen@illinois.edu\", focused = true)\npublic class Question {\n  public static List<Integer> max(int first, int second) {\n    return Arrays.asList(first, second);\n  }\n}",
+      "contents": "import edu.illinois.cs.cs125.questioner.lib.Correct;\n\nimport java.util.Arrays;\nimport java.util.List;\n\n/*\n * Example to test use of import statements.\n */\n\n@Correct(name = \"With Imports\", version = \"2022.7.0\", author = \"challen@illinois.edu\")\npublic class Question {\n  public static List<Integer> max(int first, int second) {\n    return Arrays.asList(first, second);\n  }\n}",
       "language": "java",
       "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/withimports/Question.java"
     },
@@ -2591,6 +2591,186 @@
         },
         "kotlin": {
           "source": 4,
+          "comment": 0,
+          "blank": 0
+        }
+      }
+    },
+    "fauxStatic": false
+  },
+  "With Feature Check": {
+    "name": "With Feature Check",
+    "type": "METHOD",
+    "klass": "Question",
+    "metadata": {
+      "contentHash": "7265340f9d922ca3dfe7ff222f5a309d",
+      "packageName": "com.examples.withfeaturecheck",
+      "version": "2022.7.0",
+      "author": "challen@illinois.edu",
+      "javaDescription": "<p>Test whether feature checking works.</p>",
+      "kotlinDescription": "<p>For testing features.</p>",
+      "usedFiles": [
+        "/Users/challen/code/questioner-problems/src/main/java/com/examples/withfeaturecheck/incorrect/java/usesloop/Question.java",
+        "/Users/challen/code/questioner-problems/src/main/java/com/examples/withfeaturecheck/incorrect/kotlin/usesloop/Question.kt",
+        "/Users/challen/code/questioner-problems/src/main/java/com/examples/withfeaturecheck/correct/kotlin/Question.kt"
+      ],
+      "focused": false
+    },
+    "annotatedControls": {},
+    "question": {
+      "klass": "Question",
+      "contents": "import edu.illinois.cs.cs125.jeed.core.Features;\nimport edu.illinois.cs.cs125.jenisol.core.BoundComplexity;\nimport edu.illinois.cs.cs125.jenisol.core.FilterParameters;\nimport edu.illinois.cs.cs125.jenisol.core.SkipTest;\nimport edu.illinois.cs.cs125.questioner.lib.CheckFeatures;\nimport edu.illinois.cs.cs125.questioner.lib.Correct;\nimport edu.illinois.cs.cs125.questioner.lib.FeatureCheckException;\nimport edu.illinois.cs.cs125.questioner.lib.Wrap;\nimport edu.illinois.cs.cs125.questioner.lib.features.FeatureHelpers;\n\nimport java.util.ArrayList;\nimport java.util.List;\n\n/*\n * Test whether feature checking works.\n */\n\n@Correct(name = \"With Feature Check\", author = \"challen@illinois.edu\", version = \"2022.7.0\")\n@Wrap\npublic class Question {\n  @FilterParameters\n  private static void filterParameters(int range) {\n    if (range < 0) {\n      throw new SkipTest();\n    }\n    if (range > 1024) {\n      throw new BoundComplexity();\n    }\n  }\n\n  int sumTo(int range) {\n    return (range * (range + 1)) / 2;\n  }\n\n  @CheckFeatures\n  private static List<String> checkFeatures(Features solution, Features submission) {\n    if (FeatureHelpers.usesLoop(submission)) {\n      throw new FeatureCheckException(\"Submission uses a loop\");\n    }\n    return new ArrayList<>();\n  }\n}",
+      "language": "java",
+      "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/withfeaturecheck/Question.java"
+    },
+    "correct": {
+      "klass": "Question",
+      "contents": "int sumTo(int range) {\n  return (range * (range + 1)) / 2;\n}",
+      "language": "java",
+      "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/withfeaturecheck/Question.java",
+      "complexity": 1,
+      "features": {
+        "featureMap": {
+          "ARITHMETIC_OPERATORS": 3,
+          "METHOD": 1,
+          "RETURN": 1
+        },
+        "importList": [],
+        "typeList": [
+          "int"
+        ],
+        "identifierList": [],
+        "dottedMethodList": []
+      },
+      "lineCount": {
+        "source": 3,
+        "comment": 0,
+        "blank": 0
+      },
+      "expectedDeadCount": 1
+    },
+    "alternativeSolutions": [
+      {
+        "klass": "Question",
+        "contents": "fun sumTo(range: Int): Int {\n  return range * (range + 1) / 2\n}",
+        "language": "kotlin",
+        "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/withfeaturecheck/correct/kotlin/Question.kt",
+        "complexity": 1,
+        "features": {
+          "featureMap": {
+            "METHOD": 1
+          },
+          "importList": [],
+          "typeList": [],
+          "identifierList": [],
+          "dottedMethodList": []
+        },
+        "lineCount": {
+          "source": 3,
+          "comment": 0,
+          "blank": 0
+        }
+      }
+    ],
+    "incorrect": [
+      {
+        "klass": "Question",
+        "contents": "int sumTo(int range) {\n  int sum = 0;\n  for (int i = 0; i <= range; i++) {\n    sum += i;\n  }\n  return sum;\n}",
+        "reason": "FEATURES",
+        "language": "java",
+        "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/withfeaturecheck/incorrect/java/usesloop/Question.java",
+        "starter": false,
+        "needed": true
+      },
+      {
+        "klass": "Question",
+        "contents": "fun sumTo(range: Int): Int {\n  var sum = 0\n  (0..range).forEach { i ->\n    sum += i\n  }\n  return sum\n}",
+        "reason": "FEATURES",
+        "language": "kotlin",
+        "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/withfeaturecheck/incorrect/kotlin/usesloop/Question.kt",
+        "starter": false,
+        "needed": true
+      }
+    ],
+    "common": [],
+    "javaTemplate": "public class Question {\n  {{{ contents }}}\n}",
+    "kotlinTemplate": "class Question {\n  {{{ contents }}}\n}",
+    "importWhitelist": [],
+    "importBlacklist": [],
+    "slug": "with-feature-check",
+    "kotlinSolution": {
+      "klass": "Question",
+      "contents": "fun sumTo(range: Int): Int {\n  return range * (range + 1) / 2\n}",
+      "language": "kotlin",
+      "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/withfeaturecheck/correct/kotlin/Question.kt",
+      "complexity": 1,
+      "features": {
+        "featureMap": {
+          "METHOD": 1
+        },
+        "importList": [],
+        "typeList": [],
+        "identifierList": [],
+        "dottedMethodList": []
+      },
+      "lineCount": {
+        "source": 3,
+        "comment": 0,
+        "blank": 0
+      }
+    },
+    "hasKotlin": true,
+    "published": {
+      "name": "With Feature Check",
+      "type": "METHOD",
+      "path": "with-feature-check",
+      "author": "challen@illinois.edu",
+      "version": "2022.7.0",
+      "packageName": "com.examples.withfeaturecheck",
+      "languages": [
+        "java",
+        "kotlin"
+      ],
+      "descriptions": {
+        "java": "<p>Test whether feature checking works.</p>",
+        "kotlin": "<p>For testing features.</p>"
+      },
+      "complexity": {
+        "java": 1,
+        "kotlin": 1
+      },
+      "features": {
+        "java": {
+          "featureMap": {
+            "ARITHMETIC_OPERATORS": 3,
+            "METHOD": 1,
+            "RETURN": 1
+          },
+          "importList": [],
+          "typeList": [
+            "int"
+          ],
+          "identifierList": [],
+          "dottedMethodList": []
+        },
+        "kotlin": {
+          "featureMap": {
+            "METHOD": 1
+          },
+          "importList": [],
+          "typeList": [],
+          "identifierList": [],
+          "dottedMethodList": []
+        }
+      },
+      "lineCounts": {
+        "java": {
+          "source": 3,
+          "comment": 0,
+          "blank": 0
+        },
+        "kotlin": {
+          "source": 3,
           "comment": 0,
           "blank": 0
         }

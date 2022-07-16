@@ -10,7 +10,6 @@ import edu.illinois.cs.cs125.jeed.core.KompilationArguments
 import edu.illinois.cs.cs125.jeed.core.KtLintArguments
 import edu.illinois.cs.cs125.jeed.core.KtLintFailed
 import edu.illinois.cs.cs125.jeed.core.Sandbox
-import edu.illinois.cs.cs125.jeed.core.SnippetArguments
 import edu.illinois.cs.cs125.jeed.core.Source
 import edu.illinois.cs.cs125.jeed.core.TemplatingFailed
 import edu.illinois.cs.cs125.jeed.core.allFixedMutations
@@ -21,12 +20,12 @@ import edu.illinois.cs.cs125.jeed.core.countLines
 import edu.illinois.cs.cs125.jeed.core.features
 import edu.illinois.cs.cs125.jeed.core.fromJavaSnippet
 import edu.illinois.cs.cs125.jeed.core.fromKotlinSnippet
-import edu.illinois.cs.cs125.jeed.core.fromSnippet
 import edu.illinois.cs.cs125.jeed.core.fromTemplates
 import edu.illinois.cs.cs125.jeed.core.kompile
 import edu.illinois.cs.cs125.jeed.core.ktLint
 import edu.illinois.cs.cs125.jeed.core.moshi.CompiledSourceResult
 import edu.illinois.cs.cs125.jenisol.core.CapturedResult
+import edu.illinois.cs.cs125.jenisol.core.unwrap
 import java.lang.reflect.InvocationTargetException
 import kotlin.random.Random
 
@@ -129,7 +128,6 @@ suspend fun Question.kompileSubmission(
 
 fun Question.checkCompiledSubmission(
     compiledSubmission: CompiledSource,
-    contents: String,
     testResults: TestResults
 ): String? = compiledSubmission.classLoader.definedClasses.topLevelClasses().let {
     when {
@@ -154,20 +152,6 @@ fun Question.checkCompiledSubmission(
         if (klass != compilationDefinedClass) {
             testResults.failed.checkCompiledSubmission =
                 "Submission defines incorrect class: ${it.first()} != $compilationDefinedClass"
-            testResults.failedSteps.add(TestResults.Step.checkCompiledSubmission)
-            return null
-        }
-    }
-    if (sourceChecker != null) {
-        try {
-            sourceChecker?.invoke(null, contents)
-        } catch (e: InvocationTargetException) {
-            testResults.failed.checkCompiledSubmission =
-                "Checking source failed" + if (e.cause?.message != null) {
-                    ": ${e.cause!!.message}"
-                } else {
-                    ""
-                }
             testResults.failedSteps.add(TestResults.Step.checkCompiledSubmission)
             return null
         }
@@ -257,11 +241,7 @@ fun Question.mutations(seed: Int, count: Int) = templateSubmission(
     }
 
 fun Question.computeComplexity(contents: String, language: Question.Language): TestResults.ComplexityComparison {
-    val solutionComplexity = if (language == Question.Language.java) {
-        correct.complexity
-    } else {
-        alternativeSolutions.filter { it.language == language }.mapNotNull { it.complexity }.minOrNull()
-    }
+    val solutionComplexity = published.complexity[language]
     check(solutionComplexity != null) { "Solution complexity not available" }
 
     val submissionComplexity = when {
@@ -322,14 +302,11 @@ fun Question.computeFeatures(
                     |}""".trimMargin()
                 )
             )
-            Question.Type.SNIPPET -> Source.fromSnippet(contents)
+            Question.Type.SNIPPET -> Source.fromJavaSnippet(contents)
         }
     } else {
         when {
-            type == Question.Type.SNIPPET -> Source.fromSnippet(
-                contents,
-                SnippetArguments(fileType = Source.FileType.KOTLIN)
-            )
+            type == Question.Type.SNIPPET -> Source.fromKotlinSnippet(contents)
             type == Question.Type.METHOD && !klassName.endsWith("kt") -> Source(
                 mapOf(
                     "$klassName.kt" to """class $klassName {
@@ -360,7 +337,14 @@ fun Question.computeFeatures(
         }
     }.features
 
-    return TestResults.FeaturesComparison(solutionFeatures, submissionFeatures, listOf())
+    val errors = if (featureChecker != null) {
+        @Suppress("UNCHECKED_CAST")
+        unwrap { featureChecker!!.invoke(null, solutionFeatures, submissionFeatures) } as List<String>
+    } else {
+        listOf()
+    }
+
+    return TestResults.FeaturesComparison(solutionFeatures, submissionFeatures, errors)
 }
 
 fun Question.computeLineCounts(contents: String, language: Question.Language): TestResults.LineCountComparison {

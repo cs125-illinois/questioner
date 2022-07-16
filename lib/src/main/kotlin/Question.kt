@@ -301,7 +301,7 @@ data class Question(
     ) {
         @Suppress("SpellCheckingInspection")
         enum class Reason {
-            DESIGN, COMPILE, TEST, CHECKSTYLE, TIMEOUT, DEADCODE, LINECOUNT, TOOLONG, MEMORYLIMIT, RECURSION, COMPLEXITY
+            DESIGN, COMPILE, TEST, CHECKSTYLE, TIMEOUT, DEADCODE, LINECOUNT, TOOLONG, MEMORYLIMIT, RECURSION, COMPLEXITY, FEATURES
         }
     }
 
@@ -418,12 +418,12 @@ data class Question(
     }
 
     @delegate:Transient
-    val sourceChecker by lazy {
-        compiledSolution.classLoader.loadClass(klass).declaredMethods.filter { it.isCheckSource() }.let {
-            require(it.size <= 1) { "Can only use @CheckSource once" }
+    val featureChecker by lazy {
+        compiledSolution.classLoader.loadClass(klass).declaredMethods.filter { it.isCheckFeatures() }.let {
+            require(it.size <= 1) { "Can only use @CheckFeatures once" }
             it.firstOrNull()
         }?.also {
-            CheckSource.validate(it)
+            CheckFeatures.validate(it)
         }
     }
 
@@ -583,6 +583,7 @@ fun String.toReason() = when (uppercase(Locale.getDefault())) {
     "MEMORYLIMIT" -> Question.IncorrectFile.Reason.MEMORYLIMIT
     "RECURSION" -> Question.IncorrectFile.Reason.RECURSION
     "COMPLEXITY" -> Question.IncorrectFile.Reason.COMPLEXITY
+    "FEATURES" -> Question.IncorrectFile.Reason.FEATURES
     else -> error("Invalid incorrect reason: $this")
 }
 
