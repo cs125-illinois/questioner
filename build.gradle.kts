@@ -19,6 +19,7 @@ subprojects {
         jvmArgs(
             "-ea", "-Xmx1G", "-Xss256k",
             "-Dfile.encoding=UTF-8",
+            "-XX:-OmitStackTraceInFastThrow",
             "--add-opens", "java.base/java.lang=ALL-UNNAMED",
             "--add-opens", "java.base/java.util=ALL-UNNAMED",
             "--add-exports", "jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED",
