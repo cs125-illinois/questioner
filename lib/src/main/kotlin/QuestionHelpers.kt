@@ -5,6 +5,7 @@ import edu.illinois.cs.cs125.jeed.core.CheckstyleFailed
 import edu.illinois.cs.cs125.jeed.core.CompilationArguments
 import edu.illinois.cs.cs125.jeed.core.CompilationFailed
 import edu.illinois.cs.cs125.jeed.core.CompiledSource
+import edu.illinois.cs.cs125.jeed.core.Features
 import edu.illinois.cs.cs125.jeed.core.KompilationArguments
 import edu.illinois.cs.cs125.jeed.core.KtLintArguments
 import edu.illinois.cs.cs125.jeed.core.KtLintFailed
@@ -17,6 +18,9 @@ import edu.illinois.cs.cs125.jeed.core.checkstyle
 import edu.illinois.cs.cs125.jeed.core.compile
 import edu.illinois.cs.cs125.jeed.core.complexity
 import edu.illinois.cs.cs125.jeed.core.countLines
+import edu.illinois.cs.cs125.jeed.core.features
+import edu.illinois.cs.cs125.jeed.core.fromJavaSnippet
+import edu.illinois.cs.cs125.jeed.core.fromKotlinSnippet
 import edu.illinois.cs.cs125.jeed.core.fromSnippet
 import edu.illinois.cs.cs125.jeed.core.fromTemplates
 import edu.illinois.cs.cs125.jeed.core.kompile
@@ -272,7 +276,7 @@ fun Question.computeComplexity(contents: String, language: Question.Language): T
                     }""".trimMargin()
                     )
                 )
-                Question.Type.SNIPPET -> Source.fromSnippet(contents)
+                Question.Type.SNIPPET -> Source.fromJavaSnippet(contents)
             }
             source.complexity().let { results ->
                 when (type) {
@@ -284,10 +288,7 @@ fun Question.computeComplexity(contents: String, language: Question.Language): T
         }
         language == Question.Language.kotlin -> {
             val source = when (type) {
-                Question.Type.SNIPPET -> Source.fromSnippet(
-                    contents,
-                    SnippetArguments(fileType = Source.FileType.KOTLIN)
-                )
+                Question.Type.SNIPPET -> Source.fromKotlinSnippet(contents)
                 else -> Source(mapOf("$klass.kt" to contents))
             }
             source.complexity().let { results ->
@@ -300,6 +301,66 @@ fun Question.computeComplexity(contents: String, language: Question.Language): T
         else -> error("Shouldn't get here")
     }
     return TestResults.ComplexityComparison(solutionComplexity, submissionComplexity, control.maxExtraComplexity!!)
+}
+
+fun Question.computeFeatures(
+    contents: String,
+    klassName: String,
+    language: Question.Language
+): TestResults.FeaturesComparison {
+    val solutionFeatures = published.features[language]
+    check(solutionFeatures != null) { "Solution features not available" }
+    val submissionFeatures = if (type == Question.Type.SNIPPET && contents.isEmpty()) {
+        Features()
+    } else if (language == Question.Language.java) {
+        when (type) {
+            Question.Type.KLASS -> Source(mapOf("$klassName.java" to contents))
+            Question.Type.METHOD -> Source(
+                mapOf(
+                    "$klassName.java" to """public class $klassName {
+                    |${contents.lines().joinToString("\n") { "  $it" }}
+                    |}""".trimMargin()
+                )
+            )
+            Question.Type.SNIPPET -> Source.fromSnippet(contents)
+        }
+    } else {
+        when {
+            type == Question.Type.SNIPPET -> Source.fromSnippet(
+                contents,
+                SnippetArguments(fileType = Source.FileType.KOTLIN)
+            )
+            type == Question.Type.METHOD && !klassName.endsWith("kt") -> Source(
+                mapOf(
+                    "$klassName.kt" to """class $klassName {
+                    |${contents.lines().joinToString("\n") { "  $it" }}
+                    |}""".trimMargin()
+                )
+            )
+            else -> Source(mapOf("$klassName.kt" to contents))
+        }
+    }.features().let { features ->
+        val path = when (type) {
+            Question.Type.METHOD -> {
+                if (language == Question.Language.java) {
+                    klassName
+                } else {
+                    if (klassName.endsWith("Kt")) {
+                        ""
+                    } else {
+                        klassName
+                    }
+                }
+            }
+            else -> ""
+        }
+        when (type) {
+            Question.Type.SNIPPET -> features.lookup(path)
+            else -> features.lookup(path, "$klassName.${language.extension()}")
+        }
+    }.features
+
+    return TestResults.FeaturesComparison(solutionFeatures, submissionFeatures, listOf())
 }
 
 fun Question.computeLineCounts(contents: String, language: Question.Language): TestResults.LineCountComparison {

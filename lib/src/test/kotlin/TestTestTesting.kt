@@ -29,7 +29,7 @@ const val KOTLIN_EMPTY_SUITE = """fun test() {
 """
 
 class TestTestTesting : StringSpec({
-    "f: should test test suites for classes" {
+    "should test test suites for classes" {
         val (question) = validator.validate("Add One Class", force = true, testing = true).also { (question, report) ->
             question.validated shouldBe true
             report shouldNotBe null
@@ -56,7 +56,7 @@ fun test() {
             results.failedSteps.size shouldBe 0
         }
     }
-    "f: should test test suites for methods" {
+    "should test test suites for methods" {
         val (question) = validator.validate("Add One", force = true, testing = true).also { (question, report) ->
             question.validated shouldBe true
             report shouldNotBe null

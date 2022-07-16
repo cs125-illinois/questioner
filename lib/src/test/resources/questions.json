@@ -161,6 +161,17 @@
           ],
           "identifierList": [],
           "dottedMethodList": []
+        },
+        "kotlin": {
+          "featureMap": {
+            "COMPARISON_OPERATORS": 1,
+            "IF_STATEMENTS": 1,
+            "METHOD": 1
+          },
+          "importList": [],
+          "typeList": [],
+          "identifierList": [],
+          "dottedMethodList": []
         }
       },
       "lineCounts": {
@@ -473,7 +484,8 @@
         "features": {
           "featureMap": {
             "VARIABLE_REASSIGNMENTS": 2,
-            "METHOD": 2
+            "METHOD": 2,
+            "CLASS": 1
           },
           "importList": [],
           "typeList": [],
@@ -501,7 +513,8 @@
       "features": {
         "featureMap": {
           "VARIABLE_REASSIGNMENTS": 2,
-          "METHOD": 2
+          "METHOD": 2,
+          "CLASS": 1
         },
         "importList": [],
         "typeList": [],
@@ -550,6 +563,17 @@
           "typeList": [
             "int"
           ],
+          "identifierList": [],
+          "dottedMethodList": []
+        },
+        "kotlin": {
+          "featureMap": {
+            "VARIABLE_REASSIGNMENTS": 2,
+            "METHOD": 2,
+            "CLASS": 1
+          },
+          "importList": [],
+          "typeList": [],
           "identifierList": [],
           "dottedMethodList": []
         }
@@ -1242,6 +1266,26 @@
             "contains",
             "add"
           ]
+        },
+        "kotlin": {
+          "featureMap": {
+            "LOCAL_VARIABLE_DECLARATIONS": 2,
+            "VARIABLE_ASSIGNMENTS": 2,
+            "IF_STATEMENTS": 1,
+            "FOR_LOOPS": 1,
+            "METHOD": 1,
+            "DOT_NOTATION": 4,
+            "DOTTED_METHOD_CALL": 4
+          },
+          "importList": [],
+          "typeList": [],
+          "identifierList": [],
+          "dottedMethodList": [
+            "split",
+            "trim",
+            "contains",
+            "add"
+          ]
         }
       },
       "lineCounts": {
@@ -1672,6 +1716,15 @@
           ],
           "identifierList": [],
           "dottedMethodList": []
+        },
+        "kotlin": {
+          "featureMap": {
+            "METHOD": 1
+          },
+          "importList": [],
+          "typeList": [],
+          "identifierList": [],
+          "dottedMethodList": []
         }
       },
       "lineCounts": {
@@ -1912,6 +1965,203 @@
     },
     "fauxStatic": false
   },
+  "With Imports": {
+    "name": "With Imports",
+    "type": "KLASS",
+    "klass": "Question",
+    "metadata": {
+      "contentHash": "83b1e2a4e9e7717bc90391bfb07e4ab1",
+      "packageName": "com.examples.withimports",
+      "version": "2022.7.0",
+      "author": "challen@illinois.edu",
+      "javaDescription": "<p>Example to test use of import statements.</p>",
+      "kotlinDescription": "<p>Test Kotlin top-level method with import statements.</p>",
+      "usedFiles": [
+        "/Users/challen/code/questioner-problems/src/main/java/com/examples/withimports/correct/kotlin/Question.kt"
+      ],
+      "focused": true
+    },
+    "annotatedControls": {},
+    "question": {
+      "klass": "Question",
+      "contents": "import edu.illinois.cs.cs125.questioner.lib.Correct;\n\nimport java.util.Arrays;\nimport java.util.List;\n\n/*\n * Example to test use of import statements.\n */\n\n@Correct(name = \"With Imports\", version = \"2022.7.0\", author = \"challen@illinois.edu\", focused = true)\npublic class Question {\n  public static List<Integer> max(int first, int second) {\n    return Arrays.asList(first, second);\n  }\n}",
+      "language": "java",
+      "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/withimports/Question.java"
+    },
+    "correct": {
+      "klass": "Question",
+      "contents": "import java.util.Arrays;\nimport java.util.List;\n\npublic class Question {\n  public static List<Integer> max(int first, int second) {\n    return Arrays.asList(first, second);\n  }\n}\n",
+      "language": "java",
+      "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/withimports/Question.java",
+      "complexity": 1,
+      "features": {
+        "featureMap": {
+          "METHOD": 1,
+          "RETURN": 1,
+          "CLASS": 1,
+          "VISIBILITY_MODIFIERS": 2,
+          "STATIC_METHOD": 1,
+          "IMPORT": 2,
+          "BOXING_CLASSES": 1,
+          "TYPE_PARAMETERS": 1,
+          "DOT_NOTATION": 1,
+          "DOTTED_METHOD_CALL": 1
+        },
+        "importList": [
+          "java.util.Arrays",
+          "java.util.List"
+        ],
+        "typeList": [
+          "List<Integer>",
+          "Integer",
+          "int"
+        ],
+        "identifierList": [],
+        "dottedMethodList": [
+          "asList"
+        ]
+      },
+      "lineCount": {
+        "source": 7,
+        "comment": 0,
+        "blank": 2
+      },
+      "expectedDeadCount": 1
+    },
+    "alternativeSolutions": [
+      {
+        "klass": "QuestionKt",
+        "contents": "import java.util.Arrays\n\n\nfun max(first: Int, second: Int): List<Int> {\n  return Arrays.asList(first, second)\n}",
+        "language": "kotlin",
+        "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/withimports/correct/kotlin/Question.kt",
+        "complexity": 1,
+        "features": {
+          "featureMap": {
+            "METHOD": 1,
+            "DOT_NOTATION": 1,
+            "DOTTED_METHOD_CALL": 1
+          },
+          "importList": [],
+          "typeList": [],
+          "identifierList": [],
+          "dottedMethodList": [
+            "asList"
+          ]
+        },
+        "lineCount": {
+          "source": 4,
+          "comment": 0,
+          "blank": 2
+        }
+      }
+    ],
+    "incorrect": [],
+    "common": [],
+    "importWhitelist": [],
+    "importBlacklist": [],
+    "slug": "with-imports",
+    "kotlinSolution": {
+      "klass": "QuestionKt",
+      "contents": "import java.util.Arrays\n\n\nfun max(first: Int, second: Int): List<Int> {\n  return Arrays.asList(first, second)\n}",
+      "language": "kotlin",
+      "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/withimports/correct/kotlin/Question.kt",
+      "complexity": 1,
+      "features": {
+        "featureMap": {
+          "METHOD": 1,
+          "DOT_NOTATION": 1,
+          "DOTTED_METHOD_CALL": 1
+        },
+        "importList": [],
+        "typeList": [],
+        "identifierList": [],
+        "dottedMethodList": [
+          "asList"
+        ]
+      },
+      "lineCount": {
+        "source": 4,
+        "comment": 0,
+        "blank": 2
+      }
+    },
+    "hasKotlin": true,
+    "published": {
+      "name": "With Imports",
+      "type": "KLASS",
+      "path": "with-imports",
+      "author": "challen@illinois.edu",
+      "version": "2022.7.0",
+      "packageName": "com.examples.withimports",
+      "languages": [
+        "java",
+        "kotlin"
+      ],
+      "descriptions": {
+        "java": "<p>Example to test use of import statements.</p>",
+        "kotlin": "<p>Test Kotlin top-level method with import statements.</p>"
+      },
+      "complexity": {
+        "java": 1,
+        "kotlin": 1
+      },
+      "features": {
+        "java": {
+          "featureMap": {
+            "METHOD": 1,
+            "RETURN": 1,
+            "CLASS": 1,
+            "VISIBILITY_MODIFIERS": 2,
+            "STATIC_METHOD": 1,
+            "IMPORT": 2,
+            "BOXING_CLASSES": 1,
+            "TYPE_PARAMETERS": 1,
+            "DOT_NOTATION": 1,
+            "DOTTED_METHOD_CALL": 1
+          },
+          "importList": [
+            "java.util.Arrays",
+            "java.util.List"
+          ],
+          "typeList": [
+            "List<Integer>",
+            "Integer",
+            "int"
+          ],
+          "identifierList": [],
+          "dottedMethodList": [
+            "asList"
+          ]
+        },
+        "kotlin": {
+          "featureMap": {
+            "METHOD": 1,
+            "DOT_NOTATION": 1,
+            "DOTTED_METHOD_CALL": 1
+          },
+          "importList": [],
+          "typeList": [],
+          "identifierList": [],
+          "dottedMethodList": [
+            "asList"
+          ]
+        }
+      },
+      "lineCounts": {
+        "java": {
+          "source": 7,
+          "comment": 0,
+          "blank": 2
+        },
+        "kotlin": {
+          "source": 4,
+          "comment": 0,
+          "blank": 2
+        }
+      }
+    },
+    "fauxStatic": false
+  },
   "Add One": {
     "name": "Add One",
     "type": "METHOD",
@@ -2113,6 +2363,15 @@
           ],
           "identifierList": [],
           "dottedMethodList": []
+        },
+        "kotlin": {
+          "featureMap": {
+            "METHOD": 1
+          },
+          "importList": [],
+          "typeList": [],
+          "identifierList": [],
+          "dottedMethodList": []
         }
       },
       "lineCounts": {
@@ -2311,6 +2570,17 @@
           "dottedMethodList": [
             "length"
           ]
+        },
+        "kotlin": {
+          "featureMap": {
+            "METHOD": 1,
+            "DOT_NOTATION": 1,
+            "DOTTED_VARIABLE_ACCESS": 1
+          },
+          "importList": [],
+          "typeList": [],
+          "identifierList": [],
+          "dottedMethodList": []
         }
       },
       "lineCounts": {

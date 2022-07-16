@@ -4,6 +4,7 @@ import edu.illinois.cs.cs125.jeed.core.CheckstyleFailed
 import edu.illinois.cs.cs125.jeed.core.CompilationFailed
 import edu.illinois.cs.cs125.jeed.core.ComplexityFailed
 import edu.illinois.cs.cs125.jeed.core.ConfiguredSandboxPlugin
+import edu.illinois.cs.cs125.jeed.core.FeaturesFailed
 import edu.illinois.cs.cs125.jeed.core.Jacoco
 import edu.illinois.cs.cs125.jeed.core.KtLintFailed
 import edu.illinois.cs.cs125.jeed.core.Sandbox
@@ -76,6 +77,16 @@ suspend fun Question.test(
     } catch (e: ComplexityFailed) {
         results.failed.complexity = e
         results.failedSteps.add(TestResults.Step.complexity)
+    }
+
+    // features
+    try {
+        computeFeatures(contents, klassName, language)
+        // results.completedSteps.add(TestResults.Step.complexity)
+    } catch (e: FeaturesFailed) {
+        throw e
+        // results.failed.complexity = e
+        // results.failedSteps.add(TestResults.Step.complexity)
     }
 
     // linecount

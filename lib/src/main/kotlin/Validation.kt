@@ -461,6 +461,9 @@ private fun TestResults.validate(reason: Question.IncorrectFile.Reason) {
         Question.IncorrectFile.Reason.RECURSION -> require(failed.checkExecutedSubmission?.contains("was not implemented recursively") == true) {
             "Expected submission to not correctly provide a recursive method"
         }
+        Question.IncorrectFile.Reason.COMPLEXITY -> require(complete.complexity?.failed == true) {
+            "Expected submission to be too complex"
+        }
         else -> require(complete.testing?.passed == false) {
             "Expected submission to fail tests"
         }

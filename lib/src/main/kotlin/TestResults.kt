@@ -5,6 +5,7 @@ import edu.illinois.cs.cs125.jeed.core.CheckstyleFailed
 import edu.illinois.cs.cs125.jeed.core.CheckstyleResults
 import edu.illinois.cs.cs125.jeed.core.CompilationFailed
 import edu.illinois.cs.cs125.jeed.core.ComplexityFailed
+import edu.illinois.cs.cs125.jeed.core.Features
 import edu.illinois.cs.cs125.jeed.core.KtLintFailed
 import edu.illinois.cs.cs125.jeed.core.KtLintResults
 import edu.illinois.cs.cs125.jeed.core.LineCounts
@@ -148,6 +149,14 @@ data class TestResults(
         val limit: Long,
         val increase: Long = submission - solution,
         val failed: Boolean = submission >= limit
+    )
+
+    @JsonClass(generateAdapter = true)
+    data class FeaturesComparison(
+        val solution: Features,
+        val submission: Features,
+        val errors: List<String>,
+        val failed: Boolean = errors.isNotEmpty()
     )
 
     @JsonClass(generateAdapter = true)

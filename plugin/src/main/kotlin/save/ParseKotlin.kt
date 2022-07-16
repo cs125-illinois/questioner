@@ -114,10 +114,8 @@ data class ParsedKotlinFile(val path: String, val contents: String) {
         val features = source.features().let { features ->
             if (cleanSpec.notClass) {
                 features.lookup("")
-            } else if (topLevelFile) {
-                features.lookup("", "$className.kt")
             } else {
-                features.lookup(className, "$className.kt")
+                features.lookup("", "$className.kt")
             }
         }.features
         return Question.FlatFile(className, solutionContent, Question.Language.kotlin, path, complexity, features, lineCounts)

@@ -88,8 +88,11 @@ data class Question(
                 )
             }
         },
-        // TODO: Support Kotlin features
-        mutableMapOf(Language.java to correct.features!!),
+        mutableMapOf(Language.java to correct.features!!).apply {
+            if (hasKotlin) {
+                put(Language.kotlin, kotlinSolution!!.features!!)
+            }
+        },
         mutableMapOf(Language.java to correct.lineCount!!).apply {
             if (hasKotlin) {
                 put(Language.kotlin, kotlinSolution!!.lineCount!!)
@@ -297,7 +300,9 @@ data class Question(
         val mutation: MutatedSource? = null
     ) {
         @Suppress("SpellCheckingInspection")
-        enum class Reason { DESIGN, COMPILE, TEST, CHECKSTYLE, TIMEOUT, DEADCODE, LINECOUNT, TOOLONG, MEMORYLIMIT, RECURSION }
+        enum class Reason {
+            DESIGN, COMPILE, TEST, CHECKSTYLE, TIMEOUT, DEADCODE, LINECOUNT, TOOLONG, MEMORYLIMIT, RECURSION, COMPLEXITY
+        }
     }
 
     @JsonClass(generateAdapter = true)
@@ -466,6 +471,7 @@ data class Question(
         it.compiled(this)
     }
 
+    @Suppress("unused")
     companion object {
         const val DEFAULT_RETURN_TIMEOUT = 16
         const val MAX_START_MULTIPLE_COUNT = 128
@@ -576,6 +582,7 @@ fun String.toReason() = when (uppercase(Locale.getDefault())) {
     "TOOLONG" -> Question.IncorrectFile.Reason.TOOLONG
     "MEMORYLIMIT" -> Question.IncorrectFile.Reason.MEMORYLIMIT
     "RECURSION" -> Question.IncorrectFile.Reason.RECURSION
+    "COMPLEXITY" -> Question.IncorrectFile.Reason.COMPLEXITY
     else -> error("Invalid incorrect reason: $this")
 }
 

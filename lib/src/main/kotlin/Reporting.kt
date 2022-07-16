@@ -147,7 +147,9 @@ fun IncorrectResults.html(index: Int, question: Question): String {
                 """<div class="alert alert-success" role="alert">Testing succeeded, but submission allocated ${results.complete.memoryAllocation!!.submission - results.complete.memoryAllocation!!.limit} too many bytes as expected.</div>"""
             } else if (results.succeeded && incorrect.reason == Question.IncorrectFile.Reason.RECURSION) {
                 """<div class="alert alert-success" role="alert">Testing succeeded, but submission did not implement a method recursively.</div>"""
-            } else if (results.tests()!!.size > question.control.minTestCount!!) {
+            } else if (results.succeeded && incorrect.reason == Question.IncorrectFile.Reason.COMPLEXITY) {
+                """<div class="alert alert-success" role="alert">Testing succeeded, but submission was too complex.</div>"""
+            }else if (results.tests()!!.size > question.control.minTestCount!!) {
                 """<div class="alert alert-warning" role="alert">Slowly found a failing test. Consider adding this input to @FixedParameters.</div>"""
             } else {
                 """<div class="alert alert-success" role="alert">Quickly found a failing test.</div>"""
