@@ -169,6 +169,14 @@ export const ComplexityComparison = Record({
 })
 export type ComplexityComparison = Static<typeof ComplexityComparison>
 
+export const FeaturesComparison = Record({
+  solution: FeatureValue,
+  submission: FeatureValue,
+  errors: RuntypeArray(String),
+  failed: Boolean,
+})
+export type FeaturesComparison = Static<typeof FeaturesComparison>
+
 export const CompletedTasks = Partial({
   // templateSubmission doesn't complete
   compileSubmission: CompiledSourceResult,
@@ -176,6 +184,7 @@ export const CompletedTasks = Partial({
   ktlint: KtlintResults,
   // checkCompiledSubmission doesn't complete
   complexity: ComplexityComparison,
+  features: FeaturesComparison,
   lineCount: LineCountComparison,
   // execution
   // checkExecutedSubmission doesn't complete
@@ -193,6 +202,7 @@ export const FailedTasks = Partial({
   ktlint: KtlintFailed,
   checkCompiledSubmission: String,
   complexity: ComplexityFailed,
+  features: String,
   // lineCount doesn't fail
   // execution
   checkExecutedSubmission: String,
@@ -210,6 +220,7 @@ export const Step = Union(
   Literal("ktlint"),
   Literal("checkCompiledSubmission"),
   Literal("complexity"),
+  Literal("features"),
   Literal("lineCount"),
   // execution
   Literal("checkExecutedSubmission"),
@@ -227,6 +238,7 @@ export const TestingOrder: Array<Step> = [
   "ktlint",
   "checkCompiledSubmission",
   "complexity",
+  "features",
   "lineCount",
   // execution
   "checkExecutedSubmission",
