@@ -170,8 +170,6 @@ export const ComplexityComparison = Record({
 export type ComplexityComparison = Static<typeof ComplexityComparison>
 
 export const FeaturesComparison = Record({
-  solution: FeatureValue,
-  submission: FeatureValue,
   errors: RuntypeArray(String),
   failed: Boolean,
 })
