@@ -26,7 +26,6 @@ import edu.illinois.cs.cs125.jeed.core.ktLint
 import edu.illinois.cs.cs125.jeed.core.moshi.CompiledSourceResult
 import edu.illinois.cs.cs125.jenisol.core.CapturedResult
 import edu.illinois.cs.cs125.jenisol.core.unwrap
-import java.lang.reflect.InvocationTargetException
 import kotlin.random.Random
 
 fun Question.templateSubmission(contents: String, language: Question.Language = Question.Language.java): Source {
@@ -344,7 +343,7 @@ fun Question.computeFeatures(
         listOf()
     }
 
-    return TestResults.FeaturesComparison(solutionFeatures, submissionFeatures, errors)
+    return TestResults.FeaturesComparison(errors)
 }
 
 fun Question.computeLineCounts(contents: String, language: Question.Language): TestResults.LineCountComparison {

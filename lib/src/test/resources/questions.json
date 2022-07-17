@@ -2038,10 +2038,13 @@
         "features": {
           "featureMap": {
             "METHOD": 1,
+            "IMPORT": 1,
             "DOT_NOTATION": 1,
             "DOTTED_METHOD_CALL": 1
           },
-          "importList": [],
+          "importList": [
+            "java.util.Arrays"
+          ],
           "typeList": [],
           "identifierList": [],
           "dottedMethodList": [
@@ -2069,10 +2072,13 @@
       "features": {
         "featureMap": {
           "METHOD": 1,
+          "IMPORT": 1,
           "DOT_NOTATION": 1,
           "DOTTED_METHOD_CALL": 1
         },
-        "importList": [],
+        "importList": [
+          "java.util.Arrays"
+        ],
         "typeList": [],
         "identifierList": [],
         "dottedMethodList": [
@@ -2136,10 +2142,13 @@
         "kotlin": {
           "featureMap": {
             "METHOD": 1,
+            "IMPORT": 1,
             "DOT_NOTATION": 1,
             "DOTTED_METHOD_CALL": 1
           },
-          "importList": [],
+          "importList": [
+            "java.util.Arrays"
+          ],
           "typeList": [],
           "identifierList": [],
           "dottedMethodList": [
