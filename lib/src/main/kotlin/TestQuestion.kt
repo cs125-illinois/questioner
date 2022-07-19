@@ -89,6 +89,7 @@ suspend fun Question.test(
         results.failedSteps.add(TestResults.Step.features)
         return results
     } catch (e: Exception) {
+        System.err.println(contents)
         e.printStackTrace()
         // FIXME: Ignore for now while we address any bugs
         // results.failed.features = e.message ?: "Unknown features failure"

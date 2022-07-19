@@ -80,6 +80,7 @@ suspend fun Question.validate(seed: Int): ValidationReport {
                         return@forEach
                     }
                     if (values.distinct().size == 1) {
+                        // (taskResults!!.returned!! as edu.illinois.cs.cs125.jenisol.core.TestResults).printTrace()
                         throw SolutionLacksEntropy(
                             file,
                             values.size,
