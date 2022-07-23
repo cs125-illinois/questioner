@@ -82,8 +82,6 @@ suspend fun Question.test(
     try {
         results.complete.features = computeFeatures(contents, klassName, language)
         results.completedSteps.add(TestResults.Step.features)
-    } catch (e: IllegalStateException) {
-        throw e
     } catch (e: FeatureCheckException) {
         results.failed.features = e.message!!
         results.failedSteps.add(TestResults.Step.features)
