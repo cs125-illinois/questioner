@@ -167,11 +167,11 @@ suspend fun Question.test(
         results.failedSteps.add(TestResults.Step.checkExecutedSubmission)
         when (threw) {
             is ClassNotFoundException -> results.failed.checkExecutedSubmission =
-                "Class design error: could not find class $klass"
+                "Class design error:\n  Could not find class $klass"
             is SubmissionDesignError -> results.failed.checkExecutedSubmission =
-                "Class design error: ${threw.message}"
+                "Class design error:\n  ${threw.message}"
             is NoClassDefFoundError -> results.failed.checkExecutedSubmission =
-                "Class design error: attempted to use unavailable class ${threw.message}"
+                "Class design error:\n  Attempted to use unavailable class ${threw.message}"
             is OutOfMemoryError -> results.failed.checkExecutedSubmission =
                 "Allocated too much memory: ${threw.message}, already used ${resourceUsage.allocatedMemory} bytes"
             // TODO: Adjust Jenisol to let OutOfMemoryError escape the testing loop or remove this case
