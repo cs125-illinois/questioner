@@ -87,12 +87,8 @@ suspend fun Question.test(
         results.failedSteps.add(TestResults.Step.features)
         return results
     } catch (e: Exception) {
-        System.err.println(contents)
-        e.printStackTrace()
-        // FIXME: Ignore for now while we address any bugs
-        // results.failed.features = e.message ?: "Unknown features failure"
-        // results.failedSteps.add(TestResults.Step.features)
-        results.completedSteps.add(TestResults.Step.features)
+        results.failed.features = e.message ?: "Unknown features failure"
+        results.failedSteps.add(TestResults.Step.features)
     }
 
     // linecount
@@ -146,7 +142,7 @@ suspend fun Question.test(
         configuredPlugins = plugins
     ) { (classLoader, _) ->
         try {
-            solution.submission(classLoader.loadClass(klassName)).test(jenisolSettings, ::captureJeedOutput)
+            solution.submission(classLoader.loadClass(klassName)).test(jenisolSettings, ::captureJeedOutput, ::controlJeedInput)
         } catch (e: InvocationTargetException) {
             throw e.cause ?: e
         }

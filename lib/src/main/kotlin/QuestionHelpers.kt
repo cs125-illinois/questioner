@@ -25,6 +25,7 @@ import edu.illinois.cs.cs125.jeed.core.kompile
 import edu.illinois.cs.cs125.jeed.core.ktLint
 import edu.illinois.cs.cs125.jeed.core.moshi.CompiledSourceResult
 import edu.illinois.cs.cs125.jenisol.core.CapturedResult
+import edu.illinois.cs.cs125.jenisol.core.InputController
 import edu.illinois.cs.cs125.jenisol.core.unwrap
 import kotlin.random.Random
 
@@ -395,4 +396,12 @@ fun captureJeedOutput(run: () -> Any?): CapturedResult {
         }
     }
     return CapturedResult(jeedOutput.returned, jeedOutput.threw, jeedOutput.stdout, jeedOutput.stderr, resourceUsage)
+}
+
+fun <T> controlJeedInput(run: InputController.() -> T): T {
+    val inputController = object : InputController {
+        override fun close() = TODO("Not yet implemented")
+        override fun open(input: String) = TODO("Not yet implemented")
+    }
+    return inputController.run()
 }
