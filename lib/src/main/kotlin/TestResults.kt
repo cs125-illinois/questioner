@@ -249,7 +249,7 @@ fun TestResult<*, *>.asTestResult(source: Source) = TestResults.TestingResult.Te
     type,
     runnerID,
     stepCount,
-    methodCall(),
+    submissionMethodString,
     verifierThrew?.message,
     parameters.toString(),
     @Suppress("TooGenericExceptionCaught")

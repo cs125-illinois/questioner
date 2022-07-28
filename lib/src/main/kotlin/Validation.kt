@@ -545,6 +545,7 @@ class SolutionTestingThrew(val solution: Question.FlatFile, val threw: Throwable
     ValidationFailed() {
     override val message = """
         |Solution testing threw an exception $threw
+        |${threw.stackTraceToString()}
     """.trimMargin()
 }
 
