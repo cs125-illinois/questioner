@@ -142,7 +142,7 @@ suspend fun Question.test(
         configuredPlugins = plugins
     ) { (classLoader, _) ->
         try {
-            solution.submission(classLoader.loadClass(klassName)).test(jenisolSettings, ::captureJeedOutput, ::controlJeedInput)
+            solution.submission(classLoader.loadClass(klassName)).test(jenisolSettings, ::jeedCaptureOutputControlInput)
         } catch (e: InvocationTargetException) {
             throw e.cause ?: e
         }

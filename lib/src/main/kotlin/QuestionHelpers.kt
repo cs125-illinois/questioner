@@ -25,7 +25,6 @@ import edu.illinois.cs.cs125.jeed.core.kompile
 import edu.illinois.cs.cs125.jeed.core.ktLint
 import edu.illinois.cs.cs125.jeed.core.moshi.CompiledSourceResult
 import edu.illinois.cs.cs125.jenisol.core.CapturedResult
-import edu.illinois.cs.cs125.jenisol.core.InputController
 import edu.illinois.cs.cs125.jenisol.core.unwrap
 import kotlin.random.Random
 
@@ -136,6 +135,7 @@ fun Question.checkCompiledSubmission(
             testResults.failedSteps.add(TestResults.Step.checkCompiledSubmission)
             return null
         }
+
         it.size > 1 -> {
             testResults.failed.checkCompiledSubmission = "Submission defined multiple classes"
             testResults.failedSteps.add(TestResults.Step.checkCompiledSubmission)
@@ -256,6 +256,7 @@ fun Question.computeComplexity(contents: String, language: Question.Language): T
                     }""".trimMargin()
                     )
                 )
+
                 Question.Type.SNIPPET -> Source.fromJavaSnippet(contents)
             }
             source.complexity().let { results ->
@@ -266,6 +267,7 @@ fun Question.computeComplexity(contents: String, language: Question.Language): T
                 }
             }
         }
+
         language == Question.Language.kotlin -> {
             val source = when (type) {
                 Question.Type.SNIPPET -> Source.fromKotlinSnippet(contents)
@@ -278,6 +280,7 @@ fun Question.computeComplexity(contents: String, language: Question.Language): T
                 }
             }
         }
+
         else -> error("Shouldn't get here")
     }
     return TestResults.ComplexityComparison(solutionComplexity, submissionComplexity, control.maxExtraComplexity!!)
@@ -302,6 +305,7 @@ fun Question.computeFeatures(
                     |}""".trimMargin()
                 )
             )
+
             Question.Type.SNIPPET -> Source.fromJavaSnippet(contents)
         }
     } else {
@@ -314,6 +318,7 @@ fun Question.computeFeatures(
                     |}""".trimMargin()
                 )
             )
+
             else -> Source(mapOf("$klassName.kt" to contents))
         }
     }.features().let { features ->
@@ -329,6 +334,7 @@ fun Question.computeFeatures(
                     }
                 }
             }
+
             else -> ""
         }
         when (type) {
@@ -385,7 +391,7 @@ class InvertingClassLoader(
     }
 }
 
-fun captureJeedOutput(run: () -> Any?): CapturedResult {
+fun jeedCaptureOutputControlInput(stdin: List<String>, run: () -> Any?): CapturedResult {
     var resourceUsage: ResourceMonitoringCheckpoint? = null
     val jeedOutput = Sandbox.redirectOutput {
         ResourceMonitoring.beginSubmissionCall()
@@ -395,13 +401,12 @@ fun captureJeedOutput(run: () -> Any?): CapturedResult {
             resourceUsage = ResourceMonitoring.finishSubmissionCall()
         }
     }
-    return CapturedResult(jeedOutput.returned, jeedOutput.threw, jeedOutput.stdout, jeedOutput.stderr, resourceUsage)
-}
-
-fun <T> controlJeedInput(run: InputController.() -> T): T {
-    val inputController = object : InputController {
-        override fun close() = TODO("Not yet implemented")
-        override fun open(input: String) = TODO("Not yet implemented")
-    }
-    return inputController.run()
+    // TODO
+    return CapturedResult(
+        jeedOutput.returned,
+        jeedOutput.threw,
+        jeedOutput.stdout,
+        jeedOutput.stderr,
+        "", "", resourceUsage
+    )
 }

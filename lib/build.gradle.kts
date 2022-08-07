@@ -12,11 +12,11 @@ dependencies {
     implementation("org.ow2.asm:asm:9.3")
 
     api("com.beyondgrader.resource-agent:agent:2022.6.6")
-    api("com.github.cs125-illinois.jeed:core:2022.7.5")
-    api("com.github.cs125-illinois:jenisol:2022.7.3")
-    api("io.kotest:kotest-runner-junit5:5.4.0")
+    api("com.github.cs125-illinois.jeed:core:2022.8.0")
+    api("com.github.cs125-illinois:jenisol:2022.8.0")
+    api("io.kotest:kotest-runner-junit5:5.4.1")
     api("com.google.truth:truth:1.1.3")
-    api("com.github.cs125-illinois:libcs1:2022.6.2")
+    api("com.github.cs125-illinois:libcs1:2022.7.0")
 }
 tasks {
     val sourcesJar by creating(Jar::class) {
