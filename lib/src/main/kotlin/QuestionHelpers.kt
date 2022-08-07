@@ -24,8 +24,11 @@ import edu.illinois.cs.cs125.jeed.core.fromTemplates
 import edu.illinois.cs.cs125.jeed.core.kompile
 import edu.illinois.cs.cs125.jeed.core.ktLint
 import edu.illinois.cs.cs125.jeed.core.moshi.CompiledSourceResult
+import edu.illinois.cs.cs125.jenisol.core.CaptureOutputControlInput
 import edu.illinois.cs.cs125.jenisol.core.CapturedResult
 import edu.illinois.cs.cs125.jenisol.core.unwrap
+import java.io.ByteArrayInputStream
+import java.io.InputStream
 import kotlin.random.Random
 
 fun Question.templateSubmission(contents: String, language: Question.Language = Question.Language.java): Source {
@@ -391,22 +394,42 @@ class InvertingClassLoader(
     }
 }
 
-fun jeedCaptureOutputControlInput(stdin: List<String>, run: () -> Any?): CapturedResult {
-    var resourceUsage: ResourceMonitoringCheckpoint? = null
-    val jeedOutput = Sandbox.redirectOutput {
-        ResourceMonitoring.beginSubmissionCall()
-        try {
-            run()
-        } finally {
-            resourceUsage = ResourceMonitoring.finishSubmissionCall()
+class ResettingInputStream : InputStream() {
+    private var currentInputStream: ByteArrayInputStream = ByteArrayInputStream("".toByteArray())
+        set(value) {
+            currentInputStream.close()
+            field = value
         }
+
+    override fun read(): Int {
+        return currentInputStream.read()
     }
-    // TODO
-    return CapturedResult(
-        jeedOutput.returned,
-        jeedOutput.threw,
-        jeedOutput.stdout,
-        jeedOutput.stderr,
-        "", "", resourceUsage
-    )
+}
+
+fun bindJeedCaptureOutputControlInput(stdinStream: ResettingInputStream): CaptureOutputControlInput {
+    return fun(stdin: List<String>, run: () -> Any?): CapturedResult {
+        val outputListener = object : Sandbox.OutputListener {
+            override fun stderr(int: Int) {}
+            override fun stdout(int: Int) {}
+        }
+        var resourceUsage: ResourceMonitoringCheckpoint? = null
+        val jeedOutput = Sandbox.redirectOutput(outputListener) {
+            ResourceMonitoring.beginSubmissionCall()
+            try {
+                run()
+            } finally {
+                resourceUsage = ResourceMonitoring.finishSubmissionCall()
+            }
+        }
+        // TODO
+        return CapturedResult(
+            jeedOutput.returned,
+            jeedOutput.threw,
+            jeedOutput.stdout,
+            jeedOutput.stderr,
+            jeedOutput.stdin,
+            jeedOutput.interleavedInputOutput,
+            resourceUsage
+        )
+    }
 }
