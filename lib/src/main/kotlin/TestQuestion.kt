@@ -110,12 +110,14 @@ suspend fun Question.test(
         minTestCount = settings.minTestCount,
         maxTestCount = settings.maxTestCount
     )
+    val systemInStream = ResettingInputStream()
     val executionArguments = Sandbox.ExecutionArguments(
         timeout = settings.timeout.toLong(),
         classLoaderConfiguration = classLoaderConfiguration,
         maxOutputLines = settings.outputLimit,
         permissions = Question.SAFE_PERMISSIONS,
-        returnTimeout = Question.DEFAULT_RETURN_TIMEOUT
+        returnTimeout = Question.DEFAULT_RETURN_TIMEOUT,
+        systemInStream = systemInStream
     )
     val lineCountLimit = when (language) {
         Question.Language.java -> settings.executionCountLimit.java
@@ -136,13 +138,15 @@ suspend fun Question.test(
             )
         )
     )
+
+    val captureOutputControlInput = bindJeedCaptureOutputControlInput(systemInStream)
     val taskResults = Sandbox.execute(
         compiledSubmission.classLoader,
         executionArguments,
         configuredPlugins = plugins
     ) { (classLoader, _) ->
         try {
-            solution.submission(classLoader.loadClass(klassName)).test(jenisolSettings, ::captureJeedOutput, ::controlJeedInput)
+            solution.submission(classLoader.loadClass(klassName)).test(jenisolSettings, captureOutputControlInput)
         } catch (e: InvocationTargetException) {
             throw e.cause ?: e
         }

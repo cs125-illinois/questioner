@@ -24,9 +24,11 @@ import edu.illinois.cs.cs125.jeed.core.fromTemplates
 import edu.illinois.cs.cs125.jeed.core.kompile
 import edu.illinois.cs.cs125.jeed.core.ktLint
 import edu.illinois.cs.cs125.jeed.core.moshi.CompiledSourceResult
+import edu.illinois.cs.cs125.jenisol.core.CaptureOutputControlInput
 import edu.illinois.cs.cs125.jenisol.core.CapturedResult
-import edu.illinois.cs.cs125.jenisol.core.InputController
 import edu.illinois.cs.cs125.jenisol.core.unwrap
+import java.io.ByteArrayInputStream
+import java.io.InputStream
 import kotlin.random.Random
 
 fun Question.templateSubmission(contents: String, language: Question.Language = Question.Language.java): Source {
@@ -136,6 +138,7 @@ fun Question.checkCompiledSubmission(
             testResults.failedSteps.add(TestResults.Step.checkCompiledSubmission)
             return null
         }
+
         it.size > 1 -> {
             testResults.failed.checkCompiledSubmission = "Submission defined multiple classes"
             testResults.failedSteps.add(TestResults.Step.checkCompiledSubmission)
@@ -256,6 +259,7 @@ fun Question.computeComplexity(contents: String, language: Question.Language): T
                     }""".trimMargin()
                     )
                 )
+
                 Question.Type.SNIPPET -> Source.fromJavaSnippet(contents)
             }
             source.complexity().let { results ->
@@ -266,6 +270,7 @@ fun Question.computeComplexity(contents: String, language: Question.Language): T
                 }
             }
         }
+
         language == Question.Language.kotlin -> {
             val source = when (type) {
                 Question.Type.SNIPPET -> Source.fromKotlinSnippet(contents)
@@ -278,6 +283,7 @@ fun Question.computeComplexity(contents: String, language: Question.Language): T
                 }
             }
         }
+
         else -> error("Shouldn't get here")
     }
     return TestResults.ComplexityComparison(solutionComplexity, submissionComplexity, control.maxExtraComplexity!!)
@@ -302,6 +308,7 @@ fun Question.computeFeatures(
                     |}""".trimMargin()
                 )
             )
+
             Question.Type.SNIPPET -> Source.fromJavaSnippet(contents)
         }
     } else {
@@ -314,6 +321,7 @@ fun Question.computeFeatures(
                     |}""".trimMargin()
                 )
             )
+
             else -> Source(mapOf("$klassName.kt" to contents))
         }
     }.features().let { features ->
@@ -329,6 +337,7 @@ fun Question.computeFeatures(
                     }
                 }
             }
+
             else -> ""
         }
         when (type) {
@@ -385,23 +394,42 @@ class InvertingClassLoader(
     }
 }
 
-fun captureJeedOutput(run: () -> Any?): CapturedResult {
-    var resourceUsage: ResourceMonitoringCheckpoint? = null
-    val jeedOutput = Sandbox.redirectOutput {
-        ResourceMonitoring.beginSubmissionCall()
-        try {
-            run()
-        } finally {
-            resourceUsage = ResourceMonitoring.finishSubmissionCall()
+class ResettingInputStream : InputStream() {
+    private var currentInputStream: ByteArrayInputStream = ByteArrayInputStream("".toByteArray())
+        set(value) {
+            currentInputStream.close()
+            field = value
         }
+
+    override fun read(): Int {
+        return currentInputStream.read()
     }
-    return CapturedResult(jeedOutput.returned, jeedOutput.threw, jeedOutput.stdout, jeedOutput.stderr, resourceUsage)
 }
 
-fun <T> controlJeedInput(run: InputController.() -> T): T {
-    val inputController = object : InputController {
-        override fun close() = TODO("Not yet implemented")
-        override fun open(input: String) = TODO("Not yet implemented")
+fun bindJeedCaptureOutputControlInput(stdinStream: ResettingInputStream): CaptureOutputControlInput {
+    return fun(stdin: List<String>, run: () -> Any?): CapturedResult {
+        val outputListener = object : Sandbox.OutputListener {
+            override fun stderr(int: Int) {}
+            override fun stdout(int: Int) {}
+        }
+        var resourceUsage: ResourceMonitoringCheckpoint? = null
+        val jeedOutput = Sandbox.redirectOutput(outputListener) {
+            ResourceMonitoring.beginSubmissionCall()
+            try {
+                run()
+            } finally {
+                resourceUsage = ResourceMonitoring.finishSubmissionCall()
+            }
+        }
+        // TODO
+        return CapturedResult(
+            jeedOutput.returned,
+            jeedOutput.threw,
+            jeedOutput.stdout,
+            jeedOutput.stderr,
+            jeedOutput.stdin,
+            jeedOutput.interleavedInputOutput,
+            resourceUsage
+        )
     }
-    return inputController.run()
 }
