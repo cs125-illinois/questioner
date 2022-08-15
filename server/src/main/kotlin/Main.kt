@@ -1,6 +1,7 @@
 package edu.illinois.cs.cs125.questioner.server
 
 import com.mongodb.MongoClient
+import com.mongodb.MongoClientOptions
 import com.mongodb.MongoClientURI
 import com.mongodb.client.MongoCollection
 import com.mongodb.client.model.Filters
@@ -30,7 +31,6 @@ import java.security.cert.X509Certificate
 import java.time.Instant
 import java.util.*
 import java.util.concurrent.Executors
-import javax.net.ssl.HttpsURLConnection
 import javax.net.ssl.SSLContext
 import javax.net.ssl.X509TrustManager
 import kotlin.collections.forEach
@@ -44,6 +44,19 @@ private val moshi = Moshi.Builder().apply {
 }.build()
 private val logger = KotlinLogging.logger {}
 private val collection: MongoCollection<BsonDocument> = run {
+    val trustAllCerts = object : X509TrustManager {
+        override fun getAcceptedIssuers(): Array<X509Certificate>? {
+            return null
+        }
+
+        override fun checkClientTrusted(certs: Array<X509Certificate?>?, authType: String?) {}
+        override fun checkServerTrusted(certs: Array<X509Certificate?>?, authType: String?) {}
+    }
+
+    val sc = SSLContext.getInstance("SSL").apply {
+        init(null, arrayOf(trustAllCerts), SecureRandom())
+    }
+
     require(System.getenv("MONGODB") != null) { "MONGODB environment variable not set" }
     val keystore = System.getenv("KEYSTORE_FILE")
     if (keystore != null) {
@@ -52,7 +65,7 @@ private val collection: MongoCollection<BsonDocument> = run {
         System.setProperty("javax.net.ssl.trustStorePassword", System.getenv("KEYSTORE_PASSWORD"))
     }
     val collection = System.getenv("MONGODB_COLLECTION") ?: "questioner"
-    val mongoUri = MongoClientURI(System.getenv("MONGODB")!!)
+    val mongoUri = MongoClientURI(System.getenv("MONGODB")!!, MongoClientOptions.builder().sslContext(sc))
     val database = mongoUri.database ?: error("MONGODB must specify database to use")
     MongoClient(mongoUri).getDatabase(database).getCollection(collection, BsonDocument::class.java)
 }
@@ -260,20 +273,6 @@ fun Application.questioner() {
 }
 
 fun main() {
-    val trustAllCerts = object : X509TrustManager {
-        override fun getAcceptedIssuers(): Array<X509Certificate>? {
-            return null
-        }
-
-        override fun checkClientTrusted(certs: Array<X509Certificate?>?, authType: String?) {}
-        override fun checkServerTrusted(certs: Array<X509Certificate?>?, authType: String?) {}
-    }
-
-    val sc = SSLContext.getInstance("SSL").apply {
-        init(null, arrayOf(trustAllCerts), SecureRandom())
-    }
-    HttpsURLConnection.setDefaultSSLSocketFactory(sc.socketFactory)
-
     ResourceMonitoring.ensureAgentActivated()
     logger.debug { Status() }
     CoroutineScope(Dispatchers.IO).launch { warm(2, failLint = false) }
