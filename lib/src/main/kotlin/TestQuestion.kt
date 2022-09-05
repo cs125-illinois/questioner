@@ -110,7 +110,7 @@ suspend fun Question.test(
         minTestCount = settings.minTestCount,
         maxTestCount = settings.maxTestCount
     )
-    val systemInStream = ResettingInputStream()
+    val systemInStream = BumpingInputStream()
     val executionArguments = Sandbox.ExecutionArguments(
         timeout = settings.timeout.toLong(),
         classLoaderConfiguration = classLoaderConfiguration,

@@ -15,28 +15,35 @@ import edu.illinois.cs.cs125.questioner.lib.ResourceMonitoring
 import edu.illinois.cs.cs125.questioner.lib.TestResults
 import edu.illinois.cs.cs125.questioner.lib.moshi.Adapters
 import edu.illinois.cs.cs125.questioner.lib.test
-import io.ktor.http.*
-import io.ktor.server.application.*
-import io.ktor.server.engine.*
-import io.ktor.server.netty.*
-import io.ktor.server.plugins.contentnegotiation.*
-import io.ktor.server.request.*
-import io.ktor.server.response.*
-import io.ktor.server.routing.*
-import kotlinx.coroutines.*
+import io.ktor.http.HttpStatusCode
+import io.ktor.server.application.Application
+import io.ktor.server.application.call
+import io.ktor.server.application.install
+import io.ktor.server.engine.embeddedServer
+import io.ktor.server.netty.Netty
+import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.server.request.receive
+import io.ktor.server.response.respond
+import io.ktor.server.routing.get
+import io.ktor.server.routing.post
+import io.ktor.server.routing.routing
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import mu.KotlinLogging
 import org.bson.BsonDocument
 import java.security.SecureRandom
 import java.security.cert.X509Certificate
 import java.time.Instant
-import java.util.*
+import java.util.Properties
 import java.util.concurrent.Executors
 import javax.net.ssl.SSLContext
 import javax.net.ssl.X509TrustManager
 import kotlin.collections.forEach
 import kotlin.system.exitProcess
 import edu.illinois.cs.cs125.jeed.core.moshi.Adapters as JeedAdapters
-
 
 private val moshi = Moshi.Builder().apply {
     JeedAdapters.forEach { add(it) }
@@ -73,13 +80,13 @@ private val collection: MongoCollection<BsonDocument> = run {
 data class QuestionPath(val path: String, val version: String, val author: String) {
     companion object {
         fun fromSubmission(submission: Submission) =
-                QuestionPath(submission.path, submission.version!!, submission.author!!)
+            QuestionPath(submission.path, submission.version!!, submission.author!!)
     }
 }
 
 object Questions {
     private fun getQuestion(path: String) = collection.find(
-            Filters.and(Filters.eq("published.path", path), Filters.eq("latest", true))
+        Filters.and(Filters.eq("published.path", path), Filters.eq("latest", true))
     ).sort(Sorts.descending("updated")).let {
         @Suppress("ReplaceSizeZeroCheckWithIsEmpty")
         if (it.count() == 0) {
@@ -95,12 +102,12 @@ object Questions {
     }
 
     private fun getQuestionByPath(path: QuestionPath) = collection.find(
-            Filters.and(
-                    Filters.eq("published.path", path.path),
-                    Filters.eq("published.version", path.version),
-                    Filters.eq("published.author", path.author),
-                    Filters.eq("latest", true)
-            )
+        Filters.and(
+            Filters.eq("published.path", path.path),
+            Filters.eq("published.version", path.version),
+            Filters.eq("published.author", path.author),
+            Filters.eq("latest", true)
+        )
     ).sort(Sorts.descending("updated")).let {
         @Suppress("ReplaceSizeZeroCheckWithIsEmpty")
         if (it.count() == 0) {
@@ -134,15 +141,15 @@ object Questions {
         val start = Instant.now().toEpochMilli()
         val timeout = question.testingSettings!!.timeout * (System.getenv("TIMEOUT_MULTIPLIER")?.toInt() ?: 1)
         val settings = question.testingSettings!!.copy(
-                timeout = timeout,
-                disableLineCountLimit = submission.disableLineCountLimit,
-                disableAllocationLimit = submission.disableAllocationLimit
+            timeout = timeout,
+            disableLineCountLimit = submission.disableLineCountLimit,
+            disableAllocationLimit = submission.disableAllocationLimit
         )
         logger.trace { "Testing ${question.name} with settings $settings" }
         return question.test(
-                submission.contents,
-                language = submission.language,
-                settings = settings
+            submission.contents,
+            language = submission.language,
+            settings = settings
         ).also {
             logger.trace { "Tested ${question.name} in ${Instant.now().toEpochMilli() - start}" }
         }
@@ -151,24 +158,24 @@ object Questions {
 
 @JsonClass(generateAdapter = true)
 data class Submission(
-        val path: String,
-        val contents: String,
-        val language: Question.Language,
-        val disableLineCountLimit: Boolean = false,
-        val disableAllocationLimit: Boolean = true, // TODO: Switch to false when ready for allocation limiting
-        val version: String?,
-        val author: String?
+    val path: String,
+    val contents: String,
+    val language: Question.Language,
+    val disableLineCountLimit: Boolean = false,
+    val disableAllocationLimit: Boolean = true, // TODO: Switch to false when ready for allocation limiting
+    val version: String?,
+    val author: String?
 )
 
 @JsonClass(generateAdapter = true)
 data class QuestionDescription(
-        val path: String,
-        val name: String,
-        val version: String,
-        val description: String,
-        val author: String,
-        val packageName: String,
-        val starter: String?
+    val path: String,
+    val name: String,
+    val version: String,
+    val description: String,
+    val author: String,
+    val packageName: String,
+    val starter: String?
 )
 
 private val serverStarted = Instant.now()
@@ -186,12 +193,12 @@ val versionString = run {
 
 @JsonClass(generateAdapter = true)
 data class Status(
-        val started: Instant = serverStarted,
-        val version: String = versionString
+    val started: Instant = serverStarted,
+    val version: String = versionString
 )
 
 val threadPool = Executors.newFixedThreadPool(System.getenv("QUESTIONER_THREAD_POOL_SIZE")?.toIntOrNull() ?: 8)
-        .asCoroutineDispatcher()
+    .asCoroutineDispatcher()
 
 @JsonClass(generateAdapter = true)
 data class ServerResponse(val results: TestResults)
@@ -240,15 +247,15 @@ fun Application.questioner() {
             val path = call.parameters["path"] ?: return@get call.respond(HttpStatusCode.BadRequest)
             val question = Questions.load(path) ?: return@get call.respond(HttpStatusCode.NotFound)
             call.respond(
-                    QuestionDescription(
-                            path,
-                            question.name,
-                            question.metadata.version,
-                            question.metadata.javaDescription,
-                            question.metadata.author,
-                            question.metadata.packageName,
-                            question.detemplatedJavaStarter
-                    )
+                QuestionDescription(
+                    path,
+                    question.name,
+                    question.metadata.version,
+                    question.metadata.javaDescription,
+                    question.metadata.author,
+                    question.metadata.packageName,
+                    question.detemplatedJavaStarter
+                )
             )
         }
         get("/question/kotlin/{path}") {
@@ -258,15 +265,15 @@ fun Application.questioner() {
                 return@get call.respond(HttpStatusCode.NotFound)
             }
             call.respond(
-                    QuestionDescription(
-                            path,
-                            question.name,
-                            question.metadata.version,
-                            question.metadata.kotlinDescription!!,
-                            question.metadata.author,
-                            question.metadata.packageName,
-                            starter = question.detemplatedKotlinStarter
-                    )
+                QuestionDescription(
+                    path,
+                    question.name,
+                    question.metadata.version,
+                    question.metadata.kotlinDescription!!,
+                    question.metadata.author,
+                    question.metadata.packageName,
+                    starter = question.detemplatedKotlinStarter
+                )
             )
         }
     }

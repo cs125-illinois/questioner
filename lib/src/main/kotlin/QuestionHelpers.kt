@@ -394,23 +394,43 @@ class InvertingClassLoader(
     }
 }
 
-class ResettingInputStream : InputStream() {
-    private var currentInputStream: ByteArrayInputStream = ByteArrayInputStream("".toByteArray())
-        set(value) {
-            currentInputStream.close()
-            field = value
+class BumpingInputStream : InputStream() {
+    private var stream = ByteArrayInputStream("".toByteArray())
+    private lateinit var inputs: List<ByteArray>
+
+    private var index = 0
+    private var usedIndex = false
+
+    fun setInputs(_inputs: List<ByteArray>) {
+        index = 0
+        usedIndex = false
+        inputs = _inputs
+        stream = ByteArrayInputStream(inputs.getOrNull(index) ?: "".toByteArray())
+    }
+
+    fun bump() {
+        if (usedIndex) {
+            index++
+            stream = ByteArrayInputStream(inputs.getOrNull(index) ?: "".toByteArray())
+            usedIndex = false
         }
+    }
 
     override fun read(): Int {
-        return currentInputStream.read()
+        usedIndex = true
+        return stream.read()
     }
 }
 
-fun bindJeedCaptureOutputControlInput(stdinStream: ResettingInputStream): CaptureOutputControlInput {
+fun bindJeedCaptureOutputControlInput(stdinStream: BumpingInputStream): CaptureOutputControlInput {
     return fun(stdin: List<String>, run: () -> Any?): CapturedResult {
+        stdinStream.setInputs(stdin.map { "$it\n".toByteArray() })
+
         val outputListener = object : Sandbox.OutputListener {
+            override fun stdout(int: Int) {
+                stdinStream.bump()
+            }
             override fun stderr(int: Int) {}
-            override fun stdout(int: Int) {}
         }
         var resourceUsage: ResourceMonitoringCheckpoint? = null
         val jeedOutput = Sandbox.redirectOutput(outputListener) {

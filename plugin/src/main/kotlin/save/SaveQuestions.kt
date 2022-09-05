@@ -13,6 +13,7 @@ import edu.illinois.cs.cs125.jenisol.core.FixedParameters
 import edu.illinois.cs.cs125.jenisol.core.InstanceValidator
 import edu.illinois.cs.cs125.jenisol.core.Limit
 import edu.illinois.cs.cs125.jenisol.core.NotNull
+import edu.illinois.cs.cs125.jenisol.core.ProvideSystemIn
 import edu.illinois.cs.cs125.jenisol.core.RandomParameters
 import edu.illinois.cs.cs125.jenisol.core.RandomType
 import edu.illinois.cs.cs125.jenisol.core.SimpleType
@@ -456,7 +457,8 @@ val annotationsToRemove =
         AlsoCorrect::class.java.simpleName,
         Configure::class.java.simpleName,
         Cite::class.java.simpleName,
-        Limit::class.java.simpleName
+        Limit::class.java.simpleName,
+        ProvideSystemIn::class.java.simpleName
     )
 val annotationsToDestroy =
     setOf(

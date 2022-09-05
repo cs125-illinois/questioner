@@ -1965,12 +1965,244 @@
     },
     "fauxStatic": false
   },
+  "Input Interleaving Test": {
+    "name": "Input Interleaving Test",
+    "type": "KLASS",
+    "klass": "Question",
+    "metadata": {
+      "contentHash": "07f28386753a725afce9dc22bdad83f0",
+      "packageName": "com.examples.inputinterleavingtest",
+      "version": "2022.9.0",
+      "author": "challen@illinois.edu",
+      "javaDescription": "<p>Testing STDIN generation and interleaving.</p>",
+      "kotlinDescription": "<p>Testing STDIN generation and interleaving. In Kotlin!</p>",
+      "usedFiles": [
+        "/Users/challen/code/questioner-problems/src/main/java/com/examples/inputinterleavingtest/correct/kotlin/Question.kt"
+      ],
+      "focused": false
+    },
+    "annotatedControls": {},
+    "question": {
+      "klass": "Question",
+      "contents": "import java.util.Arrays;\nimport java.util.Random;\nimport java.util.Scanner;\nimport edu.illinois.cs.cs125.jenisol.core.EdgeType;\nimport edu.illinois.cs.cs125.jenisol.core.Limit;\nimport edu.illinois.cs.cs125.jenisol.core.ProvideSystemIn;\nimport edu.illinois.cs.cs125.jenisol.core.RandomType;\nimport edu.illinois.cs.cs125.jenisol.core.SimpleType;\nimport edu.illinois.cs.cs125.jenisol.core.generators.SystemIn;\nimport edu.illinois.cs.cs125.questioner.lib.Correct;\n\n/*\n * Testing STDIN generation and interleaving.\n */\n\n@SuppressWarnings(\"StringOperationCanBeSimplified\")\n@Correct(name = \"Input Interleaving Test\", version = \"2022.9.0\", author = \"challen@illinois.edu\")\npublic class Question {\n  @ProvideSystemIn\n  @Limit(1)\n  public static void echo() {\n    System.out.println(\"Hello!\");\n    Scanner scanner = new Scanner(System.in);\n    String first = scanner.nextLine();\n    System.out.println(\"First: \" + first);\n    String second = scanner.nextLine();\n    System.out.println(\"Second: \" + second);\n  }\n\n  @SimpleType\n  private static final SystemIn[] SIMPLE =\n    new SystemIn[] {new SystemIn(Arrays.asList(\"Test\", \"Me\"))};\n\n  @EdgeType private static final SystemIn[] EDGE = new SystemIn[] {};\n\n  @RandomType\n  private static SystemIn randomInput(Random random) {\n    return new SystemIn(\n      Arrays.asList(new String(\"\" + random.nextInt()), new String(\"\" + random.nextInt())));\n  }\n}",
+      "language": "java",
+      "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/inputinterleavingtest/Question.java"
+    },
+    "correct": {
+      "klass": "Question",
+      "contents": "import java.util.Scanner;\n\npublic class Question {\n  public static void echo() {\n    System.out.println(\"Hello!\");\n    Scanner scanner = new Scanner(System.in);\n    String first = scanner.nextLine();\n    System.out.println(\"First: \" + first);\n    String second = scanner.nextLine();\n    System.out.println(\"Second: \" + second);\n  }\n}\n",
+      "language": "java",
+      "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/inputinterleavingtest/Question.java",
+      "complexity": 1,
+      "features": {
+        "featureMap": {
+          "LOCAL_VARIABLE_DECLARATIONS": 3,
+          "VARIABLE_ASSIGNMENTS": 3,
+          "ARITHMETIC_OPERATORS": 2,
+          "METHOD": 1,
+          "STRING": 2,
+          "CLASS": 1,
+          "NEW_KEYWORD": 1,
+          "VISIBILITY_MODIFIERS": 2,
+          "STATIC_METHOD": 1,
+          "IMPORT": 1,
+          "PRINT_STATEMENTS": 3,
+          "DOT_NOTATION": 3,
+          "DOTTED_METHOD_CALL": 2,
+          "DOTTED_VARIABLE_ACCESS": 1
+        },
+        "importList": [
+          "java.util.Scanner"
+        ],
+        "typeList": [
+          "Scanner",
+          "String"
+        ],
+        "identifierList": [
+          "scanner",
+          "first",
+          "second"
+        ],
+        "dottedMethodList": [
+          "println",
+          "nextLine"
+        ]
+      },
+      "lineCount": {
+        "source": 11,
+        "comment": 0,
+        "blank": 2
+      },
+      "expectedDeadCount": 1
+    },
+    "alternativeSolutions": [
+      {
+        "klass": "QuestionKt",
+        "contents": "import java.util.Scanner\n\n\nfun echo() {\n  println(\"Hello!\")\n  val scanner = Scanner(System.`in`)\n  val first = scanner.nextLine()\n  println(\"First: $first\")\n  val second = scanner.nextLine()\n  println(\"Second: $second\")\n}",
+        "language": "kotlin",
+        "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/inputinterleavingtest/correct/kotlin/Question.kt",
+        "complexity": 1,
+        "features": {
+          "featureMap": {
+            "LOCAL_VARIABLE_DECLARATIONS": 3,
+            "VARIABLE_ASSIGNMENTS": 3,
+            "METHOD": 1,
+            "IMPORT": 1,
+            "PRINT_STATEMENTS": 3,
+            "DOT_NOTATION": 3,
+            "DOTTED_METHOD_CALL": 2,
+            "DOTTED_VARIABLE_ACCESS": 1
+          },
+          "importList": [
+            "java.util.Scanner"
+          ],
+          "typeList": [],
+          "identifierList": [],
+          "dottedMethodList": [
+            "nextLine"
+          ]
+        },
+        "lineCount": {
+          "source": 9,
+          "comment": 0,
+          "blank": 2
+        }
+      }
+    ],
+    "incorrect": [],
+    "common": [],
+    "importWhitelist": [],
+    "importBlacklist": [],
+    "slug": "input-interleaving-test",
+    "kotlinSolution": {
+      "klass": "QuestionKt",
+      "contents": "import java.util.Scanner\n\n\nfun echo() {\n  println(\"Hello!\")\n  val scanner = Scanner(System.`in`)\n  val first = scanner.nextLine()\n  println(\"First: $first\")\n  val second = scanner.nextLine()\n  println(\"Second: $second\")\n}",
+      "language": "kotlin",
+      "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/inputinterleavingtest/correct/kotlin/Question.kt",
+      "complexity": 1,
+      "features": {
+        "featureMap": {
+          "LOCAL_VARIABLE_DECLARATIONS": 3,
+          "VARIABLE_ASSIGNMENTS": 3,
+          "METHOD": 1,
+          "IMPORT": 1,
+          "PRINT_STATEMENTS": 3,
+          "DOT_NOTATION": 3,
+          "DOTTED_METHOD_CALL": 2,
+          "DOTTED_VARIABLE_ACCESS": 1
+        },
+        "importList": [
+          "java.util.Scanner"
+        ],
+        "typeList": [],
+        "identifierList": [],
+        "dottedMethodList": [
+          "nextLine"
+        ]
+      },
+      "lineCount": {
+        "source": 9,
+        "comment": 0,
+        "blank": 2
+      }
+    },
+    "hasKotlin": true,
+    "published": {
+      "name": "Input Interleaving Test",
+      "type": "KLASS",
+      "path": "input-interleaving-test",
+      "author": "challen@illinois.edu",
+      "version": "2022.9.0",
+      "packageName": "com.examples.inputinterleavingtest",
+      "languages": [
+        "java",
+        "kotlin"
+      ],
+      "descriptions": {
+        "java": "<p>Testing STDIN generation and interleaving.</p>",
+        "kotlin": "<p>Testing STDIN generation and interleaving. In Kotlin!</p>"
+      },
+      "complexity": {
+        "java": 1,
+        "kotlin": 1
+      },
+      "features": {
+        "java": {
+          "featureMap": {
+            "LOCAL_VARIABLE_DECLARATIONS": 3,
+            "VARIABLE_ASSIGNMENTS": 3,
+            "ARITHMETIC_OPERATORS": 2,
+            "METHOD": 1,
+            "STRING": 2,
+            "CLASS": 1,
+            "NEW_KEYWORD": 1,
+            "VISIBILITY_MODIFIERS": 2,
+            "STATIC_METHOD": 1,
+            "IMPORT": 1,
+            "PRINT_STATEMENTS": 3,
+            "DOT_NOTATION": 3,
+            "DOTTED_METHOD_CALL": 2,
+            "DOTTED_VARIABLE_ACCESS": 1
+          },
+          "importList": [
+            "java.util.Scanner"
+          ],
+          "typeList": [
+            "Scanner",
+            "String"
+          ],
+          "identifierList": [
+            "scanner",
+            "first",
+            "second"
+          ],
+          "dottedMethodList": [
+            "println",
+            "nextLine"
+          ]
+        },
+        "kotlin": {
+          "featureMap": {
+            "LOCAL_VARIABLE_DECLARATIONS": 3,
+            "VARIABLE_ASSIGNMENTS": 3,
+            "METHOD": 1,
+            "IMPORT": 1,
+            "PRINT_STATEMENTS": 3,
+            "DOT_NOTATION": 3,
+            "DOTTED_METHOD_CALL": 2,
+            "DOTTED_VARIABLE_ACCESS": 1
+          },
+          "importList": [
+            "java.util.Scanner"
+          ],
+          "typeList": [],
+          "identifierList": [],
+          "dottedMethodList": [
+            "nextLine"
+          ]
+        }
+      },
+      "lineCounts": {
+        "java": {
+          "source": 11,
+          "comment": 0,
+          "blank": 2
+        },
+        "kotlin": {
+          "source": 9,
+          "comment": 0,
+          "blank": 2
+        }
+      }
+    },
+    "fauxStatic": false
+  },
   "With Imports": {
     "name": "With Imports",
     "type": "KLASS",
     "klass": "Question",
     "metadata": {
-      "contentHash": "cb19a8122edb12c3937dd28e4820ca15",
+      "contentHash": "28944ac134c1b61f898a4d9596831bb7",
       "packageName": "com.examples.withimports",
       "version": "2022.7.0",
       "author": "challen@illinois.edu",
@@ -1984,7 +2216,7 @@
     "annotatedControls": {},
     "question": {
       "klass": "Question",
-      "contents": "import edu.illinois.cs.cs125.questioner.lib.Correct;\n\nimport java.util.Arrays;\nimport java.util.List;\n\n/*\n * Example to test use of import statements.\n */\n\n@Correct(name = \"With Imports\", version = \"2022.7.0\", author = \"challen@illinois.edu\")\npublic class Question {\n  public static List<Integer> max(int first, int second) {\n    return Arrays.asList(first, second);\n  }\n}",
+      "contents": "import edu.illinois.cs.cs125.questioner.lib.Correct;\nimport java.util.Arrays;\nimport java.util.List;\n\n/*\n * Example to test use of import statements.\n */\n\n@Correct(name = \"With Imports\", version = \"2022.7.0\", author = \"challen@illinois.edu\")\npublic class Question {\n  public static List<Integer> max(int first, int second) {\n    return Arrays.asList(first, second);\n  }\n}",
       "language": "java",
       "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/withimports/Question.java"
     },
@@ -2612,7 +2844,7 @@
     "type": "METHOD",
     "klass": "Question",
     "metadata": {
-      "contentHash": "7265340f9d922ca3dfe7ff222f5a309d",
+      "contentHash": "f53448151d802ca1846e2f5c3475f44d",
       "packageName": "com.examples.withfeaturecheck",
       "version": "2022.7.0",
       "author": "challen@illinois.edu",
@@ -2628,7 +2860,7 @@
     "annotatedControls": {},
     "question": {
       "klass": "Question",
-      "contents": "import edu.illinois.cs.cs125.jeed.core.Features;\nimport edu.illinois.cs.cs125.jenisol.core.BoundComplexity;\nimport edu.illinois.cs.cs125.jenisol.core.FilterParameters;\nimport edu.illinois.cs.cs125.jenisol.core.SkipTest;\nimport edu.illinois.cs.cs125.questioner.lib.CheckFeatures;\nimport edu.illinois.cs.cs125.questioner.lib.Correct;\nimport edu.illinois.cs.cs125.questioner.lib.FeatureCheckException;\nimport edu.illinois.cs.cs125.questioner.lib.Wrap;\nimport edu.illinois.cs.cs125.questioner.lib.features.FeatureHelpers;\n\nimport java.util.ArrayList;\nimport java.util.List;\n\n/*\n * Test whether feature checking works.\n */\n\n@Correct(name = \"With Feature Check\", author = \"challen@illinois.edu\", version = \"2022.7.0\")\n@Wrap\npublic class Question {\n  @FilterParameters\n  private static void filterParameters(int range) {\n    if (range < 0) {\n      throw new SkipTest();\n    }\n    if (range > 1024) {\n      throw new BoundComplexity();\n    }\n  }\n\n  int sumTo(int range) {\n    return (range * (range + 1)) / 2;\n  }\n\n  @CheckFeatures\n  private static List<String> checkFeatures(Features solution, Features submission) {\n    if (FeatureHelpers.usesLoop(submission)) {\n      throw new FeatureCheckException(\"Submission uses a loop\");\n    }\n    return new ArrayList<>();\n  }\n}",
+      "contents": "import edu.illinois.cs.cs125.jeed.core.Features;\nimport edu.illinois.cs.cs125.jenisol.core.BoundComplexity;\nimport edu.illinois.cs.cs125.jenisol.core.FilterParameters;\nimport edu.illinois.cs.cs125.jenisol.core.SkipTest;\nimport edu.illinois.cs.cs125.questioner.lib.CheckFeatures;\nimport edu.illinois.cs.cs125.questioner.lib.Correct;\nimport edu.illinois.cs.cs125.questioner.lib.FeatureCheckException;\nimport edu.illinois.cs.cs125.questioner.lib.Wrap;\nimport edu.illinois.cs.cs125.questioner.lib.features.FeatureHelpers;\nimport java.util.ArrayList;\nimport java.util.List;\n\n/*\n * Test whether feature checking works.\n */\n\n@Correct(name = \"With Feature Check\", author = \"challen@illinois.edu\", version = \"2022.7.0\")\n@Wrap\npublic class Question {\n  @FilterParameters\n  private static void filterParameters(int range) {\n    if (range < 0) {\n      throw new SkipTest();\n    }\n    if (range > 1024) {\n      throw new BoundComplexity();\n    }\n  }\n\n  int sumTo(int range) {\n    return (range * (range + 1)) / 2;\n  }\n\n  @CheckFeatures\n  private static List<String> checkFeatures(Features solution, Features submission) {\n    if (FeatureHelpers.usesLoop(submission)) {\n      throw new FeatureCheckException(\"Submission uses a loop\");\n    }\n    return new ArrayList<>();\n  }\n}",
       "language": "java",
       "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/withfeaturecheck/Question.java"
     },

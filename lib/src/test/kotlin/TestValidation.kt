@@ -48,4 +48,12 @@ class TestValidation : StringSpec({
                 report!!.requiredTestCount shouldBeGreaterThan 0
             }
     }
+    "stdin interleaving should work" {
+        validator.validate("Input Interleaving Test", force = true, testing = true)
+            .also { (question, report) ->
+                question.validated shouldBe true
+                report shouldNotBe null
+                report!!.requiredTestCount shouldBeGreaterThan 0
+            }
+    }
 })
