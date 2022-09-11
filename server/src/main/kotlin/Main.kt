@@ -1,5 +1,7 @@
 package edu.illinois.cs.cs125.questioner.server
 
+import ch.qos.logback.classic.Level
+import ch.qos.logback.classic.LoggerContext
 import com.mongodb.MongoClient
 import com.mongodb.MongoClientOptions
 import com.mongodb.MongoClientURI
@@ -15,6 +17,7 @@ import edu.illinois.cs.cs125.questioner.lib.ResourceMonitoring
 import edu.illinois.cs.cs125.questioner.lib.TestResults
 import edu.illinois.cs.cs125.questioner.lib.moshi.Adapters
 import edu.illinois.cs.cs125.questioner.lib.test
+import io.kotest.mpp.log
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.Application
 import io.ktor.server.application.call
@@ -34,6 +37,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import mu.KotlinLogging
 import org.bson.BsonDocument
+import org.slf4j.LoggerFactory
 import java.security.SecureRandom
 import java.security.cert.X509Certificate
 import java.time.Instant
@@ -50,6 +54,7 @@ private val moshi = Moshi.Builder().apply {
     Adapters.forEach { add(it) }
 }.build()
 private val logger = KotlinLogging.logger {}
+
 private val collection: MongoCollection<BsonDocument> = run {
     val trustAllCerts = object : X509TrustManager {
         override fun getAcceptedIssuers(): Array<X509Certificate>? {
@@ -281,6 +286,12 @@ fun Application.questioner() {
 
 fun main() {
     ResourceMonitoring.ensureAgentActivated()
+
+    if (System.getenv("LOG_LEVEL_DEBUG") != null) {
+        (LoggerFactory.getILoggerFactory() as LoggerContext).getLogger(logger.name).level = Level.DEBUG
+        logger.debug { "Enabling debug logging" }
+    }
+
     logger.debug { Status() }
     CoroutineScope(Dispatchers.IO).launch { warm(2, failLint = false) }
     embeddedServer(Netty, port = 8888, module = Application::questioner).start(wait = true)
