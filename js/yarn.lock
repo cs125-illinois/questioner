@@ -123,10 +123,10 @@
     "@babel/helper-validator-identifier" "^7.16.7"
     to-fast-properties "^2.0.0"
 
-"@cs124/jeed-types@2022.7.0":
-  version "2022.7.0"
-  resolved "https://registry.yarnpkg.com/@cs124/jeed-types/-/jeed-types-2022.7.0.tgz#32eaf67a672cc2f2bf2ef603a80d308b6e08c23d"
-  integrity sha512-Wd3zqpBBbb7diO9GhC9xioTISVV+uMxjlYr3Tf2i+Og1DwsKJHK7nSeOR/BcyF8k/88lGxsHh0sYa7Is63z1+A==
+"@cs124/jeed-types@2022.9.0":
+  version "2022.9.0"
+  resolved "https://registry.yarnpkg.com/@cs124/jeed-types/-/jeed-types-2022.9.0.tgz#3bcf10b497001bd06402cbe44176418b0670d92b"
+  integrity sha512-VDg6OB1GqxCIsN0fnjeBxlCcQSBxVkDVQaNqb/7iWbqkaBIYELVATx1o8v6mPFXtTcjsfntMrnraEYYTcwSFpg==
 
 "@eslint/eslintrc@^1.3.2":
   version "1.3.2"
