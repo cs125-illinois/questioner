@@ -17,7 +17,6 @@ import edu.illinois.cs.cs125.questioner.lib.ResourceMonitoring
 import edu.illinois.cs.cs125.questioner.lib.TestResults
 import edu.illinois.cs.cs125.questioner.lib.moshi.Adapters
 import edu.illinois.cs.cs125.questioner.lib.test
-import io.kotest.mpp.log
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.Application
 import io.ktor.server.application.call
