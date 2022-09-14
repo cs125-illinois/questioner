@@ -598,18 +598,25 @@
     "type": "SNIPPET",
     "klass": "Question",
     "metadata": {
-      "contentHash": "de5b693d7edf480453cf1db502b7bd87",
+      "contentHash": "217a5a39a3d966d871772fd733d9d49d",
       "packageName": "com.examples.printsum",
       "version": "2021.6.0",
       "author": "challen@illinois.edu",
       "javaDescription": "<p>Given two <code>int</code> variables <code>first</code> and <code>second</code> that are already declared and initialized, print their sum.</p>",
-      "usedFiles": [],
-      "focused": false
+      "kotlinDescription": "<p>Given two <code>int</code> variables <code>first</code> and <code>second</code> that are already declared and initialized, print their sum.</p>",
+      "usedFiles": [
+        "/Users/challen/code/questioner-problems/src/main/java/com/examples/printsum/incorrect/java/toomuchoutput/Question.java",
+        "/Users/challen/code/questioner-problems/src/main/java/com/examples/printsum/correct/java/withoronnewline/Question.java",
+        "/Users/challen/code/questioner-problems/src/main/java/com/examples/printsum/correct/kotlin/Question.kt"
+      ],
+      "focused": true
     },
-    "annotatedControls": {},
+    "annotatedControls": {
+      "maxDeadCode": 2
+    },
     "question": {
       "klass": "Question",
-      "contents": "import edu.illinois.cs.cs125.questioner.lib.Correct;\n\n/*\n * Given two `int` variables `first` and `second` that are already declared and initialized, print their sum.\n */\n\n@Correct(name = \"Print Sum\", author = \"challen@illinois.edu\", version = \"2021.6.0\")\npublic class Question {\n  public static void printSum(int first, int second) {\n    // TEMPLATE_START\n    System.out.println(first + second);\n    // TEMPLATE_END\n  }\n}",
+      "contents": "import edu.illinois.cs.cs125.questioner.lib.Correct;\n\n/*\n * Given two `int` variables `first` and `second` that are already declared and initialized, print their sum.\n */\n\n@Correct(\n    name = \"Print Sum\",\n    author = \"challen@illinois.edu\",\n    version = \"2021.6.0\",\n    focused = true,\n    maxDeadCode = 2)\npublic class Question {\n  public static void printSum(int first, int second) {\n    // TEMPLATE_START\n    System.out.println(first + second);\n    // TEMPLATE_END\n  }\n}",
       "language": "java",
       "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/printsum/Question.java"
     },
@@ -638,14 +645,96 @@
       },
       "expectedDeadCount": 1
     },
-    "alternativeSolutions": [],
-    "incorrect": [],
+    "alternativeSolutions": [
+      {
+        "klass": "Question",
+        "contents": "if (first != second || first == second) {\n  System.out.println(first + second);\n}",
+        "language": "java",
+        "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/printsum/correct/java/withoronnewline/Question.java",
+        "complexity": 3,
+        "features": {
+          "featureMap": {
+            "ARITHMETIC_OPERATORS": 1,
+            "COMPARISON_OPERATORS": 2,
+            "LOGICAL_OPERATORS": 1,
+            "IF_STATEMENTS": 1,
+            "PRINT_STATEMENTS": 1
+          },
+          "importList": [],
+          "typeList": [],
+          "identifierList": [],
+          "dottedMethodList": [
+            "println"
+          ]
+        },
+        "lineCount": {
+          "source": 3,
+          "comment": 0,
+          "blank": 0
+        },
+        "expectedDeadCount": 1
+      },
+      {
+        "klass": "QuestionKt",
+        "contents": "println(first + second)",
+        "language": "kotlin",
+        "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/printsum/correct/kotlin/Question.kt",
+        "complexity": 1,
+        "features": {
+          "featureMap": {
+            "PRINT_STATEMENTS": 1
+          },
+          "importList": [],
+          "typeList": [],
+          "identifierList": [],
+          "dottedMethodList": []
+        },
+        "lineCount": {
+          "source": 1,
+          "comment": 0,
+          "blank": 0
+        }
+      }
+    ],
+    "incorrect": [
+      {
+        "klass": "Question",
+        "contents": "while (true) {\n  System.out.println(first + second);\n}",
+        "reason": "TIMEOUT",
+        "language": "java",
+        "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/printsum/incorrect/java/toomuchoutput/Question.java",
+        "starter": false,
+        "needed": true
+      }
+    ],
     "common": [],
     "javaTemplate": "public class Question {\n  public static void printSum(int first, int second) {\n    {{{ contents }}}\n  }\n}\n",
+    "kotlinTemplate": "fun printSum(first: Int, second: Int) {\n  {{{ contents }}}\n}",
     "importWhitelist": [],
     "importBlacklist": [],
     "slug": "print-sum",
-    "hasKotlin": false,
+    "kotlinSolution": {
+      "klass": "QuestionKt",
+      "contents": "println(first + second)",
+      "language": "kotlin",
+      "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/printsum/correct/kotlin/Question.kt",
+      "complexity": 1,
+      "features": {
+        "featureMap": {
+          "PRINT_STATEMENTS": 1
+        },
+        "importList": [],
+        "typeList": [],
+        "identifierList": [],
+        "dottedMethodList": []
+      },
+      "lineCount": {
+        "source": 1,
+        "comment": 0,
+        "blank": 0
+      }
+    },
+    "hasKotlin": true,
     "published": {
       "name": "Print Sum",
       "type": "SNIPPET",
@@ -654,13 +743,16 @@
       "version": "2021.6.0",
       "packageName": "com.examples.printsum",
       "languages": [
-        "java"
+        "java",
+        "kotlin"
       ],
       "descriptions": {
-        "java": "<p>Given two <code>int</code> variables <code>first</code> and <code>second</code> that are already declared and initialized, print their sum.</p>"
+        "java": "<p>Given two <code>int</code> variables <code>first</code> and <code>second</code> that are already declared and initialized, print their sum.</p>",
+        "kotlin": "<p>Given two <code>int</code> variables <code>first</code> and <code>second</code> that are already declared and initialized, print their sum.</p>"
       },
       "complexity": {
-        "java": 1
+        "java": 1,
+        "kotlin": 1
       },
       "features": {
         "java": {
@@ -674,10 +766,24 @@
           "dottedMethodList": [
             "println"
           ]
+        },
+        "kotlin": {
+          "featureMap": {
+            "PRINT_STATEMENTS": 1
+          },
+          "importList": [],
+          "typeList": [],
+          "identifierList": [],
+          "dottedMethodList": []
         }
       },
       "lineCounts": {
         "java": {
+          "source": 1,
+          "comment": 0,
+          "blank": 0
+        },
+        "kotlin": {
           "source": 1,
           "comment": 0,
           "blank": 0
@@ -1058,7 +1164,6 @@
           "IF_STATEMENTS": 1,
           "FOR_LOOPS": 1,
           "ENHANCED_FOR": 1,
-          "NESTED_IF": 1,
           "METHOD": 1,
           "RETURN": 2,
           "STRING": 4,
@@ -1105,7 +1210,6 @@
             "IF_STATEMENTS": 1,
             "FOR_LOOPS": 1,
             "ENHANCED_FOR": 1,
-            "NESTED_IF": 1,
             "METHOD": 1,
             "RETURN": 2,
             "STRING": 4,
@@ -1241,7 +1345,6 @@
             "IF_STATEMENTS": 1,
             "FOR_LOOPS": 1,
             "ENHANCED_FOR": 1,
-            "NESTED_IF": 1,
             "METHOD": 1,
             "RETURN": 2,
             "STRING": 4,
@@ -1970,7 +2073,7 @@
     "type": "KLASS",
     "klass": "Question",
     "metadata": {
-      "contentHash": "07f28386753a725afce9dc22bdad83f0",
+      "contentHash": "cb14dff3cc24c5564a60226ff7ced3f5",
       "packageName": "com.examples.inputinterleavingtest",
       "version": "2022.9.0",
       "author": "challen@illinois.edu",
@@ -1984,7 +2087,7 @@
     "annotatedControls": {},
     "question": {
       "klass": "Question",
-      "contents": "import java.util.Arrays;\nimport java.util.Random;\nimport java.util.Scanner;\nimport edu.illinois.cs.cs125.jenisol.core.EdgeType;\nimport edu.illinois.cs.cs125.jenisol.core.Limit;\nimport edu.illinois.cs.cs125.jenisol.core.ProvideSystemIn;\nimport edu.illinois.cs.cs125.jenisol.core.RandomType;\nimport edu.illinois.cs.cs125.jenisol.core.SimpleType;\nimport edu.illinois.cs.cs125.jenisol.core.generators.SystemIn;\nimport edu.illinois.cs.cs125.questioner.lib.Correct;\n\n/*\n * Testing STDIN generation and interleaving.\n */\n\n@SuppressWarnings(\"StringOperationCanBeSimplified\")\n@Correct(name = \"Input Interleaving Test\", version = \"2022.9.0\", author = \"challen@illinois.edu\")\npublic class Question {\n  @ProvideSystemIn\n  @Limit(1)\n  public static void echo() {\n    System.out.println(\"Hello!\");\n    Scanner scanner = new Scanner(System.in);\n    String first = scanner.nextLine();\n    System.out.println(\"First: \" + first);\n    String second = scanner.nextLine();\n    System.out.println(\"Second: \" + second);\n  }\n\n  @SimpleType\n  private static final SystemIn[] SIMPLE =\n    new SystemIn[] {new SystemIn(Arrays.asList(\"Test\", \"Me\"))};\n\n  @EdgeType private static final SystemIn[] EDGE = new SystemIn[] {};\n\n  @RandomType\n  private static SystemIn randomInput(Random random) {\n    return new SystemIn(\n      Arrays.asList(new String(\"\" + random.nextInt()), new String(\"\" + random.nextInt())));\n  }\n}",
+      "contents": "import edu.illinois.cs.cs125.jenisol.core.EdgeType;\nimport edu.illinois.cs.cs125.jenisol.core.Limit;\nimport edu.illinois.cs.cs125.jenisol.core.ProvideSystemIn;\nimport edu.illinois.cs.cs125.jenisol.core.RandomType;\nimport edu.illinois.cs.cs125.jenisol.core.SimpleType;\nimport edu.illinois.cs.cs125.jenisol.core.generators.SystemIn;\nimport edu.illinois.cs.cs125.questioner.lib.Correct;\nimport java.util.Arrays;\nimport java.util.Random;\nimport java.util.Scanner;\n\n/*\n * Testing STDIN generation and interleaving.\n */\n\n@SuppressWarnings(\"StringOperationCanBeSimplified\")\n@Correct(name = \"Input Interleaving Test\", version = \"2022.9.0\", author = \"challen@illinois.edu\")\npublic class Question {\n  @ProvideSystemIn\n  @Limit(1)\n  public static void echo() {\n    System.out.println(\"Hello!\");\n    Scanner scanner = new Scanner(System.in);\n    String first = scanner.nextLine();\n    System.out.println(\"First: \" + first);\n    String second = scanner.nextLine();\n    System.out.println(\"Second: \" + second);\n  }\n\n  @SimpleType\n  private static final SystemIn[] SIMPLE =\n      new SystemIn[] {new SystemIn(Arrays.asList(\"Test\", \"Me\"))};\n\n  @EdgeType private static final SystemIn[] EDGE = new SystemIn[] {};\n\n  @RandomType\n  private static SystemIn randomInput(Random random) {\n    return new SystemIn(\n        Arrays.asList(new String(\"\" + random.nextInt()), new String(\"\" + random.nextInt())));\n  }\n}",
       "language": "java",
       "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/inputinterleavingtest/Question.java"
     },

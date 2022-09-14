@@ -111,6 +111,7 @@ suspend fun Question.test(
         maxTestCount = settings.maxTestCount
     )
     val systemInStream = BumpingInputStream()
+
     val executionArguments = Sandbox.ExecutionArguments(
         timeout = settings.timeout.toLong(),
         classLoaderConfiguration = classLoaderConfiguration,
@@ -139,7 +140,7 @@ suspend fun Question.test(
         )
     )
 
-    val captureOutputControlInput = bindJeedCaptureOutputControlInput(systemInStream)
+    val captureOutputControlInput = bindJeedCaptureOutputControlInput(systemInStream, settings.perTestOutputLimit)
     val taskResults = Sandbox.execute(
         compiledSubmission.classLoader,
         executionArguments,

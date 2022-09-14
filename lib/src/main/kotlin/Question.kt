@@ -231,6 +231,7 @@ data class Question(
         val testCount: Int = -1,
         val timeout: Int,
         val outputLimit: Int,
+        val perTestOutputLimit: Int,
         val javaWhitelist: Set<String>?,
         val kotlinWhitelist: Set<String>?,
         val shrink: Boolean,
@@ -301,7 +302,7 @@ data class Question(
     ) {
         @Suppress("SpellCheckingInspection")
         enum class Reason {
-            DESIGN, COMPILE, TEST, CHECKSTYLE, TIMEOUT, DEADCODE, LINECOUNT, TOOLONG, MEMORYLIMIT, RECURSION, COMPLEXITY, FEATURES
+            DESIGN, COMPILE, TEST, CHECKSTYLE, TIMEOUT, DEADCODE, LINECOUNT, TOOLONG, MEMORYLIMIT, RECURSION, COMPLEXITY, FEATURES, TOOMUCHOUTPUT
         }
     }
 
@@ -476,6 +477,7 @@ data class Question(
         const val DEFAULT_RETURN_TIMEOUT = 16
         const val MAX_START_MULTIPLE_COUNT = 128
         const val UNLIMITED_OUTPUT_LINES = 102400
+        const val MIN_PER_TEST_LINES = 1024
         const val DEFAULT_MAX_OUTPUT_SIZE = 8 * 1024 * 1024
 
         @Transient
@@ -584,6 +586,7 @@ fun String.toReason() = when (uppercase(Locale.getDefault())) {
     "RECURSION" -> Question.IncorrectFile.Reason.RECURSION
     "COMPLEXITY" -> Question.IncorrectFile.Reason.COMPLEXITY
     "FEATURES" -> Question.IncorrectFile.Reason.FEATURES
+    "TOOMUCHOUTPUT" -> Question.IncorrectFile.Reason.TOOMUCHOUTPUT
     else -> error("Invalid incorrect reason: $this")
 }
 

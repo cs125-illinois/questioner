@@ -254,9 +254,10 @@ fun Question.computeComplexity(contents: String, language: Question.Language): T
                 Question.Type.KLASS -> Source(mapOf("$klass.java" to contents))
                 Question.Type.METHOD -> Source(
                     mapOf(
-                        "$klass.java" to """public class $klass {
-                    |$contents
-                    }""".trimMargin()
+                        "$klass.java" to """
+public class $klass {
+$contents
+}""".trimStart()
                     )
                 )
 
@@ -303,9 +304,10 @@ fun Question.computeFeatures(
             Question.Type.KLASS -> Source(mapOf("$klassName.java" to contents))
             Question.Type.METHOD -> Source(
                 mapOf(
-                    "$klassName.java" to """public class $klassName {
-                    |${contents.lines().joinToString("\n") { "  $it" }}
-                    |}""".trimMargin()
+                    "$klassName.java" to """
+public class $klassName {
+${contents.lines().joinToString("\n") { "  $it" }}
+}""".trimStart()
                 )
             )
 
@@ -316,9 +318,10 @@ fun Question.computeFeatures(
             type == Question.Type.SNIPPET -> Source.fromKotlinSnippet(contents)
             type == Question.Type.METHOD && !klassName.endsWith("kt") -> Source(
                 mapOf(
-                    "$klassName.kt" to """class $klassName {
-                    |${contents.lines().joinToString("\n") { "  $it" }}
-                    |}""".trimMargin()
+                    "$klassName.kt" to """
+class $klassName {
+${contents.lines().joinToString("\n") { "  $it" }}
+}""".trimStart()
                 )
             )
 
@@ -422,7 +425,7 @@ class BumpingInputStream : InputStream() {
     }
 }
 
-fun bindJeedCaptureOutputControlInput(stdinStream: BumpingInputStream): CaptureOutputControlInput {
+fun bindJeedCaptureOutputControlInput(stdinStream: BumpingInputStream, perTestOutputLimit: Int): CaptureOutputControlInput {
     return fun(stdin: List<String>, run: () -> Any?): CapturedResult {
         stdinStream.setInputs(stdin.map { "$it\n".toByteArray() })
 
@@ -433,7 +436,7 @@ fun bindJeedCaptureOutputControlInput(stdinStream: BumpingInputStream): CaptureO
             override fun stderr(int: Int) {}
         }
         var resourceUsage: ResourceMonitoringCheckpoint? = null
-        val jeedOutput = Sandbox.redirectOutput(outputListener) {
+        val jeedOutput = Sandbox.redirectOutput(outputListener, perTestOutputLimit) {
             ResourceMonitoring.beginSubmissionCall()
             try {
                 run()
@@ -441,7 +444,6 @@ fun bindJeedCaptureOutputControlInput(stdinStream: BumpingInputStream): CaptureO
                 resourceUsage = ResourceMonitoring.finishSubmissionCall()
             }
         }
-        // TODO
         return CapturedResult(
             jeedOutput.returned,
             jeedOutput.threw,
@@ -449,6 +451,7 @@ fun bindJeedCaptureOutputControlInput(stdinStream: BumpingInputStream): CaptureO
             jeedOutput.stderr,
             jeedOutput.stdin,
             jeedOutput.interleavedInputOutput,
+            jeedOutput.truncatedLines,
             resourceUsage
         )
     }

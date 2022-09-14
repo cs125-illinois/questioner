@@ -185,6 +185,7 @@ suspend fun Question.validate(seed: Int): ValidationReport {
         maxTestCount = maxTestCount,
         timeout = control.maxTimeout!!, // No timeout
         outputLimit = Question.UNLIMITED_OUTPUT_LINES, // No line limit
+        perTestOutputLimit = Question.UNLIMITED_OUTPUT_LINES, // No per test line limit
         javaWhitelist = null,
         kotlinWhitelist = null,
         shrink = false,
@@ -282,6 +283,7 @@ suspend fun Question.validate(seed: Int): ValidationReport {
         testCount = maxTestCount,
         timeout = control.maxTimeout!!,
         outputLimit = Question.UNLIMITED_OUTPUT_LINES,
+        perTestOutputLimit = Question.UNLIMITED_OUTPUT_LINES,
         javaWhitelist = javaClassWhitelist,
         kotlinWhitelist = kotlinClassWhitelist,
         shrink = false,
@@ -358,6 +360,7 @@ suspend fun Question.validate(seed: Int): ValidationReport {
         testCount = testCount,
         timeout = control.maxTimeout!!,
         outputLimit = Question.UNLIMITED_OUTPUT_LINES,
+        perTestOutputLimit = Question.UNLIMITED_OUTPUT_LINES,
         javaWhitelist = javaClassWhitelist,
         kotlinWhitelist = kotlinClassWhitelist,
         shrink = false,
@@ -380,7 +383,10 @@ suspend fun Question.validate(seed: Int): ValidationReport {
     val calibrationLength = Instant.now().toEpochMilli() - calibrationStart.toEpochMilli()
 
     val solutionMaxRuntime = calibrationResults.maxOf { it.results.taskResults!!.interval.length.toInt() }
-    val solutionMaxOutputLines = calibrationResults.maxOf { it.results.taskResults!!.outputLines.size }
+    // val solutionMaxOutputLines = calibrationResults.maxOf { it.results.taskResults!!.outputLines.size }
+    val solutionMaxPerTestOutputLines = calibrationResults.maxOf { results ->
+        results.results.tests()!!.maxOf { it.output!!.lines().size }
+    }
     val solutionExecutionCounts = calibrationResults.map { it.results }.setResourceUsage { it.executionCount }
     val solutionAllocation = calibrationResults.map { it.results }.setResourceUsage { it.memoryAllocation }
     val solutionCoverage = calibrationResults
@@ -393,7 +399,8 @@ suspend fun Question.validate(seed: Int): ValidationReport {
         seed = seed,
         testCount = testCount,
         timeout = (solutionMaxRuntime * control.timeoutMultiplier!!).coerceAtLeast(control.minTimeout!!),
-        outputLimit = solutionMaxOutputLines.coerceAtLeast(testCount * control.outputMultiplier!!),
+        outputLimit = 0, // solutionMaxOutputLines.coerceAtLeast(testCount * control.outputMultiplier!!),
+        perTestOutputLimit = (solutionMaxPerTestOutputLines * control.outputMultiplier!!).coerceAtLeast(Question.MIN_PER_TEST_LINES),
         javaWhitelist = javaClassWhitelist,
         kotlinWhitelist = kotlinClassWhitelist,
         shrink = false,
@@ -494,10 +501,9 @@ data class ValidationReport(
 
 sealed class ValidationFailed : Exception() {
     fun printContents(contents: String, path: String?) = """
-        |${path?.let { "$path\n" } ?: ""}---
-        |${contents}
-        |---
-    """.trimMargin()
+${path?.let { "$path\n" } ?: ""}---
+$contents
+---""".trimStart()
 }
 
 class SolutionFailed(val solution: Question.FlatFile, val explanation: String) : ValidationFailed() {

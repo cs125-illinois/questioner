@@ -260,7 +260,11 @@ fun TestResult<*, *>.asTestResult(source: Source) = TestResults.TestingResult.Te
     } else {
         null
     },
-    submission.stdout,
+    submission.stdout.trim() + if (submission.truncatedLines > 0) {
+        "\n(${submission.truncatedLines} lines truncated)\n"
+    } else {
+        "\n"
+    },
     complexity,
     submission.threw?.getStackTraceForSource(
         source,
