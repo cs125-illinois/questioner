@@ -232,6 +232,12 @@ fun Application.questioner() {
                     call.respond(ServerResponse(results))
                     val endMemory = (runtime.freeMemory().toFloat() / 1024.0 / 1024.0).toInt()
                     logger.debug { "$startMemory -> $endMemory" }
+                    System.getenv("RESTART_MEMORY_THRESHOLD")?.toInt()?.let {
+                        if (endMemory < it) {
+                            logger.debug { "Restarting on low memory error: $endMemory < $it" }
+                            exitProcess(-1)
+                        }
+                    }
                 } catch (e: StackOverflowError) {
                     e.printStackTrace()
                     call.respond(HttpStatusCode.BadRequest)
