@@ -240,7 +240,7 @@ fun Application.questioner() {
                         call.respond(ServerResponse(results))
                     }
                     val endMemory = (runtime.freeMemory().toFloat() / 1024.0 / 1024.0).toInt()
-                    logger.trace { "$startMemory -> $endMemory" }
+                    logger.debug { "$startMemory -> $endMemory" }
                 } catch (e: StackOverflowError) {
                     e.printStackTrace()
                     call.respond(HttpStatusCode.BadRequest)
