@@ -231,10 +231,16 @@ fun Application.questioner() {
                     val results = Questions.test(submission)
                     if (results.failedSteps.contains(TestResults.Step.testing)) {
                         logger.debug { "Failed testing for submission" }
+                        results.taskResults?.threw?.let {
+                            logger.debug { results.taskResults?.threw }
+                            logger.debug { results.taskResults?.threw?.stackTraceToString() }
+                        }
+                        call.respond(HttpStatusCode.InternalServerError)
+                    } else {
+                        call.respond(ServerResponse(results))
                     }
-                    call.respond(ServerResponse(results))
                     val endMemory = (runtime.freeMemory().toFloat() / 1024.0 / 1024.0).toInt()
-                    logger.debug { "$startMemory -> $endMemory" }
+                    logger.trace { "$startMemory -> $endMemory" }
                 } catch (e: StackOverflowError) {
                     e.printStackTrace()
                     call.respond(HttpStatusCode.BadRequest)
