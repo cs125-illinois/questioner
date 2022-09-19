@@ -22,6 +22,54 @@ import {
   Union,
 } from "runtypes"
 
+export const LanguagesResourceUsage = Record({
+  java: Number,
+}).And(
+  Partial({
+    kotlin: Number,
+  })
+)
+export type LanguagesResourceUsage = Static<typeof LanguagesResourceUsage>
+
+export const MethodInfo = Record({
+  className: String,
+  methodName: String,
+  descriptor: String,
+})
+export type MethodInfo = Static<typeof MethodInfo>
+
+export const LanguagesRecursiveMethods = Record({
+  java: RuntypeArray(MethodInfo),
+}).And(
+  Partial({
+    kotlin: RuntypeArray(MethodInfo),
+  })
+)
+export type LanguagesRecursiveMethods = Static<typeof LanguagesRecursiveMethods>
+
+export const LineCoverage = Record({
+  covered: Number,
+  total: Number,
+  missed: Number,
+})
+export type LineCoverage = Static<typeof LineCoverage>
+
+export const ValidationResults = Record({
+  seed: Number,
+  requiredTestCount: Number,
+  mutationCount: Number,
+  solutionMaxRuntime: Number,
+  bootstrapLength: Number,
+  mutationLength: Number,
+  incorrectLength: Number,
+  calibrationLength: Number,
+  solutionCoverage: LineCoverage,
+  executionCounts: LanguagesResourceUsage,
+  memoryAllocation: LanguagesResourceUsage,
+  solutionRecursiveMethods: LanguagesRecursiveMethods,
+})
+export type ValidationResults = Static<typeof ValidationResults>
+
 export const Languages = Union(Literal("java"), Literal("kotlin"))
 export type Languages = Static<typeof Languages>
 
@@ -51,19 +99,21 @@ export type LineCounts = Static<typeof LineCounts>
 
 export const Question = QuestionPath.And(
   Record({
-    type: Union(Literal("SNIPPET"), Literal("METHOD"), Literal("KLASS")),
     name: String,
+    type: Union(Literal("SNIPPET"), Literal("METHOD"), Literal("KLASS")),
     packageName: String,
     languages: RuntypeArray(Languages),
     descriptions: Dictionary(String, Languages),
     complexity: Dictionary(Number, Languages),
-    lineCounts: Dictionary(LineCounts, Languages),
     features: Dictionary(FeatureValue, Languages),
+    lineCounts: Dictionary(LineCounts, Languages),
+    templateImports: RuntypeArray(String),
   })
 ).And(
   Partial({
     citation: Record({ source: String }).And(Partial({ link: String })),
     starters: Dictionary(String, Languages),
+    validationResults: ValidationResults,
   })
 )
 export type Question = Static<typeof Question>
@@ -132,13 +182,6 @@ export const ExecutionCountComparison = Record({
   failed: Boolean,
 })
 export type ExecutionCountComparison = Static<typeof ExecutionCountComparison>
-
-export const LineCoverage = Record({
-  covered: Number,
-  total: Number,
-  missed: Number,
-})
-export type LineCoverage = Static<typeof LineCoverage>
 
 export const CoverageComparison = Record({
   solution: LineCoverage,

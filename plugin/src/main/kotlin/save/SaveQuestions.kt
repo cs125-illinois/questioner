@@ -411,6 +411,7 @@ fun List<ParsedJavaFile>.findQuestions(
                     kotlinSolution?.description,
                     solution.citation,
                     myUsedFiles,
+                    solution.templateImports.toSet(),
                     solution.correct.focused
                 ),
                 solution.correct.control,

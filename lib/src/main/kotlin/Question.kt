@@ -97,7 +97,8 @@ data class Question(
             if (hasKotlin) {
                 put(Language.kotlin, kotlinSolution!!.lineCount!!)
             }
-        }
+        },
+        metadata.templateImports
     )
 ) {
     @Transient
@@ -137,7 +138,9 @@ data class Question(
         val starters: Map<Language, String>?,
         val complexity: Map<Language, Int>,
         val features: Map<Language, Features>,
-        val lineCounts: Map<Language, LineCounts>
+        val lineCounts: Map<Language, LineCounts>,
+        val templateImports: Set<String>,
+        var validationResults: ValidationResults? = null
     )
 
     @JsonClass(generateAdapter = true)
@@ -150,6 +153,7 @@ data class Question(
         val kotlinDescription: String?,
         val citation: Citation?,
         val usedFiles: List<String> = listOf(),
+        val templateImports: Set<String> = setOf(),
         val focused: Boolean? = null
     ) {
         companion object {

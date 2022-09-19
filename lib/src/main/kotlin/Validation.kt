@@ -429,6 +429,7 @@ suspend fun Question.validate(seed: Int): ValidationReport {
         memoryAllocation = solutionAllocation,
         solutionRecursiveMethods = solutionRecursiveMethods
     )
+    published.validationResults = validationResults
 
     return ValidationReport(
         this,

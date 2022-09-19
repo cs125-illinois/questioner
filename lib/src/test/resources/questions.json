@@ -14,6 +14,7 @@
         "/Users/challen/code/questioner-problems/src/main/java/com/examples/recursivefactorial/incorrect/java/iterative/Question.java",
         "/Users/challen/code/questioner-problems/src/main/java/com/examples/recursivefactorial/correct/kotlin/Question.kt"
       ],
+      "templateImports": [],
       "focused": false
     },
     "annotatedControls": {},
@@ -185,7 +186,8 @@
           "comment": 0,
           "blank": 0
         }
-      }
+      },
+      "templateImports": []
     },
     "fauxStatic": false
   },
@@ -200,6 +202,7 @@
       "author": "challen@illinois.edu",
       "javaDescription": "<p>Write a method named <code>equals88</code> that returns <code>true</code> if its <code>int</code> argument is equal to 88, our magic number.</p>",
       "usedFiles": [],
+      "templateImports": [],
       "focused": false
     },
     "annotatedControls": {},
@@ -282,7 +285,8 @@
           "comment": 0,
           "blank": 0
         }
-      }
+      },
+      "templateImports": []
     },
     "fauxStatic": false
   },
@@ -297,6 +301,7 @@
       "author": "challen@illinois.edu",
       "javaDescription": "<p>Define a public class named <code>Squirrel</code>.\nThe <code>Squirrel</code> constructor should accept a <code>String</code> name, <code>String</code> tree, and <code>int</code> acorns, in that order.\nReject <code>null</code> names and trees using <code>assert</code>, and also <code>assert</code> that acorns is greater than 0 and less than or\nequal to 24.\n(Squirrels don't get too greedy and never acquire more acorns than that!)\nOverride equals and consider two <code>Squirrel</code> instances to be equal if they have the same name and tree.\nDo not provide getters or setters for your variables or expose them publicly.</p>",
       "usedFiles": [],
+      "templateImports": [],
       "focused": false
     },
     "annotatedControls": {},
@@ -416,7 +421,131 @@
           "comment": 0,
           "blank": 3
         }
-      }
+      },
+      "templateImports": []
+    },
+    "fauxStatic": false
+  },
+  "With Template Imports": {
+    "name": "With Template Imports",
+    "type": "METHOD",
+    "klass": "Question",
+    "metadata": {
+      "contentHash": "3670040a9c73df5f4cb3cf74bb78d4a2",
+      "packageName": "com.examples.withtemplateimports",
+      "version": "2022.7.0",
+      "author": "challen@illinois.edu",
+      "javaDescription": "<p>Example to test use of import statements in method templates.</p>",
+      "usedFiles": [],
+      "templateImports": [
+        "java.util.List",
+        "java.util.ArrayList",
+        "java.util.Arrays"
+      ],
+      "focused": false
+    },
+    "annotatedControls": {},
+    "question": {
+      "klass": "Question",
+      "contents": "import edu.illinois.cs.cs125.questioner.lib.Correct;\nimport edu.illinois.cs.cs125.questioner.lib.TemplateImports;\nimport edu.illinois.cs.cs125.questioner.lib.Wrap;\n\nimport java.util.Arrays;\nimport java.util.List;\n\n/*\n * Example to test use of import statements in method templates.\n */\n\n@Correct(name = \"With Template Imports\", version = \"2022.7.0\", author = \"challen@illinois.edu\")\n@Wrap\n@TemplateImports(paths = \"java.util.List,java.util.ArrayList,java.util.Arrays\")\npublic class Question {\n  public static List<Integer> max(int first, int second) {\n    return Arrays.asList(first, second);\n  }\n}",
+      "language": "java",
+      "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/withtemplateimports/Question.java"
+    },
+    "correct": {
+      "klass": "Question",
+      "contents": "public static List<Integer> max(int first, int second) {\n  return Arrays.asList(first, second);\n}",
+      "language": "java",
+      "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/withtemplateimports/Question.java",
+      "complexity": 1,
+      "features": {
+        "featureMap": {
+          "METHOD": 1,
+          "RETURN": 1,
+          "VISIBILITY_MODIFIERS": 1,
+          "STATIC_METHOD": 1,
+          "BOXING_CLASSES": 1,
+          "TYPE_PARAMETERS": 1,
+          "DOT_NOTATION": 1,
+          "DOTTED_METHOD_CALL": 1
+        },
+        "importList": [],
+        "typeList": [
+          "List<Integer>",
+          "Integer",
+          "int"
+        ],
+        "identifierList": [],
+        "dottedMethodList": [
+          "asList"
+        ]
+      },
+      "lineCount": {
+        "source": 3,
+        "comment": 0,
+        "blank": 0
+      },
+      "expectedDeadCount": 1
+    },
+    "alternativeSolutions": [],
+    "incorrect": [],
+    "common": [],
+    "javaTemplate": "import java.util.Arrays;\nimport java.util.List;\nimport java.util.ArrayList;\n\npublic class Question {\n  {{{ contents }}}\n}",
+    "importWhitelist": [],
+    "importBlacklist": [],
+    "slug": "with-template-imports",
+    "hasKotlin": false,
+    "published": {
+      "name": "With Template Imports",
+      "type": "METHOD",
+      "path": "with-template-imports",
+      "author": "challen@illinois.edu",
+      "version": "2022.7.0",
+      "packageName": "com.examples.withtemplateimports",
+      "languages": [
+        "java"
+      ],
+      "descriptions": {
+        "java": "<p>Example to test use of import statements in method templates.</p>"
+      },
+      "complexity": {
+        "java": 1
+      },
+      "features": {
+        "java": {
+          "featureMap": {
+            "METHOD": 1,
+            "RETURN": 1,
+            "VISIBILITY_MODIFIERS": 1,
+            "STATIC_METHOD": 1,
+            "BOXING_CLASSES": 1,
+            "TYPE_PARAMETERS": 1,
+            "DOT_NOTATION": 1,
+            "DOTTED_METHOD_CALL": 1
+          },
+          "importList": [],
+          "typeList": [
+            "List<Integer>",
+            "Integer",
+            "int"
+          ],
+          "identifierList": [],
+          "dottedMethodList": [
+            "asList"
+          ]
+        }
+      },
+      "lineCounts": {
+        "java": {
+          "source": 3,
+          "comment": 0,
+          "blank": 0
+        }
+      },
+      "templateImports": [
+        "java.util.List",
+        "java.util.ArrayList",
+        "java.util.Arrays"
+      ]
     },
     "fauxStatic": false
   },
@@ -434,6 +563,7 @@
       "usedFiles": [
         "/Users/challen/code/questioner-problems/src/main/java/com/examples/counterobject/correct/kotlin/Counter.kt"
       ],
+      "templateImports": [],
       "focused": false
     },
     "annotatedControls": {},
@@ -589,7 +719,8 @@
           "comment": 0,
           "blank": 0
         }
-      }
+      },
+      "templateImports": []
     },
     "fauxStatic": false
   },
@@ -609,6 +740,7 @@
         "/Users/challen/code/questioner-problems/src/main/java/com/examples/printsum/correct/java/withoronnewline/Question.java",
         "/Users/challen/code/questioner-problems/src/main/java/com/examples/printsum/correct/kotlin/Question.kt"
       ],
+      "templateImports": [],
       "focused": true
     },
     "annotatedControls": {
@@ -788,7 +920,8 @@
           "comment": 0,
           "blank": 0
         }
-      }
+      },
+      "templateImports": []
     },
     "fauxStatic": false
   },
@@ -803,6 +936,7 @@
       "author": "challen@illinois.edu",
       "javaDescription": "<p>Write a method <code>larger</code> that returns the larger of two <code>int</code> arguments.</p>",
       "usedFiles": [],
+      "templateImports": [],
       "focused": false
     },
     "annotatedControls": {},
@@ -887,7 +1021,8 @@
           "comment": 0,
           "blank": 0
         }
-      }
+      },
+      "templateImports": []
     },
     "fauxStatic": false
   },
@@ -902,6 +1037,7 @@
       "author": "challen@illinois.edu",
       "javaDescription": "<p>Write a function <code>combine</code> that, given two <code>String</code> arguments, returns the second appended to the first.\nExcept you should omit the first two characters of each <code>String</code>.\nFor example, given <code>Java</code> and <code>Kotlin</code>, you would return <code>vatlin</code>.\nYou can assume that each <code>String</code> is of length at least two.</p>",
       "usedFiles": [],
+      "templateImports": [],
       "focused": false
     },
     "annotatedControls": {},
@@ -992,7 +1128,8 @@
           "comment": 0,
           "blank": 0
         }
-      }
+      },
+      "templateImports": []
     },
     "fauxStatic": false
   },
@@ -1009,6 +1146,7 @@
       "usedFiles": [
         "/Users/challen/code/questioner-problems/src/main/java/com/examples/fancystringcompare/incorrect/badequals/Question.java"
       ],
+      "templateImports": [],
       "focused": false
     },
     "annotatedControls": {},
@@ -1123,7 +1261,8 @@
           "comment": 2,
           "blank": 0
         }
-      }
+      },
+      "templateImports": []
     },
     "fauxStatic": false
   },
@@ -1141,6 +1280,10 @@
       "usedFiles": [
         "/Users/challen/code/questioner-problems/src/main/java/com/examples/stringduplicates/correct/java/usesmap/Question.java",
         "/Users/challen/code/questioner-problems/src/main/java/com/examples/stringduplicates/correct/kotlin/Question.kt"
+      ],
+      "templateImports": [
+        "java.util.Map",
+        "java.util.HashMap"
       ],
       "focused": false
     },
@@ -1402,7 +1545,11 @@
           "comment": 0,
           "blank": 0
         }
-      }
+      },
+      "templateImports": [
+        "java.util.Map",
+        "java.util.HashMap"
+      ]
     },
     "fauxStatic": false
   },
@@ -1419,6 +1566,7 @@
       "usedFiles": [
         "/Users/challen/code/questioner-problems/src/main/java/com/examples/privaterecursivehelper/incorrect/java/iterative/Question.java"
       ],
+      "templateImports": [],
       "focused": false
     },
     "annotatedControls": {},
@@ -1524,7 +1672,8 @@
           "comment": 0,
           "blank": 2
         }
-      }
+      },
+      "templateImports": []
     },
     "fauxStatic": false
   },
@@ -1541,6 +1690,7 @@
       "usedFiles": [
         "/Users/challen/code/questioner-problems/src/main/java/com/examples/mayberecursivefactorial/correct/java/iterative/Question.java"
       ],
+      "templateImports": [],
       "focused": false
     },
     "annotatedControls": {},
@@ -1678,7 +1828,8 @@
           "comment": 0,
           "blank": 1
         }
-      }
+      },
+      "templateImports": []
     },
     "fauxStatic": false
   },
@@ -1696,6 +1847,7 @@
       "usedFiles": [
         "/Users/challen/code/questioner-problems/src/main/java/com/examples/addoneclass/correct/kotlin/Question.kt"
       ],
+      "templateImports": [],
       "focused": false
     },
     "annotatedControls": {},
@@ -1841,7 +1993,8 @@
           "comment": 0,
           "blank": 0
         }
-      }
+      },
+      "templateImports": []
     },
     "fauxStatic": false
   },
@@ -1858,6 +2011,7 @@
       "usedFiles": [
         "/Users/challen/code/questioner-problems/src/main/java/com/examples/cougarfeliform/Feliform.java"
       ],
+      "templateImports": [],
       "focused": false
     },
     "annotatedControls": {},
@@ -1973,7 +2127,8 @@
           "comment": 0,
           "blank": 4
         }
-      }
+      },
+      "templateImports": []
     },
     "fauxStatic": false
   },
@@ -1988,6 +2143,7 @@
       "author": "challen@illinois.edu",
       "javaDescription": "<p>Print &quot;Hello!&quot; without the quotes.\nUsing to test support for @Limit annotations.</p>",
       "usedFiles": [],
+      "templateImports": [],
       "focused": false
     },
     "annotatedControls": {},
@@ -2064,7 +2220,8 @@
           "comment": 0,
           "blank": 0
         }
-      }
+      },
+      "templateImports": []
     },
     "fauxStatic": false
   },
@@ -2082,6 +2239,7 @@
       "usedFiles": [
         "/Users/challen/code/questioner-problems/src/main/java/com/examples/inputinterleavingtest/correct/kotlin/Question.kt"
       ],
+      "templateImports": [],
       "focused": false
     },
     "annotatedControls": {},
@@ -2296,7 +2454,8 @@
           "comment": 0,
           "blank": 2
         }
-      }
+      },
+      "templateImports": []
     },
     "fauxStatic": false
   },
@@ -2314,6 +2473,7 @@
       "usedFiles": [
         "/Users/challen/code/questioner-problems/src/main/java/com/examples/withimports/correct/kotlin/Question.kt"
       ],
+      "templateImports": [],
       "focused": false
     },
     "annotatedControls": {},
@@ -2502,7 +2662,8 @@
           "comment": 0,
           "blank": 2
         }
-      }
+      },
+      "templateImports": []
     },
     "fauxStatic": false
   },
@@ -2525,6 +2686,7 @@
         "/Users/challen/code/questioner-problems/src/main/java/com/examples/addone/correct/java/Question.java",
         "/Users/challen/code/questioner-problems/src/main/java/com/examples/addone/correct/kotlin/Question.kt"
       ],
+      "templateImports": [],
       "focused": false
     },
     "annotatedControls": {},
@@ -2729,7 +2891,8 @@
           "comment": 3,
           "blank": 0
         }
-      }
+      },
+      "templateImports": []
     },
     "fauxStatic": false
   },
@@ -2748,6 +2911,7 @@
         "/Users/challen/code/questioner-problems/src/main/java/com/examples/kotlinnulltest/correct/kotlin/reference/Question.kt",
         "/Users/challen/code/questioner-problems/src/main/java/com/examples/kotlinnulltest/correct/kotlin/nonnullparameter/Question.kt"
       ],
+      "templateImports": [],
       "focused": false
     },
     "annotatedControls": {},
@@ -2938,7 +3102,8 @@
           "comment": 0,
           "blank": 0
         }
-      }
+      },
+      "templateImports": []
     },
     "fauxStatic": false
   },
@@ -2958,6 +3123,7 @@
         "/Users/challen/code/questioner-problems/src/main/java/com/examples/withfeaturecheck/incorrect/kotlin/usesloop/Question.kt",
         "/Users/challen/code/questioner-problems/src/main/java/com/examples/withfeaturecheck/correct/kotlin/Question.kt"
       ],
+      "templateImports": [],
       "focused": false
     },
     "annotatedControls": {},
@@ -3118,7 +3284,8 @@
           "comment": 0,
           "blank": 0
         }
-      }
+      },
+      "templateImports": []
     },
     "fauxStatic": false
   }
