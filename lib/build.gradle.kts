@@ -11,7 +11,7 @@ dependencies {
     implementation("io.github.java-diff-utils:java-diff-utils:4.12")
     implementation("org.ow2.asm:asm:9.3")
 
-    api("com.beyondgrader.resource-agent:agent:2022.9.2")
+    api("com.beyondgrader.resource-agent:agent:2022.9.3")
     api("com.github.cs125-illinois.jeed:core:2022.9.3")
     api("com.github.cs125-illinois:jenisol:2022.9.1")
     api("io.kotest:kotest-runner-junit5:5.4.2")

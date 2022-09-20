@@ -1,5 +1,6 @@
 package edu.illinois.cs.cs125.questioner.lib
 
+import com.beyondgrader.resourceagent.StaticFailureDetection
 import edu.illinois.cs.cs125.jeed.core.CheckstyleFailed
 import edu.illinois.cs.cs125.jeed.core.CompilationFailed
 import edu.illinois.cs.cs125.jeed.core.ComplexityFailed
@@ -152,8 +153,9 @@ suspend fun Question.test(
             throw e.cause ?: e
         }
     }
-    if (taskResults.killedClassInitializers.isNotEmpty()) {
-        throw CachePoisonedException(taskResults.killedClassInitializers.joinToString(", "))
+    val failedClassInitializers = StaticFailureDetection.pollStaticInitializationFailures()
+    if (failedClassInitializers.isNotEmpty()) {
+        throw CachePoisonedException(failedClassInitializers.joinToString(", ") { it.clazz.name })
     }
 
     val threw = taskResults.returned?.threw ?: taskResults.threw

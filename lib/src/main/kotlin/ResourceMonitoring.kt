@@ -1,9 +1,6 @@
 package edu.illinois.cs.cs125.questioner.lib
 
-import com.beyondgrader.resourceagent.Agent
-import com.beyondgrader.resourceagent.AllocationLimiting
-import com.beyondgrader.resourceagent.LineCounting
-import com.beyondgrader.resourceagent.WarmupWrapping
+import com.beyondgrader.resourceagent.*
 import com.sun.management.ThreadMXBean
 import edu.illinois.cs.cs125.jeed.core.*
 import org.objectweb.asm.ClassReader
@@ -39,6 +36,7 @@ object ResourceMonitoring : SandboxPlugin<ResourceMonitoringArguments, ResourceM
         mxBean.isThreadAllocatedMemoryEnabled = true
         Sandbox.SandboxedClassLoader::class.java.toString() // Ensure loaded, to be instrumented
         Agent.activate(countLines = countLibraryLines)
+        StaticFailureDetection.recordingFailedClasses = true
         AllocationLimiting.arrayBodySizeValidator = LongFunction(ResourceMonitoring::checkArrayAllocation)
         WarmupWrapping.beforeWarmup = Runnable(ResourceMonitoring::beforeWarmup)
         WarmupWrapping.afterWarmup = Runnable(ResourceMonitoring::afterWarmup)
