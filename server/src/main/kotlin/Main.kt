@@ -11,6 +11,7 @@ import com.mongodb.client.model.Sorts
 import com.ryanharter.ktor.moshi.moshi
 import com.squareup.moshi.JsonClass
 import com.squareup.moshi.Moshi
+import com.sun.management.HotSpotDiagnosticMXBean
 import edu.illinois.cs.cs125.jeed.core.warm
 import edu.illinois.cs.cs125.questioner.lib.Question
 import edu.illinois.cs.cs125.questioner.lib.ResourceMonitoring
@@ -45,6 +46,7 @@ import java.security.cert.X509Certificate
 import java.time.Instant
 import java.util.Properties
 import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicInteger
 import javax.management.NotificationEmitter
 import javax.management.NotificationListener
 import javax.net.ssl.SSLContext
@@ -214,6 +216,7 @@ val threadPool = Executors.newFixedThreadPool(System.getenv("QUESTIONER_THREAD_P
 data class ServerResponse(val results: TestResults)
 
 val runtime: Runtime = Runtime.getRuntime()
+val counter = AtomicInteger()
 
 @Suppress("LongMethod")
 fun Application.questioner() {
@@ -231,12 +234,13 @@ fun Application.questioner() {
             withContext(threadPool) {
                 val submission = call.receive<Submission>()
                 Questions.load(submission) ?: return@withContext call.respond(HttpStatusCode.NotFound)
+                val runCount = counter.incrementAndGet()
                 @Suppress("TooGenericExceptionCaught")
                 try {
                     val startMemory = (runtime.freeMemory().toFloat() / 1024.0 / 1024.0).toInt()
                     call.respond(ServerResponse(Questions.test(submission)))
                     val endMemory = (runtime.freeMemory().toFloat() / 1024.0 / 1024.0).toInt()
-                    logger.debug { "$startMemory -> $endMemory" }
+                    logger.debug { "$runCount: $startMemory -> $endMemory" }
                 } catch (e: StackOverflowError) {
                     e.printStackTrace()
                     call.respond(HttpStatusCode.BadRequest)
@@ -249,6 +253,17 @@ fun Application.questioner() {
                     e.printStackTrace()
                     logger.warn { e.toString() }
                     call.respond(HttpStatusCode.BadRequest)
+                } finally {
+                    System.getenv("DUMP_AT_SUBMISSION")?.toInt()?.also {
+                        if (it == runCount) {
+                            logger.debug { "Dumping heap" }
+                            ManagementFactory.newPlatformMXBeanProxy(
+                                ManagementFactory.getPlatformMBeanServer(),
+                                "com.sun.management:type=HotSpotDiagnostic",
+                                HotSpotDiagnosticMXBean::class.java
+                            ).dumpHeap("questioner.hprof", false)
+                        }
+                    }
                 }
             }
         }
