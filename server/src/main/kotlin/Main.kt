@@ -37,14 +37,20 @@ import kotlinx.coroutines.withContext
 import mu.KotlinLogging
 import org.bson.BsonDocument
 import org.slf4j.LoggerFactory
+import java.lang.management.ManagementFactory
+import java.lang.management.MemoryNotificationInfo
+import java.lang.management.MemoryType
 import java.security.SecureRandom
 import java.security.cert.X509Certificate
 import java.time.Instant
 import java.util.Properties
 import java.util.concurrent.Executors
+import javax.management.NotificationEmitter
+import javax.management.NotificationListener
 import javax.net.ssl.SSLContext
 import javax.net.ssl.X509TrustManager
 import kotlin.collections.forEach
+import kotlin.math.floor
 import kotlin.system.exitProcess
 import edu.illinois.cs.cs125.jeed.core.moshi.Adapters as JeedAdapters
 
@@ -289,6 +295,20 @@ fun main() {
         (LoggerFactory.getILoggerFactory() as LoggerContext).getLogger(logger.name).level = Level.DEBUG
         logger.debug { "Enabling debug logging" }
     }
+
+    ManagementFactory.getMemoryPoolMXBeans().find {
+        it.type == MemoryType.HEAP && it.isUsageThresholdSupported
+    }?.also {
+        val threshold = floor(it.usage.max * 0.8).toLong()
+        logger.debug { "Setting memory collection threshold to $threshold" }
+        it.collectionUsageThreshold = threshold
+        val listener = NotificationListener { notification, _ ->
+            if (notification.type == MemoryNotificationInfo.MEMORY_COLLECTION_THRESHOLD_EXCEEDED) {
+                logger.warn { "Memory threshold exceeded" }
+            }
+        }
+        (ManagementFactory.getMemoryMXBean() as NotificationEmitter).addNotificationListener(listener, null, null)
+    } ?: logger.warn { "Memory management interface not found" }
 
     logger.debug { Status() }
     CoroutineScope(Dispatchers.IO).launch { warm(2, failLint = false) }
