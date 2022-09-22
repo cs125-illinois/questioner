@@ -12,8 +12,8 @@ dependencies {
     implementation("org.ow2.asm:asm:9.3")
 
     api("com.beyondgrader.resource-agent:agent:2022.9.3")
-    api("com.github.cs125-illinois.jeed:core:2022.9.3")
-    api("com.github.cs125-illinois:jenisol:2022.9.1")
+    api("com.github.cs125-illinois.jeed:core:2022.9.4")
+    api("com.github.cs125-illinois:jenisol:2022.9.2")
     api("io.kotest:kotest-runner-junit5:5.4.2")
     api("com.google.truth:truth:1.1.3")
     api("com.github.cs125-illinois:libcs1:2022.9.0")

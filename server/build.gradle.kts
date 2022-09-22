@@ -24,7 +24,7 @@ dependencies {
     implementation("com.github.cs125-illinois:ktor-moshi:2022.9.0")
     implementation("org.mongodb:mongodb-driver:3.12.11")
 
-    implementation("org.slf4j:slf4j-api:2.0.1")
+    implementation("org.slf4j:slf4j-api:2.0.2")
     implementation("ch.qos.logback:logback-classic:1.4.1")
     implementation("io.github.microutils:kotlin-logging:3.0.0")
 }
