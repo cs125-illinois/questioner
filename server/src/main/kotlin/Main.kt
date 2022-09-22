@@ -319,7 +319,8 @@ fun main() {
         it.collectionUsageThreshold = threshold
         val listener = NotificationListener { notification, _ ->
             if (notification.type == MemoryNotificationInfo.MEMORY_COLLECTION_THRESHOLD_EXCEEDED) {
-                logger.warn { "Memory threshold exceeded" }
+                logger.error { "Memory threshold exceeded" }
+                exitProcess(-1)
             }
         }
         (ManagementFactory.getMemoryMXBean() as NotificationEmitter).addNotificationListener(listener, null, null)

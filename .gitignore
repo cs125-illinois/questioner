@@ -14,3 +14,4 @@ build/
 /.env
 /email.txt
 gen/
+/dumps
