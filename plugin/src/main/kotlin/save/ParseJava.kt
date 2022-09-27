@@ -54,23 +54,41 @@ data class ParsedJavaFile(val path: String, val contents: String) {
         it !in importsToRemove
     }
 
-    val whitelist = topLevelClass.getAnnotations(Whitelist::class.java).let { annotations ->
-        check(annotations.size <= 1) { "Found multiple @Whitelist annotations" }
-        if (annotations.isEmpty()) {
-            listOf()
-        } else {
-            annotations.first().let { annotation ->
-                @Suppress("TooGenericExceptionCaught")
-                try {
-                    annotation.parameterMap().let { it["paths"] ?: error("path field not set on @Whitelist") }
-                } catch (e: Exception) {
-                    error("Couldn't parse @Whitelist paths for $path: $e")
-                }.let { names ->
-                    names.split(",").map { it.trim() }
+    val whitelist = (
+        topLevelClass.getAnnotations(Whitelist::class.java).let { annotations ->
+            check(annotations.size <= 1) { "Found multiple @Whitelist annotations" }
+            if (annotations.isEmpty()) {
+                listOf()
+            } else {
+                annotations.first().let { annotation ->
+                    @Suppress("TooGenericExceptionCaught")
+                    try {
+                        annotation.parameterMap().let { it["paths"] ?: error("path field not set on @Whitelist") }
+                    } catch (e: Exception) {
+                        error("Couldn't parse @Whitelist paths for $path: $e")
+                    }.let { names ->
+                        names.split(",").map { it.trim() }
+                    }
+                }
+            }
+        } + topLevelClass.getAnnotations(TemplateImports::class.java).let { annotations ->
+            check(annotations.size <= 1) { "Found multiple @TemplateImports annotations" }
+            if (annotations.isEmpty()) {
+                listOf()
+            } else {
+                annotations.first().let { annotation ->
+                    @Suppress("TooGenericExceptionCaught")
+                    try {
+                        annotation.parameterMap().let { it["paths"] ?: error("path field not set on @TemplateImports") }
+                    } catch (e: Exception) {
+                        error("Couldn't parse @TemplateImports paths for $path: $e")
+                    }.let { names ->
+                        names.split(",").map { it.trim() }
+                    }
                 }
             }
         }
-    }
+        ).toSet().toList()
 
     val blacklist = topLevelClass.getAnnotations(Blacklist::class.java).let { annotations ->
         check(annotations.size <= 1) { "Found multiple @Blacklist annotations" }
