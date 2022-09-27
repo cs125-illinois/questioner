@@ -4,7 +4,7 @@ COPY *.jar questioner.jar
 CMD [\
   "java",\
   "-ea", "--enable-preview", "-Dfile.encoding=UTF-8",\
-  "-Xms512m", "-Xmx1G", "-Xss256k", "-XX:+UseZGC", "-XX:ZCollectionInterval=8",\
+  "-Xms512m", "-Xmx2G", "-Xss256k", "-XX:+UseZGC", "-XX:ZCollectionInterval=8",\
   "-XX:-OmitStackTraceInFastThrow",\
   "--add-opens", "java.base/java.lang=ALL-UNNAMED",\
   "--add-opens", "java.base/java.util=ALL-UNNAMED",\
