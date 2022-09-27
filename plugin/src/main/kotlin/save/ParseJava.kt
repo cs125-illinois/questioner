@@ -137,7 +137,7 @@ data class ParsedJavaFile(val path: String, val contents: String) {
                 val name = parameters["name"] ?: error("name field not set on @Correct")
                 val version = parameters["version"] ?: error("version field not set on @Correct")
                 val author = parameters["author"] ?: error("author field not set on @Correct")
-                assert(author.isEmail()) { "author field is not an email address" }
+                check(author.isEmail()) { "author field is not an email address" }
                 val description = annotation.comment().let { comment ->
                     markdownParser.buildMarkdownTreeFromString(comment).let { astNode ->
                         HtmlGenerator(comment, astNode, CommonMarkFlavourDescriptor()).generateHtml()
@@ -653,7 +653,12 @@ fun JavaParser.CompilationUnitContext.topLevelClass(): JavaParser.TypeDeclaratio
     children.filterIsInstance<JavaParser.TypeDeclarationContext>().filter {
         it.classDeclaration() != null || it.interfaceDeclaration() != null
     }.let {
-        assert(it.size == 1) { "Found multiple top-level classes" }
+        check(it.isNotEmpty()) {
+            "Couldn't find solution class. Make sure description comment is immediately above the @Correct annotation."
+        }
+        check(it.size == 1) {
+            "Found multiple top-level classes"
+        }
         it.first()
     }
 

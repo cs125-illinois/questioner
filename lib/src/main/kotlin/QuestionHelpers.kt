@@ -111,7 +111,15 @@ suspend fun Question.kompileSubmission(
             testResults.complete.compileSubmission = CompiledSourceResult(it)
             testResults.completedSteps.add(TestResults.Step.compileSubmission)
         }
-        testResults.addKtlintResults(source.ktLint(KtLintArguments(failOnError = false, indent = 2)))
+        testResults.addKtlintResults(
+            source.ktLint(
+                KtLintArguments(
+                    failOnError = false,
+                    indent = 2,
+                    maxLineLength = 120
+                )
+            )
+        )
         compiledSource
     } catch (e: TemplatingFailed) {
         testResults.failed.templateSubmission = e
@@ -425,7 +433,10 @@ class BumpingInputStream : InputStream() {
     }
 }
 
-fun bindJeedCaptureOutputControlInput(stdinStream: BumpingInputStream, perTestOutputLimit: Int): CaptureOutputControlInput {
+fun bindJeedCaptureOutputControlInput(
+    stdinStream: BumpingInputStream,
+    perTestOutputLimit: Int
+): CaptureOutputControlInput {
     return fun(stdin: List<String>, run: () -> Any?): CapturedResult {
         stdinStream.setInputs(stdin.map { "$it\n".toByteArray() })
 
@@ -433,6 +444,7 @@ fun bindJeedCaptureOutputControlInput(stdinStream: BumpingInputStream, perTestOu
             override fun stdout(int: Int) {
                 stdinStream.bump()
             }
+
             override fun stderr(int: Int) {}
         }
         var resourceUsage: ResourceMonitoringCheckpoint? = null

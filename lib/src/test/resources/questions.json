@@ -733,7 +733,7 @@
     "type": "SNIPPET",
     "klass": "Question",
     "metadata": {
-      "contentHash": "217a5a39a3d966d871772fd733d9d49d",
+      "contentHash": "7c9d8f6d83294db9f6e6db54f1bb0878",
       "packageName": "com.examples.printsum",
       "version": "2021.6.0",
       "author": "challen@illinois.edu",
@@ -745,14 +745,14 @@
         "/Users/challen/code/questioner-problems/src/main/java/com/examples/printsum/correct/kotlin/Question.kt"
       ],
       "templateImports": [],
-      "focused": true
+      "focused": false
     },
     "annotatedControls": {
       "maxDeadCode": 2
     },
     "question": {
       "klass": "Question",
-      "contents": "import edu.illinois.cs.cs125.questioner.lib.Correct;\n\n/*\n * Given two `int` variables `first` and `second` that are already declared and initialized, print their sum.\n */\n\n@Correct(\n    name = \"Print Sum\",\n    author = \"challen@illinois.edu\",\n    version = \"2021.6.0\",\n    focused = true,\n    maxDeadCode = 2)\npublic class Question {\n  public static void printSum(int first, int second) {\n    // TEMPLATE_START\n    System.out.println(first + second);\n    // TEMPLATE_END\n  }\n}",
+      "contents": "import edu.illinois.cs.cs125.questioner.lib.Correct;\n\n/*\n * Given two `int` variables `first` and `second` that are already declared and initialized, print their sum.\n */\n\n@Correct(\n    name = \"Print Sum\",\n    author = \"challen@illinois.edu\",\n    version = \"2021.6.0\",\n    maxDeadCode = 2)\npublic class Question {\n  public static void printSum(int first, int second) {\n    // TEMPLATE_START\n    System.out.println(first + second);\n    // TEMPLATE_END\n  }\n}",
       "language": "java",
       "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/printsum/Question.java"
     },
