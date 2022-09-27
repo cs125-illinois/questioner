@@ -490,7 +490,11 @@
     "incorrect": [],
     "common": [],
     "javaTemplate": "import java.util.Arrays;\nimport java.util.List;\nimport java.util.ArrayList;\n\npublic class Question {\n  {{{ contents }}}\n}",
-    "importWhitelist": [],
+    "importWhitelist": [
+      "java.util.List",
+      "java.util.ArrayList",
+      "java.util.Arrays"
+    ],
     "importBlacklist": [],
     "slug": "with-template-imports",
     "hasKotlin": false,
@@ -1425,7 +1429,10 @@
     "common": [],
     "javaTemplate": "import java.util.HashSet;\nimport java.util.Set;\nimport java.util.Map;\nimport java.util.HashMap;\n\npublic class Question {\n  {{{ contents }}}\n}",
     "kotlinTemplate": "import java.util.Map\nimport java.util.HashMap\n\nclass Question {\n  {{{ contents }}}\n}",
-    "importWhitelist": [],
+    "importWhitelist": [
+      "java.util.Map",
+      "java.util.HashMap"
+    ],
     "importBlacklist": [],
     "slug": "string-duplicates",
     "kotlinSolution": {
