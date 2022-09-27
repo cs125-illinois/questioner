@@ -8,7 +8,7 @@ plugins {
     id("com.google.devtools.ksp")
 }
 dependencies {
-    antlr("org.antlr:antlr4:4.10.1")
+    antlr("org.antlr:antlr4:4.11.1")
 
     implementation("org.jetbrains.kotlin:kotlin-reflect:1.7.10")
     implementation(gradleApi())

@@ -111,7 +111,7 @@ suspend fun Question.kompileSubmission(
             testResults.complete.compileSubmission = CompiledSourceResult(it)
             testResults.completedSteps.add(TestResults.Step.compileSubmission)
         }
-        testResults.addKtlintResults(source.ktLint(KtLintArguments(failOnError = false)))
+        testResults.addKtlintResults(source.ktLint(KtLintArguments(failOnError = false, indent = 2)))
         compiledSource
     } catch (e: TemplatingFailed) {
         testResults.failed.templateSubmission = e
