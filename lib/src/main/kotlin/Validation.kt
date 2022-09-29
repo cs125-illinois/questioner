@@ -17,7 +17,13 @@ data class CorrectResults(val incorrect: Question.FlatFile, val results: TestRes
 data class IncorrectResults(val incorrect: Question.IncorrectFile, val results: TestResults)
 
 @Suppress("LongMethod", "ComplexMethod")
-suspend fun Question.validate(seed: Int): ValidationReport {
+suspend fun Question.validate(defaultSeed: Int): ValidationReport {
+
+    val seed = if (control.seed!! != -1) {
+        control.seed!!
+    } else {
+        defaultSeed
+    }
 
     fauxStatic = solution.fauxStatic
     var deferredException: Exception? = null

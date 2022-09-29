@@ -164,6 +164,7 @@ data class ParsedJavaFile(val path: String, val contents: String) {
                 val allocationLimitMultiplier = parameters["allocationLimitMultiplier"]?.toInt()
                 val minExtraSourceLines = parameters["minExtraSourceLines"]?.toInt()
                 val sourceLinesMultiplier = parameters["sourceLinesMultiplier"]?.toDouble()
+                val seed = parameters["seed"]?.toInt()
 
                 Question.CorrectData(
                     path,
@@ -190,7 +191,8 @@ data class ParsedJavaFile(val path: String, val contents: String) {
                         allocationFailureMultiplier,
                         allocationLimitMultiplier,
                         minExtraSourceLines,
-                        sourceLinesMultiplier
+                        sourceLinesMultiplier,
+                        seed
                     )
                 )
             }

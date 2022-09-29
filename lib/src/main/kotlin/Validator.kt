@@ -27,7 +27,7 @@ class Validator(questionsFile: File, private val sourceDir: String, private val 
             question.reportFile(sourceDir).delete()
         }
         try {
-            question.validate(seed = seed).also { report ->
+            question.validate(seed).also { report ->
                 if (!testing) {
                     println("$name: ${report.summary}")
                     question.validationFile(sourceDir)

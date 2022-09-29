@@ -107,7 +107,7 @@ suspend fun Question.test(
     val jenisolSettings = Settings(
         seed = settings.seed,
         shrink = settings.shrink,
-        totalTestCount = settings.testCount,
+        testCount = settings.testCount,
         minTestCount = settings.minTestCount,
         maxTestCount = settings.maxTestCount
     )
@@ -208,7 +208,7 @@ suspend fun Question.test(
     results.addTestingResults(
         TestResults.TestingResult(
             testingResults,
-            taskResults.returned!!.settings.totalTestCount,
+            taskResults.returned!!.settings.testCount,
             taskResults.completed && !timeout,
             !taskResults.returned!!.finishedReceivers
         )

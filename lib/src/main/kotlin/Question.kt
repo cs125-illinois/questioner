@@ -180,7 +180,8 @@ data class Question(
         val allocationFailureMultiplier: Int?,
         val allocationLimitMultiplier: Int?,
         val minExtraSourceLines: Int?,
-        val sourceLinesMultiplier: Double?
+        val sourceLinesMultiplier: Double?,
+        val seed: Int?
     ) {
         companion object {
             const val DEFAULT_SOLUTION_THROWS = false
@@ -201,6 +202,7 @@ data class Question(
             const val DEFAULT_ALLOCATION_LIMIT_MULTIPLIER = 16
             const val DEFAULT_MIN_EXTRA_SOURCE_LINES = 2
             const val DEFAULT_SOURCE_LINES_MULTIPLIER = 1.5
+            const val DEFAULT_SEED = -1
 
             val DEFAULTS = TestingControl(
                 DEFAULT_SOLUTION_THROWS,
@@ -220,7 +222,8 @@ data class Question(
                 DEFAULT_ALLOCATION_FAILURE_MULTIPLIER,
                 DEFAULT_ALLOCATION_LIMIT_MULTIPLIER,
                 DEFAULT_MIN_EXTRA_SOURCE_LINES,
-                DEFAULT_SOURCE_LINES_MULTIPLIER
+                DEFAULT_SOURCE_LINES_MULTIPLIER,
+                DEFAULT_SEED
             )
         }
     }
