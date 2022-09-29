@@ -2674,6 +2674,141 @@
     },
     "fauxStatic": false
   },
+  "Test Empty Constructor": {
+    "name": "Test Empty Constructor",
+    "type": "KLASS",
+    "klass": "Question",
+    "metadata": {
+      "contentHash": "7b1b892cd3cadb2eb37aa0e0af1c2118",
+      "packageName": "com.examples.withemptyconstructor",
+      "version": "2022.9.0",
+      "author": "challen@illinois.edu",
+      "javaDescription": "<p>Test to make sure we can parse the empty constructor.</p>",
+      "usedFiles": [
+        "/Users/challen/code/questioner-problems/src/main/java/com/examples/withemptyconstructor/correct/java/emptyconstructor/Question.java"
+      ],
+      "templateImports": [],
+      "focused": false
+    },
+    "annotatedControls": {},
+    "question": {
+      "klass": "Question",
+      "contents": "import edu.illinois.cs.cs125.questioner.lib.Correct;\n\n/*\n * Test to make sure we can parse the empty constructor.\n */\n\n@Correct(name = \"Test Empty Constructor\", version = \"2022.9.0\", author = \"challen@illinois.edu\")\npublic class Question {\n  private int value = 0;\n\n  int next() {\n    return value++;\n  }\n}",
+      "language": "java",
+      "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/withemptyconstructor/Question.java"
+    },
+    "correct": {
+      "klass": "Question",
+      "contents": "public class Question {\n  private int value = 0;\n\n  int next() {\n    return value++;\n  }\n}\n",
+      "language": "java",
+      "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/withemptyconstructor/Question.java",
+      "complexity": 1,
+      "features": {
+        "featureMap": {
+          "VARIABLE_REASSIGNMENTS": 1,
+          "UNARY_OPERATORS": 1,
+          "METHOD": 1,
+          "RETURN": 1,
+          "CLASS": 1,
+          "VISIBILITY_MODIFIERS": 2
+        },
+        "importList": [],
+        "typeList": [
+          "int"
+        ],
+        "identifierList": [],
+        "dottedMethodList": []
+      },
+      "lineCount": {
+        "source": 6,
+        "comment": 0,
+        "blank": 2
+      },
+      "expectedDeadCount": 1
+    },
+    "alternativeSolutions": [
+      {
+        "klass": "Question",
+        "contents": "public class Question {\n  private int value;\n\n  public Question() {\n    value = 0;\n  }\n\n  int next() {\n    return value++;\n  }\n}\n",
+        "language": "java",
+        "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/withemptyconstructor/correct/java/emptyconstructor/Question.java",
+        "complexity": 2,
+        "features": {
+          "featureMap": {
+            "VARIABLE_REASSIGNMENTS": 2,
+            "UNARY_OPERATORS": 1,
+            "METHOD": 1,
+            "RETURN": 1,
+            "CONSTRUCTOR": 1,
+            "CLASS": 1,
+            "VISIBILITY_MODIFIERS": 3
+          },
+          "importList": [],
+          "typeList": [
+            "int"
+          ],
+          "identifierList": [],
+          "dottedMethodList": []
+        },
+        "lineCount": {
+          "source": 9,
+          "comment": 0,
+          "blank": 3
+        },
+        "expectedDeadCount": 0
+      }
+    ],
+    "incorrect": [],
+    "common": [],
+    "importWhitelist": [],
+    "importBlacklist": [],
+    "slug": "test-empty-constructor",
+    "hasKotlin": false,
+    "published": {
+      "name": "Test Empty Constructor",
+      "type": "KLASS",
+      "path": "test-empty-constructor",
+      "author": "challen@illinois.edu",
+      "version": "2022.9.0",
+      "packageName": "com.examples.withemptyconstructor",
+      "languages": [
+        "java"
+      ],
+      "descriptions": {
+        "java": "<p>Test to make sure we can parse the empty constructor.</p>"
+      },
+      "complexity": {
+        "java": 1
+      },
+      "features": {
+        "java": {
+          "featureMap": {
+            "VARIABLE_REASSIGNMENTS": 1,
+            "UNARY_OPERATORS": 1,
+            "METHOD": 1,
+            "RETURN": 1,
+            "CLASS": 1,
+            "VISIBILITY_MODIFIERS": 2
+          },
+          "importList": [],
+          "typeList": [
+            "int"
+          ],
+          "identifierList": [],
+          "dottedMethodList": []
+        }
+      },
+      "lineCounts": {
+        "java": {
+          "source": 6,
+          "comment": 0,
+          "blank": 2
+        }
+      },
+      "templateImports": []
+    },
+    "fauxStatic": false
+  },
   "Add One": {
     "name": "Add One",
     "type": "METHOD",

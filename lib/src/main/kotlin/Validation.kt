@@ -116,6 +116,7 @@ suspend fun Question.validate(defaultSeed: Int): ValidationReport {
                 complete.coverage!!.missed
             )
         }
+        check(failedSteps.isEmpty()) { "Failed steps: $failedSteps" }
         when (file.language) {
             Question.Language.java -> {
                 javaClassWhitelist.addAll(
