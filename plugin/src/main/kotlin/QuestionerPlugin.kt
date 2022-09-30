@@ -50,7 +50,9 @@ class QuestionerPlugin : Plugin<Project> {
         generateMetatests.dependsOn(project.tasks.getByName("processResources"))
         project.afterEvaluate {
             project.tasks.getByName("processResources").dependsOn(saveQuestions)
+
             generateMetatests.seed = config.seed
+            generateMetatests.maxMutationCount = config.maxMutationCount
 
             project.configurations.getByName("runtimeClasspath") { conf ->
                 val agentJarPath = conf.resolvedConfiguration.resolvedArtifacts.find {

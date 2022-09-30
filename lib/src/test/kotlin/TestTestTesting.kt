@@ -12,7 +12,8 @@ import kotlin.system.measureTimeMillis
 private val validator = Validator(
     Path.of(object {}::class.java.getResource("/questions.json")!!.toURI()).toFile(),
     "",
-    seed = 124
+    seed = 124,
+    maxMutationCount = 64
 )
 
 const val JAVA_EMPTY_SUITE_CLASS = """

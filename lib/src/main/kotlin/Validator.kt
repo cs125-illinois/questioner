@@ -3,14 +3,25 @@ package edu.illinois.cs.cs125.questioner.lib
 import java.io.File
 
 @Suppress("unused")
-class Validator(questionsFile: File, private val sourceDir: String, private val seed: Int) {
+class Validator(
+    questionsFile: File,
+    private val sourceDir: String,
+    private val seed: Int,
+    private val maxMutationCount: Int
+) {
     private val unvalidatedQuestions = loadFromPath(questionsFile, sourceDir).also {
         assert(it.isNotEmpty())
     }
     private val questions = loadFromPath(questionsFile, sourceDir).also {
         assert(it.isNotEmpty())
     }
-    suspend fun validate(name: String, verbose: Boolean = false, force: Boolean = false, testing: Boolean = false): Pair<Question, ValidationReport?> {
+
+    suspend fun validate(
+        name: String,
+        verbose: Boolean = false,
+        force: Boolean = false,
+        testing: Boolean = false
+    ): Pair<Question, ValidationReport?> {
         val question = if (force) {
             unvalidatedQuestions[name]
         } else {
@@ -27,7 +38,7 @@ class Validator(questionsFile: File, private val sourceDir: String, private val 
             question.reportFile(sourceDir).delete()
         }
         try {
-            question.validate(seed).also { report ->
+            question.validate(seed, maxMutationCount).also { report ->
                 if (!testing) {
                     println("$name: ${report.summary}")
                     question.validationFile(sourceDir)

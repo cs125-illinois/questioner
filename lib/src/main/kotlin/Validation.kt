@@ -17,7 +17,7 @@ data class CorrectResults(val incorrect: Question.FlatFile, val results: TestRes
 data class IncorrectResults(val incorrect: Question.IncorrectFile, val results: TestResults)
 
 @Suppress("LongMethod", "ComplexMethod")
-suspend fun Question.validate(defaultSeed: Int): ValidationReport {
+suspend fun Question.validate(defaultSeed: Int, maxMutationCount: Int): ValidationReport {
 
     val seed = if (control.seed!! != -1) {
         control.seed!!
@@ -267,7 +267,7 @@ suspend fun Question.validate(defaultSeed: Int): ValidationReport {
     val bootstrapLength = Instant.now().toEpochMilli() - bootStrapStart.toEpochMilli()
 
     val mutationStart = Instant.now()
-    val mutations = mutations(seed, control.maxMutationCount!!).also {
+    val mutations = mutations(seed, control.maxMutationCount ?: maxMutationCount).also {
         if (it.size < control.minMutationCount!!) {
             throw TooFewMutations(correct, it.size, control.minMutationCount!!)
         }

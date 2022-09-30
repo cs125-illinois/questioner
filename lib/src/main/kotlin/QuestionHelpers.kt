@@ -24,6 +24,7 @@ import edu.illinois.cs.cs125.jeed.core.fromTemplates
 import edu.illinois.cs.cs125.jeed.core.kompile
 import edu.illinois.cs.cs125.jeed.core.ktLint
 import edu.illinois.cs.cs125.jeed.core.moshi.CompiledSourceResult
+import edu.illinois.cs.cs125.jeed.core.stripComments
 import edu.illinois.cs.cs125.jenisol.core.CaptureOutputControlInput
 import edu.illinois.cs.cs125.jenisol.core.CapturedResult
 import edu.illinois.cs.cs125.jenisol.core.unwrap
@@ -238,6 +239,10 @@ fun Question.mutations(seed: Int, count: Int) = templateSubmission(
     }
     // Templated questions sometimes will mutate the template
     .filter { (contents, _) -> contents != correct.contents }
+    .distinctBy { (contents, _) ->
+        contents.stripComments(Source.FileType.JAVA).hashCode()
+    }
+    .shuffled(random = Random(seed))
     .take(count)
     .map { (contents, source) ->
         Question.IncorrectFile(

@@ -191,7 +191,6 @@ data class Question(
             const val DEFAULT_MAX_TIMEOUT = 2048
             const val DEFAULT_TIMEOUT_MULTIPLIER = 32
             const val DEFAULT_MIN_MUTATION_COUNT = 0
-            const val DEFAULT_MAX_MUTATION_COUNT = 32
             const val DEFAULT_OUTPUT_MULTIPLIER = 8
             const val DEFAULT_MAX_EXTRA_COMPLEXITY = 2
             const val DEFAULT_MAX_DEAD_CODE = 0
@@ -212,7 +211,7 @@ data class Question(
                 DEFAULT_MAX_TIMEOUT,
                 DEFAULT_TIMEOUT_MULTIPLIER,
                 DEFAULT_MIN_MUTATION_COUNT,
-                DEFAULT_MAX_MUTATION_COUNT,
+                null,
                 DEFAULT_OUTPUT_MULTIPLIER,
                 DEFAULT_MAX_EXTRA_COMPLEXITY,
                 DEFAULT_MAX_DEAD_CODE,

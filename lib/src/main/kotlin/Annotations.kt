@@ -23,7 +23,7 @@ annotation class Correct(
     val maxTimeout: Int = Question.TestingControl.DEFAULT_MAX_TIMEOUT,
     val timeoutMultiplier: Int = Question.TestingControl.DEFAULT_TIMEOUT_MULTIPLIER,
     val minMutationCount: Int = Question.TestingControl.DEFAULT_MIN_MUTATION_COUNT,
-    val maxMutationCount: Int = Question.TestingControl.DEFAULT_MAX_MUTATION_COUNT,
+    val maxMutationCount: Int = -1,
     val outputMultiplier: Int = Question.TestingControl.DEFAULT_OUTPUT_MULTIPLIER,
     val maxExtraComplexity: Int = Question.TestingControl.DEFAULT_MAX_EXTRA_COMPLEXITY,
     val maxDeadCode: Int = Question.TestingControl.DEFAULT_MAX_DEAD_CODE,
@@ -78,7 +78,6 @@ annotation class CheckFeatures {
                 "@$name methods must return List<String>!"
             }
             (method.genericReturnType as ParameterizedType).also { collectionType ->
-                @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
                 check(collectionType.rawType == java.util.List::class.java) {
                     "@$name methods must return List<String>"
                 }
