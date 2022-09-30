@@ -2674,12 +2674,130 @@
     },
     "fauxStatic": false
   },
+  "Classroom Getters and Setters": {
+    "name": "Classroom Getters and Setters",
+    "type": "KLASS",
+    "klass": "Classroom",
+    "metadata": {
+      "contentHash": "13ab13badab76b56d0861b939e9e80bd",
+      "packageName": "com.examples.withgettersandsetters",
+      "version": "2022.9.0",
+      "author": "challen@illinois.edu",
+      "javaDescription": "<p>Getter and setter testing.</p>",
+      "usedFiles": [],
+      "templateImports": [],
+      "focused": false
+    },
+    "annotatedControls": {},
+    "question": {
+      "klass": "Classroom",
+      "contents": "import edu.illinois.cs.cs125.questioner.lib.Correct;\n\n/*\n * Getter and setter testing.\n */\n\n@Correct(name = \"Classroom Getters and Setters\", version = \"2022.9.0\", author = \"challen@illinois.edu\")\npublic class Classroom {\n  private final String name;\n  private int capacity;\n\n  public Classroom(String setName, int setEnrollment) {\n    assert setEnrollment >= 0;\n    assert setName != null;\n    name = setName;\n    capacity = setEnrollment;\n  }\n\n  public int getCapacity() {\n    return capacity;\n  }\n\n  public void setCapacity(int setEnrollment) {\n    assert setEnrollment >= 0;\n    capacity = setEnrollment;\n  }\n\n  public String getName() {\n    return name;\n  }\n}",
+      "language": "java",
+      "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/withgettersandsetters/Classroom.java"
+    },
+    "correct": {
+      "klass": "Classroom",
+      "contents": "public class Classroom {\n  private final String name;\n  private int capacity;\n\n  public Classroom(String setName, int setEnrollment) {\n    assert setEnrollment >= 0;\n    assert setName != null;\n    name = setName;\n    capacity = setEnrollment;\n  }\n\n  public int getCapacity() {\n    return capacity;\n  }\n\n  public void setCapacity(int setEnrollment) {\n    assert setEnrollment >= 0;\n    capacity = setEnrollment;\n  }\n\n  public String getName() {\n    return name;\n  }\n}\n",
+      "language": "java",
+      "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/withgettersandsetters/Classroom.java",
+      "complexity": 4,
+      "features": {
+        "featureMap": {
+          "VARIABLE_REASSIGNMENTS": 3,
+          "COMPARISON_OPERATORS": 3,
+          "METHOD": 3,
+          "RETURN": 2,
+          "CONSTRUCTOR": 1,
+          "GETTER": 2,
+          "SETTER": 1,
+          "STRING": 3,
+          "NULL": 1,
+          "CLASS": 1,
+          "ASSERT": 3,
+          "VISIBILITY_MODIFIERS": 7,
+          "FINAL_FIELD": 1
+        },
+        "importList": [],
+        "typeList": [
+          "String",
+          "int"
+        ],
+        "identifierList": [],
+        "dottedMethodList": []
+      },
+      "lineCount": {
+        "source": 20,
+        "comment": 0,
+        "blank": 5
+      },
+      "expectedDeadCount": 4
+    },
+    "alternativeSolutions": [],
+    "incorrect": [],
+    "common": [],
+    "importWhitelist": [],
+    "importBlacklist": [],
+    "slug": "classroom-getters-and-setters",
+    "hasKotlin": false,
+    "published": {
+      "name": "Classroom Getters and Setters",
+      "type": "KLASS",
+      "path": "classroom-getters-and-setters",
+      "author": "challen@illinois.edu",
+      "version": "2022.9.0",
+      "packageName": "com.examples.withgettersandsetters",
+      "languages": [
+        "java"
+      ],
+      "descriptions": {
+        "java": "<p>Getter and setter testing.</p>"
+      },
+      "complexity": {
+        "java": 4
+      },
+      "features": {
+        "java": {
+          "featureMap": {
+            "VARIABLE_REASSIGNMENTS": 3,
+            "COMPARISON_OPERATORS": 3,
+            "METHOD": 3,
+            "RETURN": 2,
+            "CONSTRUCTOR": 1,
+            "GETTER": 2,
+            "SETTER": 1,
+            "STRING": 3,
+            "NULL": 1,
+            "CLASS": 1,
+            "ASSERT": 3,
+            "VISIBILITY_MODIFIERS": 7,
+            "FINAL_FIELD": 1
+          },
+          "importList": [],
+          "typeList": [
+            "String",
+            "int"
+          ],
+          "identifierList": [],
+          "dottedMethodList": []
+        }
+      },
+      "lineCounts": {
+        "java": {
+          "source": 20,
+          "comment": 0,
+          "blank": 5
+        }
+      },
+      "templateImports": []
+    },
+    "fauxStatic": false
+  },
   "Test Empty Constructor": {
     "name": "Test Empty Constructor",
     "type": "KLASS",
     "klass": "Question",
     "metadata": {
-      "contentHash": "7b1b892cd3cadb2eb37aa0e0af1c2118",
+      "contentHash": "e24f2c0cc57b8104384616c048448b96",
       "packageName": "com.examples.withemptyconstructor",
       "version": "2022.9.0",
       "author": "challen@illinois.edu",

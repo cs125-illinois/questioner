@@ -40,19 +40,23 @@ class TestTestTesting : StringSpec({
         question.testTests(KOTLIN_EMPTY_SUITE, Question.Language.kotlin).also { results ->
             results.failedSteps.size shouldBe 0
         }
-        question.testTests("""
+        question.testTests(
+            """
 public class TestQuestion {
   public static void test() {
     assert(Question.addOne(0) == 1);
   }
-}""", Question.Language.java).also { results ->
+}""", Question.Language.java
+        ).also { results ->
             results.failedSteps.size shouldBe 0
         }
-        question.testTests("""
+        question.testTests(
+            """
 fun test() {
   check(Question.addOne(0) == 1)
 }
-""", Question.Language.kotlin).also { results ->
+""", Question.Language.kotlin
+        ).also { results ->
             results.failedSteps.size shouldBe 0
         }
     }
@@ -67,14 +71,18 @@ fun test() {
         question.testTests(KOTLIN_EMPTY_SUITE, Question.Language.kotlin).also { results ->
             results.failedSteps.size shouldBe 0
         }
-        question.testTests("""void test() {
+        question.testTests(
+            """void test() {
   assert(addOne(0) == 0);
-}""", Question.Language.java).also { results ->
+}""", Question.Language.java
+        ).also { results ->
             results.failedSteps.size shouldBe 0
         }
-        question.testTests("""fun test() {
+        question.testTests(
+            """fun test() {
   require(addOne(0) == 0)
-}""", Question.Language.kotlin).also { results ->
+}""", Question.Language.kotlin
+        ).also { results ->
             results.failedSteps.size shouldBe 0
         }
     }
