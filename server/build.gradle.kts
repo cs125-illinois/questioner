@@ -18,14 +18,14 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-reflect:1.7.10")
     implementation(project(":lib"))
 
-    implementation("io.ktor:ktor-server-netty:2.1.1")
-    implementation("io.ktor:ktor-server-content-negotiation:2.1.1")
+    implementation("io.ktor:ktor-server-netty:2.1.2")
+    implementation("io.ktor:ktor-server-content-negotiation:2.1.2")
     implementation("com.squareup.moshi:moshi-kotlin:1.14.0")
     implementation("com.github.cs125-illinois:ktor-moshi:2022.9.0")
     implementation("org.mongodb:mongodb-driver:3.12.11")
 
     implementation("org.slf4j:slf4j-api:2.0.3")
-    implementation("ch.qos.logback:logback-classic:1.4.1")
+    implementation("ch.qos.logback:logback-classic:1.4.3")
     implementation("io.github.microutils:kotlin-logging:3.0.0")
 }
 task("createProperties") {

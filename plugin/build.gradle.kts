@@ -10,7 +10,6 @@ plugins {
 dependencies {
     antlr("org.antlr:antlr4:4.11.1")
 
-    implementation("org.jetbrains.kotlin:kotlin-reflect:1.7.10")
     implementation(gradleApi())
     implementation(project(":lib"))
     implementation("org.jetbrains:markdown:0.3.1") {

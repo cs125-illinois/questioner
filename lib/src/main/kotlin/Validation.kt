@@ -349,15 +349,16 @@ suspend fun Question.validate(defaultSeed: Int, maxMutationCount: Int): Validati
             result.results.tests()!!.indexOfFirst { !it.passed } + 1
         )
     }.filterNotNull()
+
+    if (deferredException != null) {
+        throw deferredException!!
+    }
+
     val requiredTestCount = incorrectResults
         .filter { !it.results.timeout && !it.results.succeeded }
         .mapNotNull { it.results.tests()?.size }
         .maxOrNull() ?: error("No incorrect results")
     val testCount = requiredTestCount.coerceAtLeast(minTestCount)
-
-    if (deferredException != null) {
-        throw deferredException!!
-    }
 
     // Rerun solutions to set timeouts and output limits
     // sets solution runtime, output lines, executed lines, and allocation
