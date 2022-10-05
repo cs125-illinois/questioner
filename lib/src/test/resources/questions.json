@@ -295,12 +295,15 @@
     "type": "KLASS",
     "klass": "Squirrel",
     "metadata": {
-      "contentHash": "13d2fbefde89c7c6a76b8da23c57b272",
+      "contentHash": "9a7d16190750e376b4b70561a97f1c7a",
       "packageName": "com.examples.tripleequals",
       "version": "2022.7.0",
       "author": "challen@illinois.edu",
       "javaDescription": "<p>Define a public class named <code>Squirrel</code>.\nThe <code>Squirrel</code> constructor should accept a <code>String</code> name, <code>String</code> tree, and <code>int</code> acorns, in that order.\nReject <code>null</code> names and trees using <code>assert</code>, and also <code>assert</code> that acorns is greater than 0 and less than or\nequal to 24.\n(Squirrels don't get too greedy and never acquire more acorns than that!)\nOverride equals and consider two <code>Squirrel</code> instances to be equal if they have the same name and tree.\nDo not provide getters or setters for your variables or expose them publicly.</p>",
-      "usedFiles": [],
+      "kotlinDescription": "<p>Kotlin version to test double init.</p>",
+      "usedFiles": [
+        "/Users/challen/code/questioner-problems/src/main/java/com/examples/tripleequals/correct/kotlin/Squirrel.kt"
+      ],
       "templateImports": [],
       "focused": false
     },
@@ -357,13 +360,68 @@
       },
       "expectedDeadCount": 4
     },
-    "alternativeSolutions": [],
+    "alternativeSolutions": [
+      {
+        "klass": "Squirrel",
+        "contents": "class Squirrel(private val name: String, private val tree: String, private val acorns: Int) {\n  init {\n    require(acorns > 0)\n  }\n  init {\n    require(acorns <= 9)\n  }\n  override fun equals(other: Any?): Boolean {\n    return when (other) {\n      !is Squirrel -> false\n      else -> other.name == name && other.tree == tree\n    }\n  }\n}",
+        "language": "kotlin",
+        "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/tripleequals/correct/kotlin/Squirrel.kt",
+        "complexity": 7,
+        "features": {
+          "featureMap": {
+            "COMPARISON_OPERATORS": 2,
+            "LOGICAL_OPERATORS": 1,
+            "METHOD": 1,
+            "INSTANCEOF": 1,
+            "CLASS": 1,
+            "DOT_NOTATION": 2,
+            "DOTTED_VARIABLE_ACCESS": 2
+          },
+          "importList": [],
+          "typeList": [],
+          "identifierList": [],
+          "dottedMethodList": []
+        },
+        "lineCount": {
+          "source": 14,
+          "comment": 0,
+          "blank": 0
+        }
+      }
+    ],
     "incorrect": [],
     "common": [],
     "importWhitelist": [],
     "importBlacklist": [],
     "slug": "squirrel-equality",
-    "hasKotlin": false,
+    "kotlinSolution": {
+      "klass": "Squirrel",
+      "contents": "class Squirrel(private val name: String, private val tree: String, private val acorns: Int) {\n  init {\n    require(acorns > 0)\n  }\n  init {\n    require(acorns <= 9)\n  }\n  override fun equals(other: Any?): Boolean {\n    return when (other) {\n      !is Squirrel -> false\n      else -> other.name == name && other.tree == tree\n    }\n  }\n}",
+      "language": "kotlin",
+      "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/tripleequals/correct/kotlin/Squirrel.kt",
+      "complexity": 7,
+      "features": {
+        "featureMap": {
+          "COMPARISON_OPERATORS": 2,
+          "LOGICAL_OPERATORS": 1,
+          "METHOD": 1,
+          "INSTANCEOF": 1,
+          "CLASS": 1,
+          "DOT_NOTATION": 2,
+          "DOTTED_VARIABLE_ACCESS": 2
+        },
+        "importList": [],
+        "typeList": [],
+        "identifierList": [],
+        "dottedMethodList": []
+      },
+      "lineCount": {
+        "source": 14,
+        "comment": 0,
+        "blank": 0
+      }
+    },
+    "hasKotlin": true,
     "published": {
       "name": "Squirrel Equality",
       "type": "KLASS",
@@ -372,13 +430,16 @@
       "version": "2022.7.0",
       "packageName": "com.examples.tripleequals",
       "languages": [
-        "java"
+        "java",
+        "kotlin"
       ],
       "descriptions": {
-        "java": "<p>Define a public class named <code>Squirrel</code>.\nThe <code>Squirrel</code> constructor should accept a <code>String</code> name, <code>String</code> tree, and <code>int</code> acorns, in that order.\nReject <code>null</code> names and trees using <code>assert</code>, and also <code>assert</code> that acorns is greater than 0 and less than or\nequal to 24.\n(Squirrels don't get too greedy and never acquire more acorns than that!)\nOverride equals and consider two <code>Squirrel</code> instances to be equal if they have the same name and tree.\nDo not provide getters or setters for your variables or expose them publicly.</p>"
+        "java": "<p>Define a public class named <code>Squirrel</code>.\nThe <code>Squirrel</code> constructor should accept a <code>String</code> name, <code>String</code> tree, and <code>int</code> acorns, in that order.\nReject <code>null</code> names and trees using <code>assert</code>, and also <code>assert</code> that acorns is greater than 0 and less than or\nequal to 24.\n(Squirrels don't get too greedy and never acquire more acorns than that!)\nOverride equals and consider two <code>Squirrel</code> instances to be equal if they have the same name and tree.\nDo not provide getters or setters for your variables or expose them publicly.</p>",
+        "kotlin": "<p>Kotlin version to test double init.</p>"
       },
       "complexity": {
-        "java": 5
+        "java": 5,
+        "kotlin": 7
       },
       "features": {
         "java": {
@@ -413,6 +474,21 @@
           "dottedMethodList": [
             "equals"
           ]
+        },
+        "kotlin": {
+          "featureMap": {
+            "COMPARISON_OPERATORS": 2,
+            "LOGICAL_OPERATORS": 1,
+            "METHOD": 1,
+            "INSTANCEOF": 1,
+            "CLASS": 1,
+            "DOT_NOTATION": 2,
+            "DOTTED_VARIABLE_ACCESS": 2
+          },
+          "importList": [],
+          "typeList": [],
+          "identifierList": [],
+          "dottedMethodList": []
         }
       },
       "lineCounts": {
@@ -420,6 +496,11 @@
           "source": 19,
           "comment": 0,
           "blank": 3
+        },
+        "kotlin": {
+          "source": 14,
+          "comment": 0,
+          "blank": 0
         }
       },
       "templateImports": []
@@ -431,7 +512,7 @@
     "type": "METHOD",
     "klass": "Question",
     "metadata": {
-      "contentHash": "3670040a9c73df5f4cb3cf74bb78d4a2",
+      "contentHash": "5d70228ab7a1b8f7c8ee61584ff9e859",
       "packageName": "com.examples.withtemplateimports",
       "version": "2022.7.0",
       "author": "challen@illinois.edu",
@@ -447,7 +528,7 @@
     "annotatedControls": {},
     "question": {
       "klass": "Question",
-      "contents": "import edu.illinois.cs.cs125.questioner.lib.Correct;\nimport edu.illinois.cs.cs125.questioner.lib.TemplateImports;\nimport edu.illinois.cs.cs125.questioner.lib.Wrap;\n\nimport java.util.Arrays;\nimport java.util.List;\n\n/*\n * Example to test use of import statements in method templates.\n */\n\n@Correct(name = \"With Template Imports\", version = \"2022.7.0\", author = \"challen@illinois.edu\")\n@Wrap\n@TemplateImports(paths = \"java.util.List,java.util.ArrayList,java.util.Arrays\")\npublic class Question {\n  public static List<Integer> max(int first, int second) {\n    return Arrays.asList(first, second);\n  }\n}",
+      "contents": "import edu.illinois.cs.cs125.questioner.lib.Correct;\nimport edu.illinois.cs.cs125.questioner.lib.TemplateImports;\nimport edu.illinois.cs.cs125.questioner.lib.Wrap;\nimport java.util.Arrays;\nimport java.util.List;\n\n/*\n * Example to test use of import statements in method templates.\n */\n\n@Correct(name = \"With Template Imports\", version = \"2022.7.0\", author = \"challen@illinois.edu\")\n@Wrap\n@TemplateImports(paths = \"java.util.List,java.util.ArrayList,java.util.Arrays\")\npublic class Question {\n  public static List<Integer> max(int first, int second) {\n    return Arrays.asList(first, second);\n  }\n}",
       "language": "java",
       "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/withtemplateimports/Question.java"
     },
@@ -733,7 +814,7 @@
     "type": "SNIPPET",
     "klass": "Question",
     "metadata": {
-      "contentHash": "7c9d8f6d83294db9f6e6db54f1bb0878",
+      "contentHash": "b9e43a09ae1ef6ece62ae6945b75da68",
       "packageName": "com.examples.printsum",
       "version": "2021.6.0",
       "author": "challen@illinois.edu",
@@ -752,7 +833,7 @@
     },
     "question": {
       "klass": "Question",
-      "contents": "import edu.illinois.cs.cs125.questioner.lib.Correct;\n\n/*\n * Given two `int` variables `first` and `second` that are already declared and initialized, print their sum.\n */\n\n@Correct(\n    name = \"Print Sum\",\n    author = \"challen@illinois.edu\",\n    version = \"2021.6.0\",\n    maxDeadCode = 2)\npublic class Question {\n  public static void printSum(int first, int second) {\n    // TEMPLATE_START\n    System.out.println(first + second);\n    // TEMPLATE_END\n  }\n}",
+      "contents": "import edu.illinois.cs.cs125.questioner.lib.Correct;\n\n/*\n * Given two `int` variables `first` and `second` that are already declared and initialized, print their sum.\n */\n\n@Correct(name = \"Print Sum\", author = \"challen@illinois.edu\", version = \"2021.6.0\", maxDeadCode = 2)\npublic class Question {\n  public static void printSum(int first, int second) {\n    // TEMPLATE_START\n    System.out.println(first + second);\n    // TEMPLATE_END\n  }\n}",
       "language": "java",
       "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/printsum/Question.java"
     },
@@ -2679,7 +2760,7 @@
     "type": "KLASS",
     "klass": "Classroom",
     "metadata": {
-      "contentHash": "13ab13badab76b56d0861b939e9e80bd",
+      "contentHash": "37e98c13ef079c9e2170bed9775f06f0",
       "packageName": "com.examples.withgettersandsetters",
       "version": "2022.9.0",
       "author": "challen@illinois.edu",
@@ -2691,7 +2772,7 @@
     "annotatedControls": {},
     "question": {
       "klass": "Classroom",
-      "contents": "import edu.illinois.cs.cs125.questioner.lib.Correct;\n\n/*\n * Getter and setter testing.\n */\n\n@Correct(name = \"Classroom Getters and Setters\", version = \"2022.9.0\", author = \"challen@illinois.edu\")\npublic class Classroom {\n  private final String name;\n  private int capacity;\n\n  public Classroom(String setName, int setEnrollment) {\n    assert setEnrollment >= 0;\n    assert setName != null;\n    name = setName;\n    capacity = setEnrollment;\n  }\n\n  public int getCapacity() {\n    return capacity;\n  }\n\n  public void setCapacity(int setEnrollment) {\n    assert setEnrollment >= 0;\n    capacity = setEnrollment;\n  }\n\n  public String getName() {\n    return name;\n  }\n}",
+      "contents": "import edu.illinois.cs.cs125.questioner.lib.Correct;\n\n/*\n * Getter and setter testing.\n */\n\n@Correct(\n    name = \"Classroom Getters and Setters\",\n    version = \"2022.9.0\",\n    author = \"challen@illinois.edu\")\npublic class Classroom {\n  private final String name;\n  private int capacity;\n\n  public Classroom(String setName, int setEnrollment) {\n    assert setEnrollment >= 0;\n    assert setName != null;\n    name = setName;\n    capacity = setEnrollment;\n  }\n\n  public int getCapacity() {\n    return capacity;\n  }\n\n  public void setCapacity(int setEnrollment) {\n    assert setEnrollment >= 0;\n    capacity = setEnrollment;\n  }\n\n  public String getName() {\n    return name;\n  }\n}",
       "language": "java",
       "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/withgettersandsetters/Classroom.java"
     },
