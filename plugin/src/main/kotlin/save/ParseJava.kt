@@ -540,6 +540,15 @@ $cleanContent
                     }
                 }
             }
+            classBodyDeclaration.memberDeclaration()?.constructorDeclaration()?.also { constructorDeclaration ->
+                constructorDeclaration.formalParameters()?.formalParameterList()?.formalParameter()?.forEach { parameters ->
+                    parameters.variableModifier().mapNotNull { it.annotation() }.forEach { annotation ->
+                        if (annotation.qualifiedName()?.asString()!! in annotationsToSnip) {
+                            toSnip.add(annotation.start.startIndex..annotation.stop.stopIndex)
+                        }
+                    }
+                }
+            }
         }
 
         return@runBlocking contents

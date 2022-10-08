@@ -2547,6 +2547,124 @@
     },
     "fauxStatic": false
   },
+  "Test Constructor NotNull": {
+    "name": "Test Constructor NotNull",
+    "type": "KLASS",
+    "klass": "Question",
+    "metadata": {
+      "contentHash": "5cdd4a7677f73f34f915e08ec0f5f11b",
+      "packageName": "com.examples.withconstructornotnull",
+      "version": "2022.10.0",
+      "author": "challen@illinois.edu",
+      "javaDescription": "<p>Testing @NotNull annotation on constructor parameters.</p>",
+      "usedFiles": [],
+      "templateImports": [],
+      "focused": true
+    },
+    "annotatedControls": {},
+    "question": {
+      "klass": "Question",
+      "contents": "import edu.illinois.cs.cs125.jenisol.core.NotNull;\nimport edu.illinois.cs.cs125.questioner.lib.Correct;\n\n/*\n * Testing @NotNull annotation on constructor parameters.\n */\n\n@Correct(name = \"Test Constructor NotNull\", version = \"2022.10.0\", author = \"challen@illinois.edu\", focused = true)\npublic class Question {\n  private final int stringLength;\n\n  public Question(@NotNull String value) {\n    stringLength = value.length();\n  }\n\n  public int getStringLength() {\n    return stringLength;\n  }\n}",
+      "language": "java",
+      "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/withconstructornotnull/Question.java"
+    },
+    "correct": {
+      "klass": "Question",
+      "contents": "public class Question {\n  private final int stringLength;\n\n  public Question(String value) {\n    stringLength = value.length();\n  }\n\n  public int getStringLength() {\n    return stringLength;\n  }\n}\n",
+      "language": "java",
+      "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/withconstructornotnull/Question.java",
+      "complexity": 2,
+      "features": {
+        "featureMap": {
+          "VARIABLE_REASSIGNMENTS": 1,
+          "METHOD": 1,
+          "RETURN": 1,
+          "CONSTRUCTOR": 1,
+          "GETTER": 1,
+          "STRING": 1,
+          "CLASS": 1,
+          "VISIBILITY_MODIFIERS": 4,
+          "FINAL_FIELD": 1,
+          "DOT_NOTATION": 1,
+          "DOTTED_METHOD_CALL": 1
+        },
+        "importList": [],
+        "typeList": [
+          "int",
+          "String"
+        ],
+        "identifierList": [],
+        "dottedMethodList": [
+          "length"
+        ]
+      },
+      "lineCount": {
+        "source": 9,
+        "comment": 0,
+        "blank": 3
+      },
+      "expectedDeadCount": 0
+    },
+    "alternativeSolutions": [],
+    "incorrect": [],
+    "common": [],
+    "importWhitelist": [],
+    "importBlacklist": [],
+    "slug": "test-constructor-notnull",
+    "hasKotlin": false,
+    "published": {
+      "name": "Test Constructor NotNull",
+      "type": "KLASS",
+      "path": "test-constructor-notnull",
+      "author": "challen@illinois.edu",
+      "version": "2022.10.0",
+      "packageName": "com.examples.withconstructornotnull",
+      "languages": [
+        "java"
+      ],
+      "descriptions": {
+        "java": "<p>Testing @NotNull annotation on constructor parameters.</p>"
+      },
+      "complexity": {
+        "java": 2
+      },
+      "features": {
+        "java": {
+          "featureMap": {
+            "VARIABLE_REASSIGNMENTS": 1,
+            "METHOD": 1,
+            "RETURN": 1,
+            "CONSTRUCTOR": 1,
+            "GETTER": 1,
+            "STRING": 1,
+            "CLASS": 1,
+            "VISIBILITY_MODIFIERS": 4,
+            "FINAL_FIELD": 1,
+            "DOT_NOTATION": 1,
+            "DOTTED_METHOD_CALL": 1
+          },
+          "importList": [],
+          "typeList": [
+            "int",
+            "String"
+          ],
+          "identifierList": [],
+          "dottedMethodList": [
+            "length"
+          ]
+        }
+      },
+      "lineCounts": {
+        "java": {
+          "source": 9,
+          "comment": 0,
+          "blank": 3
+        }
+      },
+      "templateImports": []
+    },
+    "fauxStatic": false
+  },
   "With Imports": {
     "name": "With Imports",
     "type": "KLASS",
