@@ -25,8 +25,8 @@ dependencies {
     implementation("org.mongodb:mongodb-driver:3.12.11")
 
     implementation("org.slf4j:slf4j-api:2.0.3")
-    implementation("ch.qos.logback:logback-classic:1.4.3")
-    implementation("io.github.microutils:kotlin-logging:3.0.0")
+    implementation("ch.qos.logback:logback-classic:1.4.4")
+    implementation("io.github.microutils:kotlin-logging:3.0.2")
 }
 task("createProperties") {
     doLast {

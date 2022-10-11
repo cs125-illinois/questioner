@@ -507,133 +507,6 @@
     },
     "fauxStatic": false
   },
-  "With Template Imports": {
-    "name": "With Template Imports",
-    "type": "METHOD",
-    "klass": "Question",
-    "metadata": {
-      "contentHash": "5d70228ab7a1b8f7c8ee61584ff9e859",
-      "packageName": "com.examples.withtemplateimports",
-      "version": "2022.7.0",
-      "author": "challen@illinois.edu",
-      "javaDescription": "<p>Example to test use of import statements in method templates.</p>",
-      "usedFiles": [],
-      "templateImports": [
-        "java.util.List",
-        "java.util.ArrayList",
-        "java.util.Arrays"
-      ],
-      "focused": false
-    },
-    "annotatedControls": {},
-    "question": {
-      "klass": "Question",
-      "contents": "import edu.illinois.cs.cs125.questioner.lib.Correct;\nimport edu.illinois.cs.cs125.questioner.lib.TemplateImports;\nimport edu.illinois.cs.cs125.questioner.lib.Wrap;\nimport java.util.Arrays;\nimport java.util.List;\n\n/*\n * Example to test use of import statements in method templates.\n */\n\n@Correct(name = \"With Template Imports\", version = \"2022.7.0\", author = \"challen@illinois.edu\")\n@Wrap\n@TemplateImports(paths = \"java.util.List,java.util.ArrayList,java.util.Arrays\")\npublic class Question {\n  public static List<Integer> max(int first, int second) {\n    return Arrays.asList(first, second);\n  }\n}",
-      "language": "java",
-      "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/withtemplateimports/Question.java"
-    },
-    "correct": {
-      "klass": "Question",
-      "contents": "public static List<Integer> max(int first, int second) {\n  return Arrays.asList(first, second);\n}",
-      "language": "java",
-      "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/withtemplateimports/Question.java",
-      "complexity": 1,
-      "features": {
-        "featureMap": {
-          "METHOD": 1,
-          "RETURN": 1,
-          "VISIBILITY_MODIFIERS": 1,
-          "STATIC_METHOD": 1,
-          "BOXING_CLASSES": 1,
-          "TYPE_PARAMETERS": 1,
-          "DOT_NOTATION": 1,
-          "DOTTED_METHOD_CALL": 1
-        },
-        "importList": [],
-        "typeList": [
-          "List<Integer>",
-          "Integer",
-          "int"
-        ],
-        "identifierList": [],
-        "dottedMethodList": [
-          "asList"
-        ]
-      },
-      "lineCount": {
-        "source": 3,
-        "comment": 0,
-        "blank": 0
-      },
-      "expectedDeadCount": 1
-    },
-    "alternativeSolutions": [],
-    "incorrect": [],
-    "common": [],
-    "javaTemplate": "import java.util.Arrays;\nimport java.util.List;\nimport java.util.ArrayList;\n\npublic class Question {\n  {{{ contents }}}\n}",
-    "importWhitelist": [
-      "java.util.List",
-      "java.util.ArrayList",
-      "java.util.Arrays"
-    ],
-    "importBlacklist": [],
-    "slug": "with-template-imports",
-    "hasKotlin": false,
-    "published": {
-      "name": "With Template Imports",
-      "type": "METHOD",
-      "path": "with-template-imports",
-      "author": "challen@illinois.edu",
-      "version": "2022.7.0",
-      "packageName": "com.examples.withtemplateimports",
-      "languages": [
-        "java"
-      ],
-      "descriptions": {
-        "java": "<p>Example to test use of import statements in method templates.</p>"
-      },
-      "complexity": {
-        "java": 1
-      },
-      "features": {
-        "java": {
-          "featureMap": {
-            "METHOD": 1,
-            "RETURN": 1,
-            "VISIBILITY_MODIFIERS": 1,
-            "STATIC_METHOD": 1,
-            "BOXING_CLASSES": 1,
-            "TYPE_PARAMETERS": 1,
-            "DOT_NOTATION": 1,
-            "DOTTED_METHOD_CALL": 1
-          },
-          "importList": [],
-          "typeList": [
-            "List<Integer>",
-            "Integer",
-            "int"
-          ],
-          "identifierList": [],
-          "dottedMethodList": [
-            "asList"
-          ]
-        }
-      },
-      "lineCounts": {
-        "java": {
-          "source": 3,
-          "comment": 0,
-          "blank": 0
-        }
-      },
-      "templateImports": [
-        "java.util.List",
-        "java.util.ArrayList",
-        "java.util.Arrays"
-      ]
-    },
-    "fauxStatic": false
-  },
   "Counter": {
     "name": "Counter",
     "type": "KLASS",
@@ -1103,6 +976,686 @@
       "lineCounts": {
         "java": {
           "source": 7,
+          "comment": 0,
+          "blank": 0
+        }
+      },
+      "templateImports": []
+    },
+    "fauxStatic": false
+  },
+  "With Template Imports": {
+    "name": "With Template Imports",
+    "type": "METHOD",
+    "klass": "Question",
+    "metadata": {
+      "contentHash": "c89221c76a84f3162a726fdc8ee8ab4a",
+      "packageName": "com.examples.testing.withtemplateimports",
+      "version": "2022.7.0",
+      "author": "challen@illinois.edu",
+      "javaDescription": "<p>Example to test use of import statements in method templates.</p>",
+      "usedFiles": [],
+      "templateImports": [
+        "java.util.List",
+        "java.util.ArrayList",
+        "java.util.Arrays"
+      ],
+      "focused": false
+    },
+    "annotatedControls": {},
+    "question": {
+      "klass": "Question",
+      "contents": "import edu.illinois.cs.cs125.questioner.lib.Correct;\nimport edu.illinois.cs.cs125.questioner.lib.TemplateImports;\nimport edu.illinois.cs.cs125.questioner.lib.Wrap;\nimport java.util.Arrays;\nimport java.util.List;\n\n/*\n * Example to test use of import statements in method templates.\n */\n\n@Correct(name = \"With Template Imports\", version = \"2022.7.0\", author = \"challen@illinois.edu\")\n@Wrap\n@TemplateImports(paths = \"java.util.List,java.util.ArrayList,java.util.Arrays\")\npublic class Question {\n  public static List<Integer> max(int first, int second) {\n    return Arrays.asList(first, second);\n  }\n}",
+      "language": "java",
+      "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/testing/withtemplateimports/Question.java"
+    },
+    "correct": {
+      "klass": "Question",
+      "contents": "public static List<Integer> max(int first, int second) {\n  return Arrays.asList(first, second);\n}",
+      "language": "java",
+      "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/testing/withtemplateimports/Question.java",
+      "complexity": 1,
+      "features": {
+        "featureMap": {
+          "METHOD": 1,
+          "RETURN": 1,
+          "VISIBILITY_MODIFIERS": 1,
+          "STATIC_METHOD": 1,
+          "BOXING_CLASSES": 1,
+          "TYPE_PARAMETERS": 1,
+          "DOT_NOTATION": 1,
+          "DOTTED_METHOD_CALL": 1
+        },
+        "importList": [],
+        "typeList": [
+          "List<Integer>",
+          "Integer",
+          "int"
+        ],
+        "identifierList": [],
+        "dottedMethodList": [
+          "asList"
+        ]
+      },
+      "lineCount": {
+        "source": 3,
+        "comment": 0,
+        "blank": 0
+      },
+      "expectedDeadCount": 1
+    },
+    "alternativeSolutions": [],
+    "incorrect": [],
+    "common": [],
+    "javaTemplate": "import java.util.Arrays;\nimport java.util.List;\nimport java.util.ArrayList;\n\npublic class Question {\n  {{{ contents }}}\n}",
+    "importWhitelist": [
+      "java.util.List",
+      "java.util.ArrayList",
+      "java.util.Arrays"
+    ],
+    "importBlacklist": [],
+    "slug": "with-template-imports",
+    "hasKotlin": false,
+    "published": {
+      "name": "With Template Imports",
+      "type": "METHOD",
+      "path": "with-template-imports",
+      "author": "challen@illinois.edu",
+      "version": "2022.7.0",
+      "packageName": "com.examples.testing.withtemplateimports",
+      "languages": [
+        "java"
+      ],
+      "descriptions": {
+        "java": "<p>Example to test use of import statements in method templates.</p>"
+      },
+      "complexity": {
+        "java": 1
+      },
+      "features": {
+        "java": {
+          "featureMap": {
+            "METHOD": 1,
+            "RETURN": 1,
+            "VISIBILITY_MODIFIERS": 1,
+            "STATIC_METHOD": 1,
+            "BOXING_CLASSES": 1,
+            "TYPE_PARAMETERS": 1,
+            "DOT_NOTATION": 1,
+            "DOTTED_METHOD_CALL": 1
+          },
+          "importList": [],
+          "typeList": [
+            "List<Integer>",
+            "Integer",
+            "int"
+          ],
+          "identifierList": [],
+          "dottedMethodList": [
+            "asList"
+          ]
+        }
+      },
+      "lineCounts": {
+        "java": {
+          "source": 3,
+          "comment": 0,
+          "blank": 0
+        }
+      },
+      "templateImports": [
+        "java.util.List",
+        "java.util.ArrayList",
+        "java.util.Arrays"
+      ]
+    },
+    "fauxStatic": false
+  },
+  "Test Constructor NotNull": {
+    "name": "Test Constructor NotNull",
+    "type": "KLASS",
+    "klass": "Question",
+    "metadata": {
+      "contentHash": "0f5d87fda490b597fa6cf22e0d1d96d1",
+      "packageName": "com.examples.testing.withconstructornotnull",
+      "version": "2022.10.0",
+      "author": "challen@illinois.edu",
+      "javaDescription": "<p>Testing @NotNull annotation on constructor parameters.</p>",
+      "usedFiles": [],
+      "templateImports": [],
+      "focused": true
+    },
+    "annotatedControls": {},
+    "question": {
+      "klass": "Question",
+      "contents": "import edu.illinois.cs.cs125.jenisol.core.NotNull;\nimport edu.illinois.cs.cs125.questioner.lib.Correct;\n\n/*\n * Testing @NotNull annotation on constructor parameters.\n */\n\n@Correct(name = \"Test Constructor NotNull\", version = \"2022.10.0\", author = \"challen@illinois.edu\", focused = true)\npublic class Question {\n  private final int stringLength;\n\n  public Question(@NotNull String value) {\n    stringLength = value.length();\n  }\n\n  public int getStringLength() {\n    return stringLength;\n  }\n}",
+      "language": "java",
+      "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/testing/withconstructornotnull/Question.java"
+    },
+    "correct": {
+      "klass": "Question",
+      "contents": "public class Question {\n  private final int stringLength;\n\n  public Question(String value) {\n    stringLength = value.length();\n  }\n\n  public int getStringLength() {\n    return stringLength;\n  }\n}\n",
+      "language": "java",
+      "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/testing/withconstructornotnull/Question.java",
+      "complexity": 2,
+      "features": {
+        "featureMap": {
+          "VARIABLE_REASSIGNMENTS": 1,
+          "METHOD": 1,
+          "RETURN": 1,
+          "CONSTRUCTOR": 1,
+          "GETTER": 1,
+          "STRING": 1,
+          "CLASS": 1,
+          "VISIBILITY_MODIFIERS": 4,
+          "FINAL_FIELD": 1,
+          "DOT_NOTATION": 1,
+          "DOTTED_METHOD_CALL": 1
+        },
+        "importList": [],
+        "typeList": [
+          "int",
+          "String"
+        ],
+        "identifierList": [],
+        "dottedMethodList": [
+          "length"
+        ]
+      },
+      "lineCount": {
+        "source": 9,
+        "comment": 0,
+        "blank": 3
+      },
+      "expectedDeadCount": 0
+    },
+    "alternativeSolutions": [],
+    "incorrect": [],
+    "common": [],
+    "importWhitelist": [],
+    "importBlacklist": [],
+    "slug": "test-constructor-notnull",
+    "hasKotlin": false,
+    "published": {
+      "name": "Test Constructor NotNull",
+      "type": "KLASS",
+      "path": "test-constructor-notnull",
+      "author": "challen@illinois.edu",
+      "version": "2022.10.0",
+      "packageName": "com.examples.testing.withconstructornotnull",
+      "languages": [
+        "java"
+      ],
+      "descriptions": {
+        "java": "<p>Testing @NotNull annotation on constructor parameters.</p>"
+      },
+      "complexity": {
+        "java": 2
+      },
+      "features": {
+        "java": {
+          "featureMap": {
+            "VARIABLE_REASSIGNMENTS": 1,
+            "METHOD": 1,
+            "RETURN": 1,
+            "CONSTRUCTOR": 1,
+            "GETTER": 1,
+            "STRING": 1,
+            "CLASS": 1,
+            "VISIBILITY_MODIFIERS": 4,
+            "FINAL_FIELD": 1,
+            "DOT_NOTATION": 1,
+            "DOTTED_METHOD_CALL": 1
+          },
+          "importList": [],
+          "typeList": [
+            "int",
+            "String"
+          ],
+          "identifierList": [],
+          "dottedMethodList": [
+            "length"
+          ]
+        }
+      },
+      "lineCounts": {
+        "java": {
+          "source": 9,
+          "comment": 0,
+          "blank": 3
+        }
+      },
+      "templateImports": []
+    },
+    "fauxStatic": false
+  },
+  "Classroom Getters and Setters": {
+    "name": "Classroom Getters and Setters",
+    "type": "KLASS",
+    "klass": "Classroom",
+    "metadata": {
+      "contentHash": "6769836b4d831d087d98dd4c24354fd4",
+      "packageName": "com.examples.testing.withgettersandsetters",
+      "version": "2022.9.0",
+      "author": "challen@illinois.edu",
+      "javaDescription": "<p>Getter and setter testing.</p>",
+      "usedFiles": [],
+      "templateImports": [],
+      "focused": false
+    },
+    "annotatedControls": {},
+    "question": {
+      "klass": "Classroom",
+      "contents": "import edu.illinois.cs.cs125.questioner.lib.Correct;\n\n/*\n * Getter and setter testing.\n */\n\n@Correct(\n    name = \"Classroom Getters and Setters\",\n    version = \"2022.9.0\",\n    author = \"challen@illinois.edu\")\npublic class Classroom {\n  private final String name;\n  private int capacity;\n\n  public Classroom(String setName, int setEnrollment) {\n    assert setEnrollment >= 0;\n    assert setName != null;\n    name = setName;\n    capacity = setEnrollment;\n  }\n\n  public int getCapacity() {\n    return capacity;\n  }\n\n  public void setCapacity(int setEnrollment) {\n    assert setEnrollment >= 0;\n    capacity = setEnrollment;\n  }\n\n  public String getName() {\n    return name;\n  }\n}",
+      "language": "java",
+      "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/testing/withgettersandsetters/Classroom.java"
+    },
+    "correct": {
+      "klass": "Classroom",
+      "contents": "public class Classroom {\n  private final String name;\n  private int capacity;\n\n  public Classroom(String setName, int setEnrollment) {\n    assert setEnrollment >= 0;\n    assert setName != null;\n    name = setName;\n    capacity = setEnrollment;\n  }\n\n  public int getCapacity() {\n    return capacity;\n  }\n\n  public void setCapacity(int setEnrollment) {\n    assert setEnrollment >= 0;\n    capacity = setEnrollment;\n  }\n\n  public String getName() {\n    return name;\n  }\n}\n",
+      "language": "java",
+      "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/testing/withgettersandsetters/Classroom.java",
+      "complexity": 4,
+      "features": {
+        "featureMap": {
+          "VARIABLE_REASSIGNMENTS": 3,
+          "COMPARISON_OPERATORS": 3,
+          "METHOD": 3,
+          "RETURN": 2,
+          "CONSTRUCTOR": 1,
+          "GETTER": 2,
+          "SETTER": 1,
+          "STRING": 3,
+          "NULL": 1,
+          "CLASS": 1,
+          "ASSERT": 3,
+          "VISIBILITY_MODIFIERS": 7,
+          "FINAL_FIELD": 1
+        },
+        "importList": [],
+        "typeList": [
+          "String",
+          "int"
+        ],
+        "identifierList": [],
+        "dottedMethodList": []
+      },
+      "lineCount": {
+        "source": 20,
+        "comment": 0,
+        "blank": 5
+      },
+      "expectedDeadCount": 4
+    },
+    "alternativeSolutions": [],
+    "incorrect": [],
+    "common": [],
+    "importWhitelist": [],
+    "importBlacklist": [],
+    "slug": "classroom-getters-and-setters",
+    "hasKotlin": false,
+    "published": {
+      "name": "Classroom Getters and Setters",
+      "type": "KLASS",
+      "path": "classroom-getters-and-setters",
+      "author": "challen@illinois.edu",
+      "version": "2022.9.0",
+      "packageName": "com.examples.testing.withgettersandsetters",
+      "languages": [
+        "java"
+      ],
+      "descriptions": {
+        "java": "<p>Getter and setter testing.</p>"
+      },
+      "complexity": {
+        "java": 4
+      },
+      "features": {
+        "java": {
+          "featureMap": {
+            "VARIABLE_REASSIGNMENTS": 3,
+            "COMPARISON_OPERATORS": 3,
+            "METHOD": 3,
+            "RETURN": 2,
+            "CONSTRUCTOR": 1,
+            "GETTER": 2,
+            "SETTER": 1,
+            "STRING": 3,
+            "NULL": 1,
+            "CLASS": 1,
+            "ASSERT": 3,
+            "VISIBILITY_MODIFIERS": 7,
+            "FINAL_FIELD": 1
+          },
+          "importList": [],
+          "typeList": [
+            "String",
+            "int"
+          ],
+          "identifierList": [],
+          "dottedMethodList": []
+        }
+      },
+      "lineCounts": {
+        "java": {
+          "source": 20,
+          "comment": 0,
+          "blank": 5
+        }
+      },
+      "templateImports": []
+    },
+    "fauxStatic": false
+  },
+  "Test Empty Constructor": {
+    "name": "Test Empty Constructor",
+    "type": "KLASS",
+    "klass": "Question",
+    "metadata": {
+      "contentHash": "99f38223aa37346c80979626df0dc69c",
+      "packageName": "com.examples.testing.withemptyconstructor",
+      "version": "2022.9.0",
+      "author": "challen@illinois.edu",
+      "javaDescription": "<p>Test to make sure we can parse the empty constructor.</p>",
+      "usedFiles": [
+        "/Users/challen/code/questioner-problems/src/main/java/com/examples/testing/withemptyconstructor/correct/java/emptyconstructor/Question.java"
+      ],
+      "templateImports": [],
+      "focused": false
+    },
+    "annotatedControls": {},
+    "question": {
+      "klass": "Question",
+      "contents": "import edu.illinois.cs.cs125.questioner.lib.Correct;\n\n/*\n * Test to make sure we can parse the empty constructor.\n */\n\n@Correct(name = \"Test Empty Constructor\", version = \"2022.9.0\", author = \"challen@illinois.edu\")\npublic class Question {\n  private int value = 0;\n\n  int next() {\n    return value++;\n  }\n}",
+      "language": "java",
+      "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/testing/withemptyconstructor/Question.java"
+    },
+    "correct": {
+      "klass": "Question",
+      "contents": "public class Question {\n  private int value = 0;\n\n  int next() {\n    return value++;\n  }\n}\n",
+      "language": "java",
+      "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/testing/withemptyconstructor/Question.java",
+      "complexity": 1,
+      "features": {
+        "featureMap": {
+          "VARIABLE_REASSIGNMENTS": 1,
+          "UNARY_OPERATORS": 1,
+          "METHOD": 1,
+          "RETURN": 1,
+          "CLASS": 1,
+          "VISIBILITY_MODIFIERS": 2
+        },
+        "importList": [],
+        "typeList": [
+          "int"
+        ],
+        "identifierList": [],
+        "dottedMethodList": []
+      },
+      "lineCount": {
+        "source": 6,
+        "comment": 0,
+        "blank": 2
+      },
+      "expectedDeadCount": 1
+    },
+    "alternativeSolutions": [
+      {
+        "klass": "Question",
+        "contents": "public class Question {\n  private int value;\n\n  public Question() {\n    value = 0;\n  }\n\n  int next() {\n    return value++;\n  }\n}\n",
+        "language": "java",
+        "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/testing/withemptyconstructor/correct/java/emptyconstructor/Question.java",
+        "complexity": 2,
+        "features": {
+          "featureMap": {
+            "VARIABLE_REASSIGNMENTS": 2,
+            "UNARY_OPERATORS": 1,
+            "METHOD": 1,
+            "RETURN": 1,
+            "CONSTRUCTOR": 1,
+            "CLASS": 1,
+            "VISIBILITY_MODIFIERS": 3
+          },
+          "importList": [],
+          "typeList": [
+            "int"
+          ],
+          "identifierList": [],
+          "dottedMethodList": []
+        },
+        "lineCount": {
+          "source": 9,
+          "comment": 0,
+          "blank": 3
+        },
+        "expectedDeadCount": 0
+      }
+    ],
+    "incorrect": [],
+    "common": [],
+    "importWhitelist": [],
+    "importBlacklist": [],
+    "slug": "test-empty-constructor",
+    "hasKotlin": false,
+    "published": {
+      "name": "Test Empty Constructor",
+      "type": "KLASS",
+      "path": "test-empty-constructor",
+      "author": "challen@illinois.edu",
+      "version": "2022.9.0",
+      "packageName": "com.examples.testing.withemptyconstructor",
+      "languages": [
+        "java"
+      ],
+      "descriptions": {
+        "java": "<p>Test to make sure we can parse the empty constructor.</p>"
+      },
+      "complexity": {
+        "java": 1
+      },
+      "features": {
+        "java": {
+          "featureMap": {
+            "VARIABLE_REASSIGNMENTS": 1,
+            "UNARY_OPERATORS": 1,
+            "METHOD": 1,
+            "RETURN": 1,
+            "CLASS": 1,
+            "VISIBILITY_MODIFIERS": 2
+          },
+          "importList": [],
+          "typeList": [
+            "int"
+          ],
+          "identifierList": [],
+          "dottedMethodList": []
+        }
+      },
+      "lineCounts": {
+        "java": {
+          "source": 6,
+          "comment": 0,
+          "blank": 2
+        }
+      },
+      "templateImports": []
+    },
+    "fauxStatic": false
+  },
+  "With Feature Check": {
+    "name": "With Feature Check",
+    "type": "METHOD",
+    "klass": "Question",
+    "metadata": {
+      "contentHash": "1d850909c5792f96c01604b921f26c21",
+      "packageName": "com.examples.testing.withfeaturecheck",
+      "version": "2022.7.0",
+      "author": "challen@illinois.edu",
+      "javaDescription": "<p>Test whether feature checking works.</p>",
+      "kotlinDescription": "<p>For testing features.</p>",
+      "usedFiles": [
+        "/Users/challen/code/questioner-problems/src/main/java/com/examples/testing/withfeaturecheck/incorrect/java/usesloop/Question.java",
+        "/Users/challen/code/questioner-problems/src/main/java/com/examples/testing/withfeaturecheck/incorrect/kotlin/usesloop/Question.kt",
+        "/Users/challen/code/questioner-problems/src/main/java/com/examples/testing/withfeaturecheck/correct/kotlin/Question.kt"
+      ],
+      "templateImports": [],
+      "focused": false
+    },
+    "annotatedControls": {},
+    "question": {
+      "klass": "Question",
+      "contents": "import edu.illinois.cs.cs125.jeed.core.Features;\nimport edu.illinois.cs.cs125.jenisol.core.BoundComplexity;\nimport edu.illinois.cs.cs125.jenisol.core.FilterParameters;\nimport edu.illinois.cs.cs125.jenisol.core.SkipTest;\nimport edu.illinois.cs.cs125.questioner.lib.CheckFeatures;\nimport edu.illinois.cs.cs125.questioner.lib.Correct;\nimport edu.illinois.cs.cs125.questioner.lib.FeatureCheckException;\nimport edu.illinois.cs.cs125.questioner.lib.Wrap;\nimport edu.illinois.cs.cs125.questioner.lib.features.FeatureHelpers;\nimport java.util.ArrayList;\nimport java.util.List;\n\n/*\n * Test whether feature checking works.\n */\n\n@Correct(name = \"With Feature Check\", author = \"challen@illinois.edu\", version = \"2022.7.0\")\n@Wrap\npublic class Question {\n  @FilterParameters\n  private static void filterParameters(int range) {\n    if (range < 0) {\n      throw new SkipTest();\n    }\n    if (range > 1024) {\n      throw new BoundComplexity();\n    }\n  }\n\n  int sumTo(int range) {\n    return (range * (range + 1)) / 2;\n  }\n\n  @CheckFeatures\n  private static List<String> checkFeatures(Features solution, Features submission) {\n    if (FeatureHelpers.usesLoop(submission)) {\n      throw new FeatureCheckException(\"Submission uses a loop\");\n    }\n    return new ArrayList<>();\n  }\n}",
+      "language": "java",
+      "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/testing/withfeaturecheck/Question.java"
+    },
+    "correct": {
+      "klass": "Question",
+      "contents": "int sumTo(int range) {\n  return (range * (range + 1)) / 2;\n}",
+      "language": "java",
+      "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/testing/withfeaturecheck/Question.java",
+      "complexity": 1,
+      "features": {
+        "featureMap": {
+          "ARITHMETIC_OPERATORS": 3,
+          "METHOD": 1,
+          "RETURN": 1
+        },
+        "importList": [],
+        "typeList": [
+          "int"
+        ],
+        "identifierList": [],
+        "dottedMethodList": []
+      },
+      "lineCount": {
+        "source": 3,
+        "comment": 0,
+        "blank": 0
+      },
+      "expectedDeadCount": 1
+    },
+    "alternativeSolutions": [
+      {
+        "klass": "Question",
+        "contents": "fun sumTo(range: Int): Int {\n  return range * (range + 1) / 2\n}",
+        "language": "kotlin",
+        "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/testing/withfeaturecheck/correct/kotlin/Question.kt",
+        "complexity": 1,
+        "features": {
+          "featureMap": {
+            "METHOD": 1
+          },
+          "importList": [],
+          "typeList": [],
+          "identifierList": [],
+          "dottedMethodList": []
+        },
+        "lineCount": {
+          "source": 3,
+          "comment": 0,
+          "blank": 0
+        }
+      }
+    ],
+    "incorrect": [
+      {
+        "klass": "Question",
+        "contents": "int sumTo(int range) {\n  int sum = 0;\n  for (int i = 0; i <= range; i++) {\n    sum += i;\n  }\n  return sum;\n}",
+        "reason": "FEATURES",
+        "language": "java",
+        "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/testing/withfeaturecheck/incorrect/java/usesloop/Question.java",
+        "starter": false,
+        "needed": true
+      },
+      {
+        "klass": "Question",
+        "contents": "fun sumTo(range: Int): Int {\n  var sum = 0\n  (0..range).forEach { i ->\n    sum += i\n  }\n  return sum\n}",
+        "reason": "FEATURES",
+        "language": "kotlin",
+        "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/testing/withfeaturecheck/incorrect/kotlin/usesloop/Question.kt",
+        "starter": false,
+        "needed": true
+      }
+    ],
+    "common": [],
+    "javaTemplate": "public class Question {\n  {{{ contents }}}\n}",
+    "kotlinTemplate": "class Question {\n  {{{ contents }}}\n}",
+    "importWhitelist": [],
+    "importBlacklist": [],
+    "slug": "with-feature-check",
+    "kotlinSolution": {
+      "klass": "Question",
+      "contents": "fun sumTo(range: Int): Int {\n  return range * (range + 1) / 2\n}",
+      "language": "kotlin",
+      "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/testing/withfeaturecheck/correct/kotlin/Question.kt",
+      "complexity": 1,
+      "features": {
+        "featureMap": {
+          "METHOD": 1
+        },
+        "importList": [],
+        "typeList": [],
+        "identifierList": [],
+        "dottedMethodList": []
+      },
+      "lineCount": {
+        "source": 3,
+        "comment": 0,
+        "blank": 0
+      }
+    },
+    "hasKotlin": true,
+    "published": {
+      "name": "With Feature Check",
+      "type": "METHOD",
+      "path": "with-feature-check",
+      "author": "challen@illinois.edu",
+      "version": "2022.7.0",
+      "packageName": "com.examples.testing.withfeaturecheck",
+      "languages": [
+        "java",
+        "kotlin"
+      ],
+      "descriptions": {
+        "java": "<p>Test whether feature checking works.</p>",
+        "kotlin": "<p>For testing features.</p>"
+      },
+      "complexity": {
+        "java": 1,
+        "kotlin": 1
+      },
+      "features": {
+        "java": {
+          "featureMap": {
+            "ARITHMETIC_OPERATORS": 3,
+            "METHOD": 1,
+            "RETURN": 1
+          },
+          "importList": [],
+          "typeList": [
+            "int"
+          ],
+          "identifierList": [],
+          "dottedMethodList": []
+        },
+        "kotlin": {
+          "featureMap": {
+            "METHOD": 1
+          },
+          "importList": [],
+          "typeList": [],
+          "identifierList": [],
+          "dottedMethodList": []
+        }
+      },
+      "lineCounts": {
+        "java": {
+          "source": 3,
+          "comment": 0,
+          "blank": 0
+        },
+        "kotlin": {
+          "source": 3,
           "comment": 0,
           "blank": 0
         }
@@ -2547,124 +3100,6 @@
     },
     "fauxStatic": false
   },
-  "Test Constructor NotNull": {
-    "name": "Test Constructor NotNull",
-    "type": "KLASS",
-    "klass": "Question",
-    "metadata": {
-      "contentHash": "5cdd4a7677f73f34f915e08ec0f5f11b",
-      "packageName": "com.examples.withconstructornotnull",
-      "version": "2022.10.0",
-      "author": "challen@illinois.edu",
-      "javaDescription": "<p>Testing @NotNull annotation on constructor parameters.</p>",
-      "usedFiles": [],
-      "templateImports": [],
-      "focused": true
-    },
-    "annotatedControls": {},
-    "question": {
-      "klass": "Question",
-      "contents": "import edu.illinois.cs.cs125.jenisol.core.NotNull;\nimport edu.illinois.cs.cs125.questioner.lib.Correct;\n\n/*\n * Testing @NotNull annotation on constructor parameters.\n */\n\n@Correct(name = \"Test Constructor NotNull\", version = \"2022.10.0\", author = \"challen@illinois.edu\", focused = true)\npublic class Question {\n  private final int stringLength;\n\n  public Question(@NotNull String value) {\n    stringLength = value.length();\n  }\n\n  public int getStringLength() {\n    return stringLength;\n  }\n}",
-      "language": "java",
-      "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/withconstructornotnull/Question.java"
-    },
-    "correct": {
-      "klass": "Question",
-      "contents": "public class Question {\n  private final int stringLength;\n\n  public Question(String value) {\n    stringLength = value.length();\n  }\n\n  public int getStringLength() {\n    return stringLength;\n  }\n}\n",
-      "language": "java",
-      "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/withconstructornotnull/Question.java",
-      "complexity": 2,
-      "features": {
-        "featureMap": {
-          "VARIABLE_REASSIGNMENTS": 1,
-          "METHOD": 1,
-          "RETURN": 1,
-          "CONSTRUCTOR": 1,
-          "GETTER": 1,
-          "STRING": 1,
-          "CLASS": 1,
-          "VISIBILITY_MODIFIERS": 4,
-          "FINAL_FIELD": 1,
-          "DOT_NOTATION": 1,
-          "DOTTED_METHOD_CALL": 1
-        },
-        "importList": [],
-        "typeList": [
-          "int",
-          "String"
-        ],
-        "identifierList": [],
-        "dottedMethodList": [
-          "length"
-        ]
-      },
-      "lineCount": {
-        "source": 9,
-        "comment": 0,
-        "blank": 3
-      },
-      "expectedDeadCount": 0
-    },
-    "alternativeSolutions": [],
-    "incorrect": [],
-    "common": [],
-    "importWhitelist": [],
-    "importBlacklist": [],
-    "slug": "test-constructor-notnull",
-    "hasKotlin": false,
-    "published": {
-      "name": "Test Constructor NotNull",
-      "type": "KLASS",
-      "path": "test-constructor-notnull",
-      "author": "challen@illinois.edu",
-      "version": "2022.10.0",
-      "packageName": "com.examples.withconstructornotnull",
-      "languages": [
-        "java"
-      ],
-      "descriptions": {
-        "java": "<p>Testing @NotNull annotation on constructor parameters.</p>"
-      },
-      "complexity": {
-        "java": 2
-      },
-      "features": {
-        "java": {
-          "featureMap": {
-            "VARIABLE_REASSIGNMENTS": 1,
-            "METHOD": 1,
-            "RETURN": 1,
-            "CONSTRUCTOR": 1,
-            "GETTER": 1,
-            "STRING": 1,
-            "CLASS": 1,
-            "VISIBILITY_MODIFIERS": 4,
-            "FINAL_FIELD": 1,
-            "DOT_NOTATION": 1,
-            "DOTTED_METHOD_CALL": 1
-          },
-          "importList": [],
-          "typeList": [
-            "int",
-            "String"
-          ],
-          "identifierList": [],
-          "dottedMethodList": [
-            "length"
-          ]
-        }
-      },
-      "lineCounts": {
-        "java": {
-          "source": 9,
-          "comment": 0,
-          "blank": 3
-        }
-      },
-      "templateImports": []
-    },
-    "fauxStatic": false
-  },
   "With Imports": {
     "name": "With Imports",
     "type": "KLASS",
@@ -2865,259 +3300,6 @@
         },
         "kotlin": {
           "source": 4,
-          "comment": 0,
-          "blank": 2
-        }
-      },
-      "templateImports": []
-    },
-    "fauxStatic": false
-  },
-  "Classroom Getters and Setters": {
-    "name": "Classroom Getters and Setters",
-    "type": "KLASS",
-    "klass": "Classroom",
-    "metadata": {
-      "contentHash": "37e98c13ef079c9e2170bed9775f06f0",
-      "packageName": "com.examples.withgettersandsetters",
-      "version": "2022.9.0",
-      "author": "challen@illinois.edu",
-      "javaDescription": "<p>Getter and setter testing.</p>",
-      "usedFiles": [],
-      "templateImports": [],
-      "focused": false
-    },
-    "annotatedControls": {},
-    "question": {
-      "klass": "Classroom",
-      "contents": "import edu.illinois.cs.cs125.questioner.lib.Correct;\n\n/*\n * Getter and setter testing.\n */\n\n@Correct(\n    name = \"Classroom Getters and Setters\",\n    version = \"2022.9.0\",\n    author = \"challen@illinois.edu\")\npublic class Classroom {\n  private final String name;\n  private int capacity;\n\n  public Classroom(String setName, int setEnrollment) {\n    assert setEnrollment >= 0;\n    assert setName != null;\n    name = setName;\n    capacity = setEnrollment;\n  }\n\n  public int getCapacity() {\n    return capacity;\n  }\n\n  public void setCapacity(int setEnrollment) {\n    assert setEnrollment >= 0;\n    capacity = setEnrollment;\n  }\n\n  public String getName() {\n    return name;\n  }\n}",
-      "language": "java",
-      "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/withgettersandsetters/Classroom.java"
-    },
-    "correct": {
-      "klass": "Classroom",
-      "contents": "public class Classroom {\n  private final String name;\n  private int capacity;\n\n  public Classroom(String setName, int setEnrollment) {\n    assert setEnrollment >= 0;\n    assert setName != null;\n    name = setName;\n    capacity = setEnrollment;\n  }\n\n  public int getCapacity() {\n    return capacity;\n  }\n\n  public void setCapacity(int setEnrollment) {\n    assert setEnrollment >= 0;\n    capacity = setEnrollment;\n  }\n\n  public String getName() {\n    return name;\n  }\n}\n",
-      "language": "java",
-      "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/withgettersandsetters/Classroom.java",
-      "complexity": 4,
-      "features": {
-        "featureMap": {
-          "VARIABLE_REASSIGNMENTS": 3,
-          "COMPARISON_OPERATORS": 3,
-          "METHOD": 3,
-          "RETURN": 2,
-          "CONSTRUCTOR": 1,
-          "GETTER": 2,
-          "SETTER": 1,
-          "STRING": 3,
-          "NULL": 1,
-          "CLASS": 1,
-          "ASSERT": 3,
-          "VISIBILITY_MODIFIERS": 7,
-          "FINAL_FIELD": 1
-        },
-        "importList": [],
-        "typeList": [
-          "String",
-          "int"
-        ],
-        "identifierList": [],
-        "dottedMethodList": []
-      },
-      "lineCount": {
-        "source": 20,
-        "comment": 0,
-        "blank": 5
-      },
-      "expectedDeadCount": 4
-    },
-    "alternativeSolutions": [],
-    "incorrect": [],
-    "common": [],
-    "importWhitelist": [],
-    "importBlacklist": [],
-    "slug": "classroom-getters-and-setters",
-    "hasKotlin": false,
-    "published": {
-      "name": "Classroom Getters and Setters",
-      "type": "KLASS",
-      "path": "classroom-getters-and-setters",
-      "author": "challen@illinois.edu",
-      "version": "2022.9.0",
-      "packageName": "com.examples.withgettersandsetters",
-      "languages": [
-        "java"
-      ],
-      "descriptions": {
-        "java": "<p>Getter and setter testing.</p>"
-      },
-      "complexity": {
-        "java": 4
-      },
-      "features": {
-        "java": {
-          "featureMap": {
-            "VARIABLE_REASSIGNMENTS": 3,
-            "COMPARISON_OPERATORS": 3,
-            "METHOD": 3,
-            "RETURN": 2,
-            "CONSTRUCTOR": 1,
-            "GETTER": 2,
-            "SETTER": 1,
-            "STRING": 3,
-            "NULL": 1,
-            "CLASS": 1,
-            "ASSERT": 3,
-            "VISIBILITY_MODIFIERS": 7,
-            "FINAL_FIELD": 1
-          },
-          "importList": [],
-          "typeList": [
-            "String",
-            "int"
-          ],
-          "identifierList": [],
-          "dottedMethodList": []
-        }
-      },
-      "lineCounts": {
-        "java": {
-          "source": 20,
-          "comment": 0,
-          "blank": 5
-        }
-      },
-      "templateImports": []
-    },
-    "fauxStatic": false
-  },
-  "Test Empty Constructor": {
-    "name": "Test Empty Constructor",
-    "type": "KLASS",
-    "klass": "Question",
-    "metadata": {
-      "contentHash": "e24f2c0cc57b8104384616c048448b96",
-      "packageName": "com.examples.withemptyconstructor",
-      "version": "2022.9.0",
-      "author": "challen@illinois.edu",
-      "javaDescription": "<p>Test to make sure we can parse the empty constructor.</p>",
-      "usedFiles": [
-        "/Users/challen/code/questioner-problems/src/main/java/com/examples/withemptyconstructor/correct/java/emptyconstructor/Question.java"
-      ],
-      "templateImports": [],
-      "focused": false
-    },
-    "annotatedControls": {},
-    "question": {
-      "klass": "Question",
-      "contents": "import edu.illinois.cs.cs125.questioner.lib.Correct;\n\n/*\n * Test to make sure we can parse the empty constructor.\n */\n\n@Correct(name = \"Test Empty Constructor\", version = \"2022.9.0\", author = \"challen@illinois.edu\")\npublic class Question {\n  private int value = 0;\n\n  int next() {\n    return value++;\n  }\n}",
-      "language": "java",
-      "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/withemptyconstructor/Question.java"
-    },
-    "correct": {
-      "klass": "Question",
-      "contents": "public class Question {\n  private int value = 0;\n\n  int next() {\n    return value++;\n  }\n}\n",
-      "language": "java",
-      "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/withemptyconstructor/Question.java",
-      "complexity": 1,
-      "features": {
-        "featureMap": {
-          "VARIABLE_REASSIGNMENTS": 1,
-          "UNARY_OPERATORS": 1,
-          "METHOD": 1,
-          "RETURN": 1,
-          "CLASS": 1,
-          "VISIBILITY_MODIFIERS": 2
-        },
-        "importList": [],
-        "typeList": [
-          "int"
-        ],
-        "identifierList": [],
-        "dottedMethodList": []
-      },
-      "lineCount": {
-        "source": 6,
-        "comment": 0,
-        "blank": 2
-      },
-      "expectedDeadCount": 1
-    },
-    "alternativeSolutions": [
-      {
-        "klass": "Question",
-        "contents": "public class Question {\n  private int value;\n\n  public Question() {\n    value = 0;\n  }\n\n  int next() {\n    return value++;\n  }\n}\n",
-        "language": "java",
-        "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/withemptyconstructor/correct/java/emptyconstructor/Question.java",
-        "complexity": 2,
-        "features": {
-          "featureMap": {
-            "VARIABLE_REASSIGNMENTS": 2,
-            "UNARY_OPERATORS": 1,
-            "METHOD": 1,
-            "RETURN": 1,
-            "CONSTRUCTOR": 1,
-            "CLASS": 1,
-            "VISIBILITY_MODIFIERS": 3
-          },
-          "importList": [],
-          "typeList": [
-            "int"
-          ],
-          "identifierList": [],
-          "dottedMethodList": []
-        },
-        "lineCount": {
-          "source": 9,
-          "comment": 0,
-          "blank": 3
-        },
-        "expectedDeadCount": 0
-      }
-    ],
-    "incorrect": [],
-    "common": [],
-    "importWhitelist": [],
-    "importBlacklist": [],
-    "slug": "test-empty-constructor",
-    "hasKotlin": false,
-    "published": {
-      "name": "Test Empty Constructor",
-      "type": "KLASS",
-      "path": "test-empty-constructor",
-      "author": "challen@illinois.edu",
-      "version": "2022.9.0",
-      "packageName": "com.examples.withemptyconstructor",
-      "languages": [
-        "java"
-      ],
-      "descriptions": {
-        "java": "<p>Test to make sure we can parse the empty constructor.</p>"
-      },
-      "complexity": {
-        "java": 1
-      },
-      "features": {
-        "java": {
-          "featureMap": {
-            "VARIABLE_REASSIGNMENTS": 1,
-            "UNARY_OPERATORS": 1,
-            "METHOD": 1,
-            "RETURN": 1,
-            "CLASS": 1,
-            "VISIBILITY_MODIFIERS": 2
-          },
-          "importList": [],
-          "typeList": [
-            "int"
-          ],
-          "identifierList": [],
-          "dottedMethodList": []
-        }
-      },
-      "lineCounts": {
-        "java": {
-          "source": 6,
           "comment": 0,
           "blank": 2
         }
@@ -3558,188 +3740,6 @@
         },
         "kotlin": {
           "source": 4,
-          "comment": 0,
-          "blank": 0
-        }
-      },
-      "templateImports": []
-    },
-    "fauxStatic": false
-  },
-  "With Feature Check": {
-    "name": "With Feature Check",
-    "type": "METHOD",
-    "klass": "Question",
-    "metadata": {
-      "contentHash": "f53448151d802ca1846e2f5c3475f44d",
-      "packageName": "com.examples.withfeaturecheck",
-      "version": "2022.7.0",
-      "author": "challen@illinois.edu",
-      "javaDescription": "<p>Test whether feature checking works.</p>",
-      "kotlinDescription": "<p>For testing features.</p>",
-      "usedFiles": [
-        "/Users/challen/code/questioner-problems/src/main/java/com/examples/withfeaturecheck/incorrect/java/usesloop/Question.java",
-        "/Users/challen/code/questioner-problems/src/main/java/com/examples/withfeaturecheck/incorrect/kotlin/usesloop/Question.kt",
-        "/Users/challen/code/questioner-problems/src/main/java/com/examples/withfeaturecheck/correct/kotlin/Question.kt"
-      ],
-      "templateImports": [],
-      "focused": false
-    },
-    "annotatedControls": {},
-    "question": {
-      "klass": "Question",
-      "contents": "import edu.illinois.cs.cs125.jeed.core.Features;\nimport edu.illinois.cs.cs125.jenisol.core.BoundComplexity;\nimport edu.illinois.cs.cs125.jenisol.core.FilterParameters;\nimport edu.illinois.cs.cs125.jenisol.core.SkipTest;\nimport edu.illinois.cs.cs125.questioner.lib.CheckFeatures;\nimport edu.illinois.cs.cs125.questioner.lib.Correct;\nimport edu.illinois.cs.cs125.questioner.lib.FeatureCheckException;\nimport edu.illinois.cs.cs125.questioner.lib.Wrap;\nimport edu.illinois.cs.cs125.questioner.lib.features.FeatureHelpers;\nimport java.util.ArrayList;\nimport java.util.List;\n\n/*\n * Test whether feature checking works.\n */\n\n@Correct(name = \"With Feature Check\", author = \"challen@illinois.edu\", version = \"2022.7.0\")\n@Wrap\npublic class Question {\n  @FilterParameters\n  private static void filterParameters(int range) {\n    if (range < 0) {\n      throw new SkipTest();\n    }\n    if (range > 1024) {\n      throw new BoundComplexity();\n    }\n  }\n\n  int sumTo(int range) {\n    return (range * (range + 1)) / 2;\n  }\n\n  @CheckFeatures\n  private static List<String> checkFeatures(Features solution, Features submission) {\n    if (FeatureHelpers.usesLoop(submission)) {\n      throw new FeatureCheckException(\"Submission uses a loop\");\n    }\n    return new ArrayList<>();\n  }\n}",
-      "language": "java",
-      "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/withfeaturecheck/Question.java"
-    },
-    "correct": {
-      "klass": "Question",
-      "contents": "int sumTo(int range) {\n  return (range * (range + 1)) / 2;\n}",
-      "language": "java",
-      "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/withfeaturecheck/Question.java",
-      "complexity": 1,
-      "features": {
-        "featureMap": {
-          "ARITHMETIC_OPERATORS": 3,
-          "METHOD": 1,
-          "RETURN": 1
-        },
-        "importList": [],
-        "typeList": [
-          "int"
-        ],
-        "identifierList": [],
-        "dottedMethodList": []
-      },
-      "lineCount": {
-        "source": 3,
-        "comment": 0,
-        "blank": 0
-      },
-      "expectedDeadCount": 1
-    },
-    "alternativeSolutions": [
-      {
-        "klass": "Question",
-        "contents": "fun sumTo(range: Int): Int {\n  return range * (range + 1) / 2\n}",
-        "language": "kotlin",
-        "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/withfeaturecheck/correct/kotlin/Question.kt",
-        "complexity": 1,
-        "features": {
-          "featureMap": {
-            "METHOD": 1
-          },
-          "importList": [],
-          "typeList": [],
-          "identifierList": [],
-          "dottedMethodList": []
-        },
-        "lineCount": {
-          "source": 3,
-          "comment": 0,
-          "blank": 0
-        }
-      }
-    ],
-    "incorrect": [
-      {
-        "klass": "Question",
-        "contents": "int sumTo(int range) {\n  int sum = 0;\n  for (int i = 0; i <= range; i++) {\n    sum += i;\n  }\n  return sum;\n}",
-        "reason": "FEATURES",
-        "language": "java",
-        "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/withfeaturecheck/incorrect/java/usesloop/Question.java",
-        "starter": false,
-        "needed": true
-      },
-      {
-        "klass": "Question",
-        "contents": "fun sumTo(range: Int): Int {\n  var sum = 0\n  (0..range).forEach { i ->\n    sum += i\n  }\n  return sum\n}",
-        "reason": "FEATURES",
-        "language": "kotlin",
-        "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/withfeaturecheck/incorrect/kotlin/usesloop/Question.kt",
-        "starter": false,
-        "needed": true
-      }
-    ],
-    "common": [],
-    "javaTemplate": "public class Question {\n  {{{ contents }}}\n}",
-    "kotlinTemplate": "class Question {\n  {{{ contents }}}\n}",
-    "importWhitelist": [],
-    "importBlacklist": [],
-    "slug": "with-feature-check",
-    "kotlinSolution": {
-      "klass": "Question",
-      "contents": "fun sumTo(range: Int): Int {\n  return range * (range + 1) / 2\n}",
-      "language": "kotlin",
-      "path": "/Users/challen/code/questioner-problems/src/main/java/com/examples/withfeaturecheck/correct/kotlin/Question.kt",
-      "complexity": 1,
-      "features": {
-        "featureMap": {
-          "METHOD": 1
-        },
-        "importList": [],
-        "typeList": [],
-        "identifierList": [],
-        "dottedMethodList": []
-      },
-      "lineCount": {
-        "source": 3,
-        "comment": 0,
-        "blank": 0
-      }
-    },
-    "hasKotlin": true,
-    "published": {
-      "name": "With Feature Check",
-      "type": "METHOD",
-      "path": "with-feature-check",
-      "author": "challen@illinois.edu",
-      "version": "2022.7.0",
-      "packageName": "com.examples.withfeaturecheck",
-      "languages": [
-        "java",
-        "kotlin"
-      ],
-      "descriptions": {
-        "java": "<p>Test whether feature checking works.</p>",
-        "kotlin": "<p>For testing features.</p>"
-      },
-      "complexity": {
-        "java": 1,
-        "kotlin": 1
-      },
-      "features": {
-        "java": {
-          "featureMap": {
-            "ARITHMETIC_OPERATORS": 3,
-            "METHOD": 1,
-            "RETURN": 1
-          },
-          "importList": [],
-          "typeList": [
-            "int"
-          ],
-          "identifierList": [],
-          "dottedMethodList": []
-        },
-        "kotlin": {
-          "featureMap": {
-            "METHOD": 1
-          },
-          "importList": [],
-          "typeList": [],
-          "identifierList": [],
-          "dottedMethodList": []
-        }
-      },
-      "lineCounts": {
-        "java": {
-          "source": 3,
-          "comment": 0,
-          "blank": 0
-        },
-        "kotlin": {
-          "source": 3,
           "comment": 0,
           "blank": 0
         }
