@@ -70,7 +70,14 @@ suspend fun Question.compileSubmission(
             testResults.complete.compileSubmission = CompiledSourceResult(it)
             testResults.completedSteps.add(TestResults.Step.compileSubmission)
         }
-        testResults.addCheckstyleResults(source.checkstyle(CheckstyleArguments(failOnError = false)))
+        testResults.addCheckstyleResults(
+            source.checkstyle(
+                CheckstyleArguments(
+                    failOnError = false,
+                    suppressions = checkstyleSuppressions
+                )
+            )
+        )
         compiledSource
     } catch (e: TemplatingFailed) {
         testResults.failed.templateSubmission = e

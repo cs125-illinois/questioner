@@ -97,6 +97,7 @@
     "common": [],
     "importWhitelist": [],
     "importBlacklist": [],
+    "checkstyleSuppressions": [],
     "slug": "recursive-factorial",
     "kotlinSolution": {
       "klass": "QuestionKt",
@@ -245,6 +246,7 @@
     "javaTemplate": "public class Question {\n  {{{ contents }}}\n}",
     "importWhitelist": [],
     "importBlacklist": [],
+    "checkstyleSuppressions": [],
     "slug": "equals-88",
     "hasKotlin": false,
     "published": {
@@ -393,6 +395,7 @@
     "common": [],
     "importWhitelist": [],
     "importBlacklist": [],
+    "checkstyleSuppressions": [],
     "slug": "squirrel-equality",
     "kotlinSolution": {
       "klass": "Squirrel",
@@ -591,6 +594,7 @@
     "common": [],
     "importWhitelist": [],
     "importBlacklist": [],
+    "checkstyleSuppressions": [],
     "slug": "counter",
     "kotlinSolution": {
       "klass": "Counter",
@@ -802,6 +806,7 @@
     "kotlinTemplate": "fun printSum(first: Int, second: Int) {\n  {{{ contents }}}\n}",
     "importWhitelist": [],
     "importBlacklist": [],
+    "checkstyleSuppressions": [],
     "slug": "print-sum",
     "kotlinSolution": {
       "klass": "QuestionKt",
@@ -938,6 +943,7 @@
     "javaTemplate": "public class Question {\n  {{{ contents }}}\n}",
     "importWhitelist": [],
     "importBlacklist": [],
+    "checkstyleSuppressions": [],
     "slug": "larger-of-two",
     "hasKotlin": false,
     "published": {
@@ -1054,6 +1060,7 @@
       "java.util.Arrays"
     ],
     "importBlacklist": [],
+    "checkstyleSuppressions": [],
     "slug": "with-template-imports",
     "hasKotlin": false,
     "published": {
@@ -1174,6 +1181,7 @@
     "common": [],
     "importWhitelist": [],
     "importBlacklist": [],
+    "checkstyleSuppressions": [],
     "slug": "test-constructor-notnull",
     "hasKotlin": false,
     "published": {
@@ -1292,6 +1300,7 @@
     "common": [],
     "importWhitelist": [],
     "importBlacklist": [],
+    "checkstyleSuppressions": [],
     "slug": "classroom-getters-and-setters",
     "hasKotlin": false,
     "published": {
@@ -1435,6 +1444,7 @@
     "common": [],
     "importWhitelist": [],
     "importBlacklist": [],
+    "checkstyleSuppressions": [],
     "slug": "test-empty-constructor",
     "hasKotlin": false,
     "published": {
@@ -1582,6 +1592,7 @@
     "kotlinTemplate": "class Question {\n  {{{ contents }}}\n}",
     "importWhitelist": [],
     "importBlacklist": [],
+    "checkstyleSuppressions": [],
     "slug": "with-feature-check",
     "kotlinSolution": {
       "klass": "Question",
@@ -1722,6 +1733,7 @@
     "javaTemplate": "public class Question {\n  {{{ contents }}}\n}",
     "importWhitelist": [],
     "importBlacklist": [],
+    "checkstyleSuppressions": [],
     "slug": "combine-minus-two",
     "hasKotlin": false,
     "published": {
@@ -1848,6 +1860,7 @@
     "javaTemplate": "public class Question {\n  {{{ contents }}}\n}",
     "importWhitelist": [],
     "importBlacklist": [],
+    "checkstyleSuppressions": [],
     "slug": "fancy-string-compare",
     "hasKotlin": false,
     "published": {
@@ -2068,6 +2081,7 @@
       "java.util.HashMap"
     ],
     "importBlacklist": [],
+    "checkstyleSuppressions": [],
     "slug": "string-duplicates",
     "kotlinSolution": {
       "klass": "Question",
@@ -2266,6 +2280,7 @@
     "common": [],
     "importWhitelist": [],
     "importBlacklist": [],
+    "checkstyleSuppressions": [],
     "slug": "private-recursive-helper",
     "hasKotlin": false,
     "published": {
@@ -2422,6 +2437,7 @@
     "common": [],
     "importWhitelist": [],
     "importBlacklist": [],
+    "checkstyleSuppressions": [],
     "slug": "maybe-recursive-factorial",
     "hasKotlin": false,
     "published": {
@@ -2554,6 +2570,7 @@
     "common": [],
     "importWhitelist": [],
     "importBlacklist": [],
+    "checkstyleSuppressions": [],
     "slug": "add-one-class",
     "kotlinSolution": {
       "klass": "QuestionKt",
@@ -2712,6 +2729,7 @@
     ],
     "importWhitelist": [],
     "importBlacklist": [],
+    "checkstyleSuppressions": [],
     "slug": "cougar-feliform",
     "hasKotlin": false,
     "published": {
@@ -2824,6 +2842,7 @@
     "javaTemplate": "public class Question {\n  public static void printHello() {\n    {{{ contents }}}\n  }\n}\n",
     "importWhitelist": [],
     "importBlacklist": [],
+    "checkstyleSuppressions": [],
     "slug": "print-hello",
     "hasKotlin": false,
     "published": {
@@ -2975,6 +2994,7 @@
     "common": [],
     "importWhitelist": [],
     "importBlacklist": [],
+    "checkstyleSuppressions": [],
     "slug": "input-interleaving-test",
     "kotlinSolution": {
       "klass": "QuestionKt",
@@ -3198,6 +3218,7 @@
     "common": [],
     "importWhitelist": [],
     "importBlacklist": [],
+    "checkstyleSuppressions": [],
     "slug": "with-imports",
     "kotlinSolution": {
       "klass": "QuestionKt",
@@ -3455,6 +3476,7 @@
     "kotlinTemplate": "class Question {\n  {{{ contents }}}\n}",
     "importWhitelist": [],
     "importBlacklist": [],
+    "checkstyleSuppressions": [],
     "slug": "add-one",
     "kotlinSolution": {
       "klass": "Question",
@@ -3651,6 +3673,7 @@
     "common": [],
     "importWhitelist": [],
     "importBlacklist": [],
+    "checkstyleSuppressions": [],
     "slug": "kotlin-null-test",
     "kotlinSolution": {
       "klass": "QuestionKt",

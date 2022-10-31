@@ -45,6 +45,7 @@ data class Question(
     var kotlinTemplate: String?,
     val importWhitelist: Set<String>,
     val importBlacklist: Set<String>,
+    val checkstyleSuppressions: Set<String>,
     val slug: String,
     val kotlinSolution: FlatFile?,
     val detemplatedJavaStarter: String? = incorrect.find { it.language == Language.java && it.starter }?.contents,

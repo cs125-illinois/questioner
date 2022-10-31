@@ -24,7 +24,7 @@ dependencies {
     implementation("com.github.slugify:slugify:3.0.2")
     implementation("org.apache.httpcomponents.client5:httpclient5-fluent:5.1.3")
 
-    testImplementation("io.kotest:kotest-runner-junit5:5.5.1")
+    testImplementation("io.kotest:kotest-runner-junit5:5.5.3")
 }
 tasks.compileKotlin {
     dependsOn(tasks.generateGrammarSource)

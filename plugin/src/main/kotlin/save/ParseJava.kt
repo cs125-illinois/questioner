@@ -13,6 +13,7 @@ import edu.illinois.cs.cs125.questioner.antlr.JavaLexer
 import edu.illinois.cs.cs125.questioner.antlr.JavaParser
 import edu.illinois.cs.cs125.questioner.lib.AlsoCorrect
 import edu.illinois.cs.cs125.questioner.lib.Blacklist
+import edu.illinois.cs.cs125.questioner.lib.CheckstyleSuppress
 import edu.illinois.cs.cs125.questioner.lib.Cite
 import edu.illinois.cs.cs125.questioner.lib.Correct
 import edu.illinois.cs.cs125.questioner.lib.Incorrect
@@ -88,7 +89,7 @@ data class ParsedJavaFile(val path: String, val contents: String) {
                 }
             }
         }
-        ).toSet().toList()
+        ).toSet()
 
     val blacklist = topLevelClass.getAnnotations(Blacklist::class.java).let { annotations ->
         check(annotations.size <= 1) { "Found multiple @Blacklist annotations" }
@@ -106,7 +107,25 @@ data class ParsedJavaFile(val path: String, val contents: String) {
                 }
             }
         }
-    }
+    }.toSet()
+
+    val checkstyleSuppress = topLevelClass.getAnnotations(CheckstyleSuppress::class.java).let { annotations ->
+        check(annotations.size <= 1) { "Found multiple @CheckstyleSuppress annotations" }
+        if (annotations.isEmpty()) {
+            listOf()
+        } else {
+            annotations.first().let { annotation ->
+                @Suppress("TooGenericExceptionCaught")
+                try {
+                    annotation.parameterMap().let { it["suppressions"] ?: error("suppressions field not set on @CheckstyleSuppress") }
+                } catch (e: Exception) {
+                    error("Couldn't parse @CheckstyleSuppress suppressions for $path: $e")
+                }.let { names ->
+                    names.split(",").map { it.trim() }
+                }
+            }
+        }
+    }.toSet()
 
     val templateImports = topLevelClass.getAnnotations(TemplateImports::class.java).let { annotations ->
         check(annotations.size <= 1) { "Found multiple @TemplateImports annotations" }

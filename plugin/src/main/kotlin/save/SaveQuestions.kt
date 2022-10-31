@@ -21,6 +21,7 @@ import edu.illinois.cs.cs125.jenisol.core.Verify
 import edu.illinois.cs.cs125.questioner.lib.AlsoCorrect
 import edu.illinois.cs.cs125.questioner.lib.Blacklist
 import edu.illinois.cs.cs125.questioner.lib.CheckFeatures
+import edu.illinois.cs.cs125.questioner.lib.CheckstyleSuppress
 import edu.illinois.cs.cs125.questioner.lib.Cite
 import edu.illinois.cs.cs125.questioner.lib.Correct
 import edu.illinois.cs.cs125.questioner.lib.Ignore
@@ -427,8 +428,9 @@ fun List<ParsedJavaFile>.findQuestions(
                 common,
                 javaTemplate,
                 kotlinTemplate,
-                solution.whitelist.toSet(),
-                solution.blacklist.toSet(),
+                solution.whitelist,
+                solution.blacklist,
+                solution.checkstyleSuppress,
                 solution.correct.path ?: slugify.slugify(solution.correct.name),
                 kotlinSolution?.toAlternateFile(kotlinCleanSpec)
             )
@@ -459,7 +461,8 @@ val annotationsToRemove =
         Configure::class.java.simpleName,
         Cite::class.java.simpleName,
         Limit::class.java.simpleName,
-        ProvideSystemIn::class.java.simpleName
+        ProvideSystemIn::class.java.simpleName,
+        CheckstyleSuppress::class.java.simpleName
     )
 val annotationsToDestroy =
     setOf(

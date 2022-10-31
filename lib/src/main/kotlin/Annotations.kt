@@ -53,6 +53,9 @@ annotation class Whitelist(val paths: String)
 annotation class Blacklist(val paths: String)
 
 @Target(AnnotationTarget.CLASS)
+annotation class CheckstyleSuppress(val suppressions: String)
+
+@Target(AnnotationTarget.CLASS)
 annotation class TemplateImports(val paths: String)
 
 @Target(AnnotationTarget.CLASS)
