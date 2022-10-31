@@ -3,7 +3,6 @@ import {
   CheckstyleResults,
   CompilationFailed,
   CompiledSourceResult,
-  ComplexityFailed,
   FeatureValue,
   KtlintFailed,
   KtlintResults,
@@ -242,9 +241,9 @@ export const FailedTasks = Partial({
   checkstyle: CheckstyleFailed,
   ktlint: KtlintFailed,
   checkCompiledSubmission: String,
-  complexity: ComplexityFailed,
+  complexity: String,
   features: String,
-  // lineCount doesn't fail
+  lineCount: String,
   // execution
   checkExecutedSubmission: String,
   // executionCount doesn't fail
