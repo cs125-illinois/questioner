@@ -74,9 +74,15 @@ suspend fun Question.test(
         // Special case when snippet transformation fails
         results.failed.checkCompiledSubmission = "Do not use return statements for this problem"
         results.failedSteps.add(TestResults.Step.checkCompiledSubmission)
-    } catch (e: ComplexityFailed) {
-        results.failed.complexity = e
+        return results
+    } catch (e: MaxComplexityExceeded) {
+        results.failed.complexity = e.message
         results.failedSteps.add(TestResults.Step.complexity)
+        return results
+    } catch (e: ComplexityFailed) {
+        results.failed.complexity = "Unable to compute complexity for this submission:\n" + e.errors.joinToString(", ")
+        results.failedSteps.add(TestResults.Step.complexity)
+        return results
     }
 
     // features
@@ -90,11 +96,22 @@ suspend fun Question.test(
     } catch (e: Exception) {
         results.failed.features = e.message ?: "Unknown features failure"
         results.failedSteps.add(TestResults.Step.features)
+        return results
     }
 
     // linecount
-    results.complete.lineCount = computeLineCounts(contents, language)
-    results.completedSteps.add(TestResults.Step.lineCount)
+    try {
+        results.complete.lineCount = computeLineCounts(contents, language)
+        results.completedSteps.add(TestResults.Step.lineCount)
+    } catch (e: MaxLineCountExceeded) {
+        results.failed.lineCount = e.message!!
+        results.failedSteps.add(TestResults.Step.lineCount)
+        return results
+    } catch (e: Exception) {
+        results.failed.lineCount = e.message ?: "Unknown line count failure"
+        results.failedSteps.add(TestResults.Step.lineCount)
+        return results
+    }
 
     // execution
     val classLoaderConfiguration = when (language) {

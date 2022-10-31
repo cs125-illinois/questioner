@@ -182,7 +182,9 @@ data class Question(
         val allocationLimitMultiplier: Int?,
         val minExtraSourceLines: Int?,
         val sourceLinesMultiplier: Double?,
-        val seed: Int?
+        val seed: Int?,
+        val maxComplexityMultiplier: Int?,
+        val maxLineCountMultiplier: Int?
     ) {
         companion object {
             const val DEFAULT_SOLUTION_THROWS = false
@@ -203,6 +205,8 @@ data class Question(
             const val DEFAULT_MIN_EXTRA_SOURCE_LINES = 2
             const val DEFAULT_SOURCE_LINES_MULTIPLIER = 1.5
             const val DEFAULT_SEED = -1
+            const val DEFAULT_MAX_COMPLEXITY_MULTIPLIER = 8
+            const val DEFAULT_MAX_LINECOUNT_MULTIPLIER = 8
 
             val DEFAULTS = TestingControl(
                 DEFAULT_SOLUTION_THROWS,
@@ -223,7 +227,9 @@ data class Question(
                 DEFAULT_ALLOCATION_LIMIT_MULTIPLIER,
                 DEFAULT_MIN_EXTRA_SOURCE_LINES,
                 DEFAULT_SOURCE_LINES_MULTIPLIER,
-                DEFAULT_SEED
+                DEFAULT_SEED,
+                DEFAULT_MAX_COMPLEXITY_MULTIPLIER,
+                DEFAULT_MAX_LINECOUNT_MULTIPLIER
             )
         }
     }
@@ -309,7 +315,7 @@ data class Question(
     ) {
         @Suppress("SpellCheckingInspection")
         enum class Reason {
-            DESIGN, COMPILE, TEST, CHECKSTYLE, TIMEOUT, DEADCODE, LINECOUNT, TOOLONG, MEMORYLIMIT, RECURSION, COMPLEXITY, FEATURES, TOOMUCHOUTPUT
+            DESIGN, COMPILE, TEST, CHECKSTYLE, TIMEOUT, DEADCODE, LINECOUNT, TOOLONG, MEMORYLIMIT, RECURSION, COMPLEXITY, FEATURES, TOOMUCHOUTPUT, MEMOIZATION
         }
     }
 
@@ -594,6 +600,7 @@ fun String.toReason() = when (uppercase(Locale.getDefault())) {
     "COMPLEXITY" -> Question.IncorrectFile.Reason.COMPLEXITY
     "FEATURES" -> Question.IncorrectFile.Reason.FEATURES
     "TOOMUCHOUTPUT" -> Question.IncorrectFile.Reason.TOOMUCHOUTPUT
+    "MEMOIZATION" -> Question.IncorrectFile.Reason.MEMOIZATION
     else -> error("Invalid incorrect reason: $this")
 }
 

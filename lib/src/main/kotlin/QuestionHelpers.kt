@@ -263,9 +263,13 @@ fun Question.mutations(seed: Int, count: Int) = templateSubmission(
         )
     }
 
+class MaxComplexityExceeded(message: String) : RuntimeException(message)
+
 fun Question.computeComplexity(contents: String, language: Question.Language): TestResults.ComplexityComparison {
     val solutionComplexity = published.complexity[language]
     check(solutionComplexity != null) { "Solution complexity not available" }
+
+    val maxComplexity = (control.maxComplexityMultiplier!! * solutionComplexity)
 
     val submissionComplexity = when {
         type == Question.Type.SNIPPET && contents.isBlank() -> 0
@@ -306,6 +310,9 @@ $contents
         }
 
         else -> error("Shouldn't get here")
+    }
+    if (submissionComplexity > maxComplexity) {
+        throw MaxComplexityExceeded("Submission complexity $submissionComplexity exceeds maximum of $maxComplexity")
     }
     return TestResults.ComplexityComparison(solutionComplexity, submissionComplexity, control.maxExtraComplexity!!)
 }
@@ -379,14 +386,22 @@ ${contents.lines().joinToString("\n") { "  $it" }}
     return TestResults.FeaturesComparison(errors)
 }
 
+class MaxLineCountExceeded(message: String) : RuntimeException(message)
+
 fun Question.computeLineCounts(contents: String, language: Question.Language): TestResults.LineCountComparison {
     val solutionLineCount = published.lineCounts[language]
     check(solutionLineCount != null) { "Solution line count not available" }
+
+    val maxLineCount = (control.maxLineCountMultiplier!! * solutionLineCount.source)
+
     val type = when (language) {
         Question.Language.java -> Source.FileType.JAVA
         Question.Language.kotlin -> Source.FileType.KOTLIN
     }
     val submissionLineCount = contents.countLines(type)
+    if (submissionLineCount.source > maxLineCount) {
+        throw MaxLineCountExceeded("Submission line count ${submissionLineCount.source} exceeds maximum of $maxLineCount")
+    }
     return TestResults.LineCountComparison(
         solutionLineCount,
         submissionLineCount,

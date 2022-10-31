@@ -4,7 +4,6 @@ import com.squareup.moshi.JsonClass
 import edu.illinois.cs.cs125.jeed.core.CheckstyleFailed
 import edu.illinois.cs.cs125.jeed.core.CheckstyleResults
 import edu.illinois.cs.cs125.jeed.core.CompilationFailed
-import edu.illinois.cs.cs125.jeed.core.ComplexityFailed
 import edu.illinois.cs.cs125.jeed.core.KtLintFailed
 import edu.illinois.cs.cs125.jeed.core.KtLintResults
 import edu.illinois.cs.cs125.jeed.core.LineCounts
@@ -98,9 +97,9 @@ data class TestResults(
         var checkstyle: CheckstyleFailed? = null,
         var ktlint: KtLintFailed? = null,
         var checkCompiledSubmission: String? = null,
-        var complexity: ComplexityFailed? = null,
+        var complexity: String? = null,
         var features: String? = null,
-        // lineCount doesn't fail
+        var lineCount: String? = null,
         // execution
         var checkExecutedSubmission: String? = null
         // executionCount doesn't fail
@@ -220,7 +219,7 @@ data class TestResults(
         } else if (failed.ktlint != null) {
             "Ktlint failed:${failed.ktlint?.let { ": $it" } ?: ""}"
         } else if (failed.complexity != null) {
-            "Computing complexity failed: ${failed.complexity!!.message ?: "unknown error"}"
+            "Computing complexity failed: ${failed.complexity ?: "unknown error"}"
         } else if (failed.checkCompiledSubmission != null) {
             "Checking submission failed: ${failed.checkCompiledSubmission}"
         } else if (failed.checkExecutedSubmission != null) {

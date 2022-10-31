@@ -484,6 +484,9 @@ private fun TestResults.validate(reason: Question.IncorrectFile.Reason) {
         Question.IncorrectFile.Reason.FEATURES -> require(failed.features != null) {
             "Expected submission to fail feature check"
         }
+        Question.IncorrectFile.Reason.MEMOIZATION -> require(failed.complexity != null && failed.complexity!!.contains("exceeds maximum")) {
+            "Expected submission to be so complex as to suggest memoization"
+        }
         else -> require(complete.testing?.passed == false) {
             "Expected submission to fail tests"
         }

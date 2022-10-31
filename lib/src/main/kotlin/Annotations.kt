@@ -34,7 +34,9 @@ annotation class Correct(
     val allocationLimitMultiplier: Int = Question.TestingControl.DEFAULT_ALLOCATION_LIMIT_MULTIPLIER,
     val minExtraSourceLines: Int = Question.TestingControl.DEFAULT_MIN_EXTRA_SOURCE_LINES,
     val sourceLinesMultiplier: Double = Question.TestingControl.DEFAULT_SOURCE_LINES_MULTIPLIER,
-    val seed: Int = Question.TestingControl.DEFAULT_SEED
+    val seed: Int = Question.TestingControl.DEFAULT_SEED,
+    val maxComplexityMultiplier: Int = Question.TestingControl.DEFAULT_MAX_COMPLEXITY_MULTIPLIER,
+    val maxLineCountMultiplier: Int = Question.TestingControl.DEFAULT_MAX_LINECOUNT_MULTIPLIER
 )
 
 @Target(AnnotationTarget.CLASS, AnnotationTarget.FILE)
