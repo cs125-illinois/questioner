@@ -9,7 +9,6 @@ plugins {
     application
     id("org.jmailen.kotlinter")
     id("com.github.johnrengelman.shadow") version "7.1.2"
-    id("com.palantir.docker") version "0.34.0"
     id("com.google.devtools.ksp")
 }
 dependencies {
@@ -25,7 +24,7 @@ dependencies {
 
     implementation("org.slf4j:slf4j-api:2.0.3")
     implementation("ch.qos.logback:logback-classic:1.4.4")
-    implementation("io.github.microutils:kotlin-logging:3.0.3")
+    implementation("io.github.microutils:kotlin-logging:3.0.4")
 }
 task("createProperties") {
     doLast {
@@ -54,15 +53,37 @@ tasks.shadowJar {
 application {
     mainClass.set("edu.illinois.cs.cs125.questioner.server.MainKt")
 }
-docker {
-    name = "cs125/questioner"
-    files(tasks["shadowJar"].outputs)
-    @Suppress("DEPRECATION")
-    tags("latest")
-}
 kotlin {
     kotlinDaemonJvmArgs = listOf("-Dfile.encoding=UTF-8")
 }
 tasks.withType<ShadowJar> {
     isZip64 = true
+}
+val dockerName = "cs125/questioner"
+tasks.register<Copy>("dockerCopyJar") {
+    from(tasks["shadowJar"].outputs)
+    into("${buildDir}/docker")
+}
+tasks.register<Copy>("dockerCopyDockerfile") {
+    from("${projectDir}/Dockerfile")
+    into("${buildDir}/docker")
+}
+tasks.register<Exec>("dockerBuild") {
+    dependsOn("dockerCopyJar", "dockerCopyDockerfile")
+    workingDir("${buildDir}/docker")
+    commandLine(
+        ("docker build . " +
+            "-t ${dockerName}:latest " +
+            "-t ${dockerName}:${project.version}").split(" ")
+    )
+}
+tasks.register<Exec>("dockerPush") {
+    dependsOn("dockerCopyJar", "dockerCopyDockerfile")
+    workingDir("${buildDir}/docker")
+    commandLine(
+        ("docker buildx build . --platform=linux/amd64,linux/arm64/v8 " +
+            "--builder multiplatform " +
+            "--tag ${dockerName}:latest " +
+            "--tag ${dockerName}:${project.version} --push").split(" ")
+    )
 }
