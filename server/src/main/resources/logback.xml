@@ -6,6 +6,7 @@
         </encoder>
     </appender>
     <logger name="edu.illinois.cs.cs125.questioner" level="debug" />
+    <logger name="ktor.application" level="info" />
     <root level="warn">
         <appender-ref ref="STDOUT" />
     </root>
