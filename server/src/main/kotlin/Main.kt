@@ -221,6 +221,7 @@ val CALL_START_TIME = AttributeKey<Instant>("CallStartTime")
 @Suppress("LongMethod")
 fun Application.questioner() {
     intercept(ApplicationCallPipeline.Setup) {
+        println(Instant.now())
         // intercept before calling routing and mark every incoming call with a TimeMark
         call.attributes.put(CALL_START_TIME, Instant.now())
     }
