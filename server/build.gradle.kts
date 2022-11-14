@@ -18,6 +18,7 @@ dependencies {
 
     implementation("io.ktor:ktor-server-netty:2.1.3")
     implementation("io.ktor:ktor-server-content-negotiation:2.1.3")
+    implementation("io.ktor:ktor-server-call-logging:2.1.3")
     implementation("com.squareup.moshi:moshi-kotlin:1.14.0")
     implementation("com.github.cs125-illinois:ktor-moshi:2022.9.0")
     implementation("org.mongodb:mongodb-driver:3.12.11")

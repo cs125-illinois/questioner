@@ -231,8 +231,8 @@ fun Application.questioner() {
             call.respond(Status())
         }
         post("/") {
+            val start = Instant.now().toEpochMilli()
             withContext(threadPool) {
-                val start = Instant.now().toEpochMilli()
                 val submission = call.receive<Submission>()
                 Questions.load(submission) ?: return@withContext call.respond(HttpStatusCode.NotFound)
                 val runCount = counter.incrementAndGet()
