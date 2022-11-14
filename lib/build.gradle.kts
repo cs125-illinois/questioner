@@ -12,7 +12,7 @@ dependencies {
     implementation("org.ow2.asm:asm:9.4")
 
     api("com.beyondgrader.resource-agent:agent:2022.9.3")
-    api("com.github.cs125-illinois.jeed:core:2022.11.0")
+    api("com.github.cs125-illinois.jeed:core:2022.11.1")
     api("com.github.cs125-illinois:jenisol:2022.10.5")
     api("io.kotest:kotest-runner-junit5:5.5.4")
     api("com.google.truth:truth:1.1.3")

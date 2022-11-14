@@ -232,6 +232,7 @@ fun Application.questioner() {
         }
         post("/") {
             withContext(threadPool) {
+                val start = Instant.now().toEpochMilli()
                 val submission = call.receive<Submission>()
                 Questions.load(submission) ?: return@withContext call.respond(HttpStatusCode.NotFound)
                 val runCount = counter.incrementAndGet()
@@ -240,7 +241,7 @@ fun Application.questioner() {
                     val startMemory = (runtime.freeMemory().toFloat() / 1024.0 / 1024.0).toInt()
                     call.respond(ServerResponse(Questions.test(submission)))
                     val endMemory = (runtime.freeMemory().toFloat() / 1024.0 / 1024.0).toInt()
-                    logger.debug { "$runCount: $startMemory -> $endMemory" }
+                    logger.debug { "$runCount: ${submission.path}: $startMemory -> $endMemory (${Instant.now().toEpochMilli() - start})" }
                 } catch (e: StackOverflowError) {
                     e.printStackTrace()
                     call.respond(HttpStatusCode.BadRequest)
