@@ -32,9 +32,7 @@ import io.ktor.server.routing.post
 import io.ktor.server.routing.routing
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import mu.KotlinLogging
 import org.bson.BsonDocument
 import org.slf4j.LoggerFactory
@@ -45,7 +43,6 @@ import java.security.SecureRandom
 import java.security.cert.X509Certificate
 import java.time.Instant
 import java.util.Properties
-import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicInteger
 import javax.management.NotificationEmitter
 import javax.management.NotificationListener
@@ -209,9 +206,6 @@ data class Status(
     val version: String = versionString
 )
 
-val threadPool = Executors.newFixedThreadPool(System.getenv("QUESTIONER_THREAD_POOL_SIZE")?.toIntOrNull() ?: 8)
-    .asCoroutineDispatcher()
-
 @JsonClass(generateAdapter = true)
 data class ServerResponse(val results: TestResults)
 
@@ -232,38 +226,40 @@ fun Application.questioner() {
         }
         post("/") {
             val start = Instant.now().toEpochMilli()
-            withContext(threadPool) {
-                val submission = call.receive<Submission>()
-                Questions.load(submission) ?: return@withContext call.respond(HttpStatusCode.NotFound)
-                val runCount = counter.incrementAndGet()
-                @Suppress("TooGenericExceptionCaught")
-                try {
-                    val startMemory = (runtime.freeMemory().toFloat() / 1024.0 / 1024.0).toInt()
-                    call.respond(ServerResponse(Questions.test(submission)))
-                    val endMemory = (runtime.freeMemory().toFloat() / 1024.0 / 1024.0).toInt()
-                    logger.debug { "$runCount: ${submission.path}: $startMemory -> $endMemory (${Instant.now().toEpochMilli() - start})" }
-                } catch (e: StackOverflowError) {
-                    e.printStackTrace()
-                    call.respond(HttpStatusCode.BadRequest)
-                } catch (e: Error) {
-                    e.printStackTrace()
-                    logger.debug { submission }
-                    logger.error { e.toString() }
-                    exitProcess(-1)
-                } catch (e: Throwable) {
-                    e.printStackTrace()
-                    logger.warn { e.toString() }
-                    call.respond(HttpStatusCode.BadRequest)
-                } finally {
-                    System.getenv("DUMP_AT_SUBMISSION")?.toInt()?.also {
-                        if (it == runCount) {
-                            logger.debug { "Dumping heap" }
-                            ManagementFactory.newPlatformMXBeanProxy(
-                                ManagementFactory.getPlatformMBeanServer(),
-                                "com.sun.management:type=HotSpotDiagnostic",
-                                HotSpotDiagnosticMXBean::class.java
-                            ).dumpHeap("questioner.hprof", false)
-                        }
+            val submission = call.receive<Submission>()
+            Questions.load(submission) ?: return@post call.respond(HttpStatusCode.NotFound)
+            val runCount = counter.incrementAndGet()
+            @Suppress("TooGenericExceptionCaught")
+            try {
+                val startMemory = (runtime.freeMemory().toFloat() / 1024.0 / 1024.0).toInt()
+                call.respond(ServerResponse(Questions.test(submission)))
+                val endMemory = (runtime.freeMemory().toFloat() / 1024.0 / 1024.0).toInt()
+                logger.debug {
+                    "$runCount: ${submission.path}: $startMemory -> $endMemory (${
+                    Instant.now().toEpochMilli() - start
+                    })"
+                }
+            } catch (e: StackOverflowError) {
+                e.printStackTrace()
+                call.respond(HttpStatusCode.BadRequest)
+            } catch (e: Error) {
+                e.printStackTrace()
+                logger.debug { submission }
+                logger.error { e.toString() }
+                exitProcess(-1)
+            } catch (e: Throwable) {
+                e.printStackTrace()
+                logger.warn { e.toString() }
+                call.respond(HttpStatusCode.BadRequest)
+            } finally {
+                System.getenv("DUMP_AT_SUBMISSION")?.toInt()?.also {
+                    if (it == runCount) {
+                        logger.debug { "Dumping heap" }
+                        ManagementFactory.newPlatformMXBeanProxy(
+                            ManagementFactory.getPlatformMBeanServer(),
+                            "com.sun.management:type=HotSpotDiagnostic",
+                            HotSpotDiagnosticMXBean::class.java
+                        ).dumpHeap("questioner.hprof", false)
                     }
                 }
             }
