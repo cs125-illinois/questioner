@@ -221,14 +221,18 @@ val CALL_START_TIME = AttributeKey<Instant>("CallStartTime")
 @Suppress("LongMethod")
 fun Application.questioner() {
     intercept(ApplicationCallPipeline.Setup) {
-        println(Instant.now())
-        // intercept before calling routing and mark every incoming call with a TimeMark
         call.attributes.put(CALL_START_TIME, Instant.now())
     }
     install(CallLogging) {
         format { call ->
-            val startTime = call.attributes.getOrNull(CALL_START_TIME)!!
-            "${call.response.status()}: ${call.request.toLogString()} ${Instant.now().toEpochMilli() - startTime.toEpochMilli()}"
+            val startTime = call.attributes.getOrNull(CALL_START_TIME)
+            "${call.response.status()}: ${call.request.toLogString()} ${
+            if (startTime != null) {
+                Instant.now().toEpochMilli() - startTime.toEpochMilli()
+            } else {
+                ""
+            }
+            }"
         }
     }
     install(ContentNegotiation) {
