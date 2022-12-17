@@ -11,14 +11,10 @@ import org.gradle.api.Project
 import org.gradle.api.plugins.JavaPluginExtension
 import org.gradle.api.tasks.testing.Test
 import java.io.File
-import java.util.UUID
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class QuestionerConfig(val endpoints: List<EndPoint> = listOf()) {
     data class EndPoint(val name: String, val token: String, val url: String)
-    init {
-        require(endpoints.all { UUID.fromString(it.token) != null }) { "Invalid UUID in .questioner.yaml" }
-    }
 }
 
 fun Project.javaSourceDir(): File =
